@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>إدارة شاي بكر</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" href="../assets/logo.png?v=7" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@600;700&family=Tajawal:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <link rel="stylesheet" href="./css/admin.css?v=27" />
+  </head>
+  <body>
+    <div id="loginView" class="login-view">
+      <div class="login-card">
+        <img class="login-logo" src="../assets/logo.png?v=7" alt="شاي بكر" />
+        <h1>لوحة إدارة شاي بكر</h1>
+        <p>أدخل رمز الدخول للمتابعة</p>
+        <label class="field">
+          <span>رمز الدخول</span>
+          <input
+            id="adminPin"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            placeholder="1234"
+            dir="ltr"
+          />
+        </label>
+        <p class="login-error" id="loginError" hidden>رمز غير صحيح — جرّب 1234 (بأرقام إنجليزية)</p>
+        <button type="button" class="btn btn-primary" id="loginBtn">دخول</button>
+        <p class="login-hint">الرمز الافتراضي: <strong dir="ltr">1234</strong> — غيّره لاحقاً من <code>js/config.js</code></p>
+      </div>
+    </div>
+
+    <div id="appView" class="app-view is-hidden" hidden>
+      <header class="admin-header">
+        <div class="admin-brand">
+          <div class="brand-mark">
+            <img src="../assets/logo.png?v=7" alt="شاي بكر" />
+            <span id="storageBadge" class="status-dot" title="حالة الاتصال" aria-label="حالة الاتصال"></span>
+          </div>
+          <div class="admin-brand-text">
+            <strong>إدارة شاي بكر</strong>
+          </div>
+        </div>
+        <div class="admin-actions">
+          <button type="button" class="btn btn-refresh" id="refreshBtn">تحديث</button>
+          <button type="button" class="btn btn-logout" id="logoutBtn">خروج</button>
+        </div>
+      </header>
+
+      <main class="admin-main">
+        <div id="connAlert" class="conn-alert is-hidden" hidden>
+          <span id="setupStatus" class="setup-status">جاري الفحص…</span>
+          <button type="button" class="btn btn-ghost" id="pingBtn">إعادة المحاولة</button>
+          <div id="setupHelp" class="setup-help" hidden>
+            <p>تحقق من إعدادات Supabase في <code>js/config.js</code> أو راجع <code>docs/SETUP-AR.md</code></p>
+          </div>
+        </div>
+
+        <div id="dashboardView">
+          <section class="admin-welcome admin-page is-page-on" id="adminHome" data-page="home">
+            <div class="welcome-landing">
+              <div class="welcome-intro">
+                <div class="welcome-brand-block">
+                  <div class="welcome-logo-wrap">
+                    <img class="welcome-logo" src="../assets/logo.png?v=7" alt="شاي بكر" />
+                  </div>
+                  <div class="welcome-copy">
+                    <p class="welcome-name">شاي بكر</p>
+                    <h1>إدارة شاي بكر</h1>
+                    <p class="welcome-tag">ضيافتك .. بإدارة أوضح وأسهل</p>
+                    <p class="welcome-sub">لوحة العمل اليومية للإحصائيات والطلبات</p>
+                  </div>
+                </div>
+
+                <div class="welcome-side">
+                  <div class="welcome-art-wrap" aria-hidden="true">
+                    <img class="welcome-art" src="../assets/hero-art.png?v=9" alt="" />
+                  </div>
+                  <div class="welcome-choices" aria-label="أقسام اللوحة">
+                    <button type="button" class="welcome-choice is-primary" data-page="orders">
+                      <strong>الطلبات</strong>
+                      <span id="ordersChoiceHint">عرض الطلبات واتخاذ القرار</span>
+                    </button>
+                    <button type="button" class="welcome-choice is-secondary" data-page="stats">
+                      <strong>الإحصائيات</strong>
+                      <span>الزيارات والدخل وأوقات الذروة</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="welcome-end-line" aria-hidden="true"></div>
+            </div>
+          </section>
+
+          <section class="panel orders-panel admin-page" id="ordersPanel" data-page="orders" hidden>
+            <div class="panel-head orders-head">
+              <div class="page-nav">
+                <button type="button" class="btn btn-ghost" data-page="home">← الرئيسية</button>
+                <h2>الطلبات</h2>
+              </div>
+              <div class="orders-head-actions">
+                <button type="button" class="btn btn-primary" id="newBookingBtn">+ حجز جديد</button>
+                <div class="filter-tabs" id="statusTabs">
+                  <button type="button" class="filter-tab is-on" data-status="all">الكل</button>
+                  <button type="button" class="filter-tab" data-status="pending">جديد</button>
+                  <button type="button" class="filter-tab" data-status="accepted">مقبول</button>
+                  <button type="button" class="filter-tab" data-status="rejected">مرفوض</button>
+                </div>
+              </div>
+            </div>
+            <p class="orders-lead">اضغط الطلب للتفاصيل — أو استخدم قبول / رفض مباشرة من القائمة</p>
+            <div id="ordersList" class="orders-list"></div>
+          </section>
+
+          <section class="panel stats-panel admin-page" id="statsPanel" data-page="stats" hidden>
+            <div class="panel-head">
+              <div class="page-nav">
+                <button type="button" class="btn btn-ghost" data-page="home">← الرئيسية</button>
+                <h2>الإحصائيات</h2>
+              </div>
+              <div class="range-tabs" id="rangeTabs">
+                <button type="button" class="range-tab is-on" data-range="month">شهر</button>
+                <button type="button" class="range-tab" data-range="year">سنة</button>
+              </div>
+            </div>
+
+            <div class="period-nav" id="periodNav">
+              <button type="button" class="btn btn-ghost period-btn" id="periodPrev" aria-label="السابق">→ السابق</button>
+              <div class="period-label-wrap">
+                <strong id="periodLabel">—</strong>
+                <button type="button" class="period-today" id="periodToday">اليوم / هذا الشهر</button>
+              </div>
+              <button type="button" class="btn btn-ghost period-btn" id="periodNext" aria-label="التالي">التالي ←</button>
+            </div>
+
+            <div class="stat-grid stat-grid-hero" id="statGrid"></div>
+            <div class="charts-grid">
+              <article class="chart-card">
+                <h3>حالات الطلبات</h3>
+                <p class="chart-hint">كم جديد / مقبول / مرفوض</p>
+                <div class="chart-canvas-wrap">
+                  <canvas id="statusChart"></canvas>
+                </div>
+              </article>
+              <article class="chart-card">
+                <h3>أكثر المدن طلباً</h3>
+                <p class="chart-hint">وين يجي أكثر الطلبات</p>
+                <div class="chart-canvas-wrap">
+                  <canvas id="citiesChart"></canvas>
+                </div>
+              </article>
+              <article class="chart-card">
+                <h3>أكثر البكجات حجزاً</h3>
+                <p class="chart-hint">أي بكج عليه طلب أعلى</p>
+                <div class="chart-canvas-wrap">
+                  <canvas id="packagesChart"></canvas>
+                </div>
+              </article>
+              <article class="chart-card chart-wide">
+                <h3>أوقات الذروة</h3>
+                <p class="chart-hint">ساعة اليوم اللي فيها أكثر طلبات</p>
+                <div class="chart-canvas-wrap chart-canvas-wide">
+                  <canvas id="peakChart"></canvas>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
+
+        <div id="orderDetailView" class="order-detail-view is-hidden" hidden>
+          <div class="detail-toolbar">
+            <button type="button" class="btn btn-ghost" id="backToListBtn">← رجوع للطلبات</button>
+          </div>
+          <article class="panel detail-panel" id="orderDetail"></article>
+        </div>
+      </main>
+    </div>
+
+    <div id="bookingModal" class="share-modal is-hidden" hidden>
+      <div class="share-card booking-card" role="dialog" aria-modal="true">
+        <h3>حجز جديد من خارج الموقع</h3>
+        <p>سجّل الحجز هنا عشان التاريخ ينحجز وما أحد يطلبه من الموقع</p>
+        <form id="bookingForm" class="booking-form">
+          <label class="field">
+            <span>اسم العميل</span>
+            <input id="bkName" type="text" required placeholder="اسم العميل" autocomplete="name" />
+          </label>
+          <label class="field">
+            <span>رقم الجوال</span>
+            <input id="bkPhone" type="tel" required placeholder="05xxxxxxxx" dir="ltr" inputmode="numeric" />
+          </label>
+          <label class="field">
+            <span>المدينة</span>
+            <select id="bkCity" required></select>
+          </label>
+          <label class="field">
+            <span>تاريخ المناسبة</span>
+            <input id="bkDate" type="date" required dir="ltr" />
+          </label>
+          <label class="field">
+            <span>ملاحظات (اختياري)</span>
+            <input id="bkNotes" type="text" placeholder="مثال: حجز واتساب / اتصال" />
+          </label>
+          <p class="login-error" id="bkError" hidden></p>
+          <div class="share-actions">
+            <button type="submit" class="btn btn-ok" id="bkSaveBtn">حفظ الحجز وتأكيد التاريخ</button>
+            <button type="button" class="btn btn-ghost" id="bkCancelBtn">إلغاء</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="../js/config.js?v=8"></script>
+    <script src="../js/catalog.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./vendor/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="../js/store.js?v=9"></script>
+    <script src="./js/logo-data.js?v=8"></script>
+    <script src="./js/order-pdf.js?v=8"></script>
+    <script src="./js/wa-send.js?v=8"></script>
+    <script src="./js/admin.js?v=27"></script>
+  </body>
+</html>
