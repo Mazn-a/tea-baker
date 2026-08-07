@@ -917,6 +917,10 @@ function renderWizard() {
   title.style.display = step === "success" ? "none" : "";
   sub.style.display = step === "success" ? "none" : "";
 
+  // على الجوال: ارجع أعلى منطقة التمرير عند تغيير الخطوة
+  const wizardBodyEl = document.querySelector(".view[data-view='booking'] .wizard-body");
+  if (wizardBodyEl) wizardBodyEl.scrollTop = 0;
+
   if (step === "city") {
     body.innerHTML = renderChoices(CITIES, state.city, null, "cols-3");
     bindChoices((id) => {
@@ -1225,6 +1229,25 @@ function setupNav() {
   const toggle = $("#menuToggle");
   const links = $("#navLinks");
   toggle?.addEventListener("click", () => links.classList.toggle("open"));
+
+  // إغلاق القائمة عند الضغط خارجها
+  document.addEventListener("click", (e) => {
+    if (!links?.classList.contains("open")) return;
+    if (toggle?.contains(e.target) || links.contains(e.target)) return;
+    links.classList.remove("open");
+  });
+
+  // عند فتح لوحة المفاتيح: مرّر الحقل ليظهر فوق أزرار التالي/رجوع
+  document.addEventListener("focusin", (e) => {
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (!target.matches("input, textarea, select")) return;
+    const scroller = target.closest(".wizard-body");
+    if (!scroller) return;
+    requestAnimationFrame(() => {
+      target.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+  });
 
   // الشعار: تحديث الصفحة والرجوع للرئيسية داخل الموقع
   $("#brandHome")?.addEventListener("click", (e) => {
