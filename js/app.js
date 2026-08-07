@@ -76,7 +76,7 @@ function getAddonQty(id) {
 
 function setAddonQty(id, qty) {
   const next = { ...(state.addonQty || {}) };
-  const n = Math.max(0, Math.min(99, Math.floor(Number(qty) || 0)));
+  const n = Math.max(0, Math.min(20, Math.floor(Number(qty) || 0)));
   if (n <= 0) delete next[id];
   else next[id] = n;
   state.addonQty = next;
@@ -143,6 +143,7 @@ function loadDraft() {
     }
     // توافق مع المسودات القديمة
     if (!state.hallName && d.location) state.hallName = d.location;
+    state.phone = sanitizePhoneInput(state.phone || "");
     if (state.date) {
       const dt = new Date(`${state.date}T12:00:00`);
       state.calendar = new Date(dt.getFullYear(), dt.getMonth(), 1);
@@ -747,19 +748,27 @@ function renderAddonsStep() {
     </div>`;
 }
 
-function renderField(id, label, type, value, placeholder, extra = "") {
+function renderField(id, label, type, value, placeholder, extra = "", attrs = "") {
   return `
     <div class="field-card">
       <label for="${id}">${label}</label>
       ${
         type === "textarea"
-          ? `<textarea id="${id}" placeholder="${placeholder}">${value || ""}</textarea>`
+          ? `<textarea id="${id}" placeholder="${placeholder}" ${attrs}>${value || ""}</textarea>`
           : `<input id="${id}" type="${type}" inputmode="${extra}" placeholder="${placeholder}" value="${
               value || ""
-            }" />`
+            }" ${attrs} />`
       }
       <div class="field-error" id="fieldError"></div>
     </div>`;
+}
+
+/** رقم سعودي: أرقام فقط وبحد أقصى 10 */
+function sanitizePhoneInput(value) {
+  let digits = String(value || "").replace(/\D/g, "");
+  if (digits.startsWith("966")) digits = `0${digits.slice(3)}`;
+  else if (digits.startsWith("00966")) digits = `0${digits.slice(5)}`;
+  return digits.slice(0, 10);
 }
 
 function renderReview() {
@@ -813,7 +822,7 @@ function renderReview() {
         <li>اضغط <strong>تأكيد الطلب</strong> بالأسفل لإرسال الطلب عبر الموقع.</li>
         <li>تصل طلبك مباشرة إلى إدارة شاي بكر للمراجعة.</li>
         <li>يصلك على رقم جوالك رسالة واتساب <strong>بالقبول أو الرفض</strong> مع تفاصيل الطلب.</li>
-        <li>الحجز يُعتمد فقط بعد رسالة القبول (مناسبة واحدة في اليوم).</li>
+        <li>الحجز يُعتمد فقط بعد رسالة القبول.</li>
       </ol>
       <p class="procedure-note">لا تحتاج إرسال واتساب بنفسك — القرار والرسالة يأتيانك من الإدارة على رقمك.</p>
     </div>`;
@@ -903,7 +912,7 @@ function renderWizard() {
     event: "اختر نوع المناسبة من البطاقات. إذا اخترت «أخرى» فاكتب نوعها.",
     package: "اختر البكج المناسب لطلبك.",
     addons: "اختر ما تريد من الإضافات — المجموع هنا للإضافات فقط.",
-    date: "ميلادي أو هجري، واكتب التاريخ أو اختره من التقويم. مناسبة واحدة فقط في اليوم.",
+    date: "ميلادي أو هجري، واكتب التاريخ أو اختره من التقويم.",
     name: "خطوة واحدة فقط الآن.",
     phone: "للتواصل وإرسال رسالة القبول أو الرفض على واتساب.",
     location: "اكتب اسم القاعة، ثم الصق رابط موقعها من خرائط قوقل.",
@@ -1052,12 +1061,22 @@ function renderWizard() {
       "inputPhone",
       "رقم الجوال",
       "tel",
-      state.phone,
+      sanitizePhoneInput(state.phone),
       "05xxxxxxxx",
-      "tel"
+      "numeric",
+      'maxlength="10" autocomplete="tel" pattern="05[0-9]{8}"'
     );
-    $("#inputPhone").addEventListener("input", (e) => {
-      state.phone = e.target.value;
+    const phoneInput = $("#inputPhone");
+    phoneInput.addEventListener("input", (e) => {
+      const cleaned = sanitizePhoneInput(e.target.value);
+      e.target.value = cleaned;
+      state.phone = cleaned;
+      nextBtn.disabled = !canProceed();
+    });
+    phoneInput.addEventListener("blur", (e) => {
+      const cleaned = sanitizePhoneInput(e.target.value);
+      e.target.value = cleaned;
+      state.phone = cleaned;
       nextBtn.disabled = !canProceed();
     });
   } else if (step === "location") {

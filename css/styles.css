@@ -27,6 +27,10 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
+  /* يمنع سحب الصفحة يمين/يسار على الجوال */
+  touch-action: pan-y;
 }
 
 body {
@@ -39,7 +43,13 @@ body {
   line-height: 1.7;
   font-size: 1.05rem;
   overflow-x: hidden;
+  overflow-y: auto;
+  max-width: 100%;
+  width: 100%;
   min-height: 100svh;
+  position: relative;
+  touch-action: pan-y;
+  overscroll-behavior-x: none;
 }
 
 img {
@@ -76,9 +86,10 @@ select {
   z-index: 80;
   background: #ead4bd;
   border-bottom: 1px solid rgba(74, 50, 34, 0.1);
-  padding: env(safe-area-inset-top, 0px) 0 0;
+  padding: max(0.35rem, env(safe-area-inset-top, 0px)) 0 0;
   margin: 0;
   isolation: isolate;
+  overflow: visible;
 }
 
 .site-header.is-hidden {
@@ -94,9 +105,11 @@ select {
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 0.55rem clamp(0.85rem, 2.5vw, 1.75rem);
+  padding: 0.45rem max(0.85rem, env(safe-area-inset-inline-end, 0px)) 0.55rem
+    max(0.85rem, env(safe-area-inset-inline-start, 0px));
   min-height: 4.25rem;
   position: relative;
+  box-sizing: border-box;
 }
 
 .brand {
@@ -107,12 +120,14 @@ select {
   margin: 0;
   line-height: 0;
   flex-shrink: 0;
+  overflow: visible;
 }
 
 .brand img {
   width: 52px;
   height: 52px;
   object-fit: contain;
+  object-position: center;
   background: transparent;
   display: block;
 }
@@ -1064,12 +1079,15 @@ select {
 /* Storefront — مطابق للصورة حرفياً */
 .storefront {
   background: #ead4bd;
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 .storefront-hero {
   position: relative;
-  overflow: visible;
+  overflow: hidden;
   width: 100%;
+  max-width: 100%;
   background: #ead4bd;
 }
 
@@ -1082,14 +1100,15 @@ select {
   justify-content: center;
   align-items: stretch;
   background: #ead4bd;
-  overflow: visible;
+  overflow: hidden;
+  max-width: 100%;
 }
 
 /* إضاءة شمس جانبية (سدف) — داخل الهيرو فقط دون التوب بار */
 .storefront-landing::before {
   content: "";
   position: absolute;
-  inset: -20% -10% -30% -15%;
+  inset: 0;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
@@ -1118,8 +1137,6 @@ select {
     );
   mix-blend-mode: soft-light;
   opacity: 0.95;
-  transform: rotate(-4deg);
-  animation: sunGlowDrift 9s ease-in-out infinite alternate;
 }
 
 @keyframes sunGlowDrift {
@@ -1169,7 +1186,7 @@ select {
   margin-inline: auto;
   margin-top: 0;
   padding: clamp(1.5rem, 4vw, 2.75rem) 0 2.5rem;
-  transform: translateY(-6vh);
+  transform: none;
 }
 
 .storefront-brand {
@@ -1337,12 +1354,14 @@ select {
 
 @media (max-width: 800px) {
   .storefront-landing {
-    min-height: calc(100svh - 4.25rem - env(safe-area-inset-top, 0px));
-    justify-content: center;
+    min-height: 0;
+    justify-content: flex-start;
+    padding: 0.75rem 0 1.15rem;
+    overflow: hidden;
   }
 
   .storefront-landing::before {
-    inset: -8% -6% -12% -8%;
+    inset: 0;
     animation: none;
     transform: none;
   }
@@ -1352,8 +1371,9 @@ select {
     justify-items: center;
     text-align: center;
     width: min(100% - 1.5rem, 26rem);
-    padding: 0.65rem 0 1.25rem;
-    gap: 0.85rem;
+    margin-inline: auto;
+    padding: 0.35rem 0 0.85rem;
+    gap: 0.65rem;
     transform: none;
   }
 
@@ -1375,8 +1395,13 @@ select {
   .storefront-brand {
     flex-direction: column;
     align-items: center;
-    gap: 0.55rem;
+    gap: 0.45rem;
     width: 100%;
+  }
+
+  .storefront-logo-wrap {
+    overflow: visible;
+    line-height: 0;
   }
 
   .storefront-copy {
@@ -1393,7 +1418,7 @@ select {
   .hero-cta-group {
     justify-items: center;
     width: min(100%, 16rem);
-    margin-top: 0.85rem;
+    margin-top: 0.7rem;
   }
 
   .hero-cta {
@@ -1409,7 +1434,8 @@ select {
   }
 
   .storefront-logo {
-    width: min(128px, 34vw);
+    width: min(120px, 32vw);
+    max-height: none;
   }
 
   .store-name {
@@ -1431,13 +1457,24 @@ select {
   }
 
   #packages,
-  .home-sections {
+  .home-sections,
+  .home-body,
+  .container-wide {
     overflow-x: clip;
+    max-width: 100%;
+  }
+
+  .pkg-market-grid {
     max-width: 100%;
   }
 
   .nav {
     padding-inline: max(0.85rem, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+  }
+
+  .brand img {
+    width: 44px;
+    height: 44px;
   }
 
   .about-map iframe {
@@ -1862,6 +1899,8 @@ select {
     padding: 0.35rem 0.1rem 0.9rem;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-x pinch-zoom;
+    max-width: 100%;
   }
 
   .pkg-market-grid::-webkit-scrollbar {
