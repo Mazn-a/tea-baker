@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>شاي بكر | ضيافة المناسبات</title>
+    <meta
+      name="description"
+      content="بكر للضيافة والمناسبات — حجز بخطوات بسيطة داخل مكة وجدة والطائف."
+    />
+    <link rel="icon" href="./assets/logo.png?v=7" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;600;700&family=Tajawal:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./css/styles.css?v=53" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="nav" id="topNav">
+        <a class="brand" href="#home" id="brandHome" aria-label="شاي بكر — الرئيسية">
+          <img src="./assets/logo.png?v=7" alt="شعار شاي بكر" />
+        </a>
+
+        <div class="nav-end">
+          <button class="btn-book-nav btn-book-mobile" id="navOrderBtnMobile" type="button">
+            اطلب الآن
+          </button>
+          <button class="menu-toggle" id="menuToggle" type="button" aria-label="القائمة">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+
+        <ul class="nav-links" id="navLinks">
+          <li><a href="#home" data-nav="home">الرئيسية</a></li>
+          <li><a href="#packages" data-nav="home">منتجاتنا</a></li>
+          <li><a href="#about" data-nav="about">عن شاي بكر</a></li>
+          <li><a href="#contact" data-nav="contact">تواصل معنا</a></li>
+          <li class="nav-order-desktop">
+            <button class="btn-book-nav" id="navOrderBtn" type="button" data-nav="booking">
+              اطلب الآن
+            </button>
+          </li>
+        </ul>
+      </div>
+    </header>
+
+    <!-- واجهة الترحيب -->
+    <section class="view is-active" data-view="home">
+      <div class="storefront">
+        <div class="storefront-hero">
+          <div class="storefront-landing">
+            <div class="storefront-intro">
+              <div class="storefront-brand">
+                <div class="storefront-logo-wrap">
+                  <img class="storefront-logo" src="./assets/logo.png?v=7" alt="شاي بكر" />
+                </div>
+                <div class="storefront-copy">
+                  <p class="store-name">شاي بكر</p>
+                  <h1>بكر للضيافة والمناسبات</h1>
+                  <p class="store-tag">ضيافتك .. بأسلوبنا الأصيل</p>
+                  <p class="store-cities">نخدم مكة المكرمة - جدة - الطائف</p>
+                  <div class="hero-cta-group">
+                    <button type="button" class="btn-book-nav hero-cta" id="heroOrderBtn">اطلب الآن</button>
+                    <a class="hero-cta-secondary" href="#packages" id="heroPackagesBtn">اكتشف بكجاتنا</a>
+                  </div>
+                </div>
+              </div>
+              <div class="storefront-art-col">
+                <div class="storefront-art-wrap" aria-hidden="true">
+                  <img class="storefront-art" src="./assets/hero-art.png?v=9" alt="" />
+                </div>
+              </div>
+            </div>
+            <div class="storefront-end-line" aria-hidden="true"></div>
+          </div>
+        </div>
+
+        <div class="container-wide page home-body">
+          <div class="home-sections">
+            <section id="packages" class="section-block">
+              <div class="page-head">
+                <h2>البكجات</h2>
+                <p>اختر البكج المناسب لمناسبتك — التفاصيل والأسعار واضحة من أول نظرة.</p>
+              </div>
+              <div class="pkg-market-grid" id="marketPackages"></div>
+            </section>
+
+            <section id="addons" class="section-block">
+              <div class="page-head">
+                <h2>الإضافات الممكنة</h2>
+                <p>يمكن طلبها مع أي بكج من خلال الموقع، ويتم قبولها أو رفضها برسالة واتساب على رقمك.</p>
+              </div>
+              <div class="addons-grid" id="marketAddons"></div>
+            </section>
+
+            <section id="faq" class="section-block">
+              <div class="page-head">
+                <h2>الأسئلة الشائعة</h2>
+              </div>
+              <div class="faq-list">
+                <article class="faq-item panel-card">
+                  <details>
+                    <summary>كيف أطلب؟</summary>
+                    <p>
+                      تصفّح البكجات، ثم اضغط «اطلب الآن» وأكمل خطوات الطلب حتى تضغط «تأكيد الطلب».
+                      يُرسل طلبك مباشرة إلى إدارة شاي بكر عبر الموقع.
+                    </p>
+                  </details>
+                </article>
+                <article class="faq-item panel-card">
+                  <details>
+                    <summary>هل يوجد عربون؟</summary>
+                    <p>نعم، يتم الاتفاق على العربون بعد قبول الطلب برسالة واتساب على رقمك.</p>
+                  </details>
+                </article>
+                <article class="faq-item panel-card">
+                  <details>
+                    <summary>ما المدن التي تشملها خدمة الضيافة؟</summary>
+                    <p>مكة المكرمة، جدة، والطائف فقط.</p>
+                  </details>
+                </article>
+                <article class="faq-item panel-card">
+                  <details>
+                    <summary>هل أستطيع تغيير الموعد؟</summary>
+                    <p>نعم بالتواصل معنا عبر واتساب، حسب التوفر وقاعدة مناسبة واحدة في اليوم.</p>
+                  </details>
+                </article>
+                <article class="faq-item panel-card">
+                  <details>
+                    <summary>كيف يتم تأكيد أو رفض الحجز؟</summary>
+                    <p>
+                      بعد إرسال الطلب من الموقع، تراجعه الإدارة ثم يصلك على رقم جوالك رسالة واتساب
+                      بالقبول أو الرفض مع تفاصيل طلبك. الحجز النهائي بعد رسالة القبول فقط.
+                    </p>
+                  </details>
+                </article>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <div class="storefront-stage">
+          <img src="./assets/storefront-stage.png?v=9" alt="ركن ضيافة شاي بكر" />
+        </div>
+      </div>
+    </section>
+
+    <!-- صفحة عن شاي بكر -->
+    <section class="view" data-view="about">
+      <div class="content-page">
+        <div class="container-wide page">
+          <section class="section-block about-page">
+            <div class="page-head">
+              <h2>عن شاي بكر</h2>
+              <p>
+                محل شاي بكر في مكة المكرمة — حي الراشدية يقدّم المشروبات يومياً،
+                ويجهّز أيضاً ضيافة المناسبات داخل مكة وجدة والطائف بأسلوب أصيل وخطوات طلب بسيطة.
+              </p>
+            </div>
+            <div class="about-map">
+              <iframe
+                title="موقع شاي بكر — مكة الراشدية"
+                src="https://maps.google.com/maps?q=%D8%B4%D8%A7%D9%8A+%D8%A8%D9%83%D8%B1+%D9%85%D9%83%D8%A9+%D8%A7%D9%84%D8%B1%D8%A7%D8%B4%D8%AF%D9%8A%D8%A9&hl=ar&z=16&output=embed"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                allowfullscreen
+              ></iframe>
+              <a
+                class="map-link"
+                href="https://www.google.com/maps/search/?api=1&query=%D8%B4%D8%A7%D9%8A+%D8%A8%D9%83%D8%B1+%D9%85%D9%83%D8%A9+%D8%A7%D9%84%D8%B1%D8%A7%D8%B4%D8%AF%D9%8A%D8%A9"
+                target="_blank"
+                rel="noopener"
+              >
+                فتح الموقع في خرائط قوقل
+              </a>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- خطوات الطلب بعد الضغط على اطلب الآن -->
+    <section class="view" data-view="booking">
+      <div class="container wizard">
+        <div class="wizard-top">
+          <div class="wizard-progress">
+            <div class="progress-meta">
+              <span id="progressText">خطوة 1 من 10</span>
+              <span>طلب الحجز</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="wizard-body">
+          <h2 class="step-title" id="stepTitle">اختر مدينة المناسبة</h2>
+          <p class="step-sub" id="stepSub"></p>
+          <div id="wizardBody"></div>
+        </div>
+
+        <div class="wizard-foot">
+          <div class="wizard-actions" id="wizardActions">
+            <button class="btn btn-back" id="btnBack" type="button">رجوع</button>
+            <button class="btn btn-next" id="btnNext" type="button" disabled>التالي</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer" id="contact">
+      <div class="container-wide footer-inner">
+        <div class="page-head footer-head">
+          <h2>تواصل معنا</h2>
+        </div>
+        <div class="contact-list footer-contact">
+          <p class="contact-line">
+            <span class="contact-label">واتساب:</span>
+            <a href="https://wa.me/966533508361" target="_blank" rel="noopener">0533508361</a>
+          </p>
+          <p class="contact-line">
+            <span class="contact-label">رقم الجوال:</span>
+            <a href="tel:0533508361">0533508361</a>
+          </p>
+          <p class="contact-line">
+            <span class="contact-label">تيك توك:</span>
+            <span class="contact-value">شاي بكر</span>
+          </p>
+          <p class="contact-line">
+            <span class="contact-label">أوقات العمل:</span>
+            <span class="contact-value">يومياً 4 م – 3 ص</span>
+          </p>
+          <p class="contact-line">
+            <span class="contact-label">المحل:</span>
+            <span class="contact-value">مكة — الراشدية</span>
+          </p>
+          <p class="contact-line">
+            <span class="contact-label">المدن:</span>
+            <span class="contact-value">مكة · جدة · الطائف</span>
+          </p>
+        </div>
+        <p class="footer-copy">© <span id="year"></span> شاي بكر — ضيافتك بأسلوبنا الأصيل</p>
+      </div>
+    </footer>
+
+    <script>
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+    <script src="./js/config.js"></script>
+    <script src="./js/catalog.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./js/store.js?v=9"></script>
+    <script src="./js/app.js?v=36"></script>
+  </body>
+</html>
