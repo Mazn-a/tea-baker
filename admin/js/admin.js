@@ -997,11 +997,27 @@ function setup() {
     tryLogin();
   });
 
+  $("#togglePinVisibility")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    const input = $("#adminPin");
+    const btn = $("#togglePinVisibility");
+    if (!input || !btn) return;
+    const show = input.type === "password";
+    input.type = show ? "text" : "password";
+    btn.setAttribute("aria-pressed", show ? "true" : "false");
+    btn.setAttribute("aria-label", show ? "إخفاء رمز الدخول" : "إظهار رمز الدخول");
+    const openIcon = btn.querySelector(".eye-open");
+    const closedIcon = btn.querySelector(".eye-closed");
+    if (openIcon) openIcon.hidden = show;
+    if (closedIcon) closedIcon.hidden = !show;
+    input.focus();
+  });
+
   $("#adminPin")?.addEventListener("input", (e) => {
     const el = e.target;
     const start = el.selectionStart;
     const before = el.value;
-    const next = normalizeDigits(before).replace(/\D/g, "").slice(0, 12);
+    const next = normalizeDigits(before).replace(/\D/g, "").slice(0, 8);
     if (next !== before) {
       el.value = next;
       const pos = Math.min(start ?? next.length, next.length);
