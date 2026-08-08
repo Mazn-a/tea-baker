@@ -459,6 +459,25 @@ select {
   border: 1px solid rgba(99, 58, 17, 0.25);
 }
 
+.btn-locate {
+  background: rgba(31, 122, 63, 0.08);
+  color: var(--ok);
+  border: 1.5px dashed rgba(31, 122, 63, 0.35);
+  font-size: 0.98rem;
+  min-height: 3rem;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.btn-locate:hover:not(:disabled) {
+  background: rgba(31, 122, 63, 0.14);
+}
+
+.btn-locate:disabled {
+  opacity: 0.75;
+}
+
 /* Choice cards */
 .choice-grid {
   display: grid;
@@ -2217,6 +2236,152 @@ select {
 .success-summary {
   width: 100%;
   text-align: start;
+}
+
+/* أزرار عائمة: الإبلاغ عن مشكلة + الرجوع لأعلى الصفحة */
+.fab-stack {
+  position: fixed;
+  inset-inline-start: 1rem;
+  bottom: calc(1rem + var(--safe-bottom));
+  z-index: 70;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.fab {
+  width: 3.1rem;
+  height: 3.1rem;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(26, 18, 12, 0.22);
+  transition: transform 0.15s ease;
+}
+
+.fab:hover {
+  transform: translateY(-2px);
+}
+
+.fab svg {
+  width: 55%;
+  height: 55%;
+}
+
+.fab-report {
+  background: var(--white);
+  color: var(--tea);
+  border: 2px solid rgba(99, 58, 17, 0.18);
+}
+
+.fab-top {
+  background: var(--tea);
+  color: var(--white);
+}
+
+/* يختفي داخل خطوات الحجز حتى لا يغطي أزرار رجوع/التالي */
+body.booking-open .fab-stack,
+body:has(.view[data-view="booking"].is-active) .fab-stack {
+  display: none;
+}
+
+/* نافذة مشتركة: الإبلاغ عن مشكلة */
+.site-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(26, 18, 12, 0.45);
+}
+
+.site-modal.is-hidden {
+  display: none;
+}
+
+.site-modal-card {
+  width: min(420px, 100%);
+  max-height: min(88vh, 640px);
+  overflow-y: auto;
+  background: var(--white);
+  border-radius: calc(var(--radius) + 0.2rem);
+  padding: 1.4rem;
+  display: grid;
+  gap: 0.85rem;
+  box-shadow: 0 24px 60px rgba(26, 18, 12, 0.3);
+}
+
+.site-modal-card h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  color: var(--tea-deep);
+  font-size: 1.3rem;
+}
+
+.site-modal-lead {
+  margin: 0;
+  color: var(--tea-mid);
+  font-size: 0.98rem;
+  line-height: 1.6;
+}
+
+.site-modal-field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.site-modal-field span {
+  font-weight: 800;
+  color: var(--tea-deep);
+  font-size: 0.98rem;
+}
+
+.site-modal-field input,
+.site-modal-field textarea {
+  width: 100%;
+  border: 2px solid rgba(99, 58, 17, 0.15);
+  border-radius: 0.9rem;
+  padding: 0.75rem 0.9rem;
+  background: #fffaf3;
+  color: var(--ink);
+  outline: none;
+  font: inherit;
+  font-size: 16px;
+}
+
+.site-modal-field textarea {
+  min-height: 6.5rem;
+  resize: vertical;
+}
+
+.site-modal-field input:focus,
+.site-modal-field textarea:focus {
+  border-color: var(--tea-mid);
+  box-shadow: 0 0 0 3px rgba(99, 58, 17, 0.1);
+}
+
+.site-modal-success {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.85rem;
+  background: rgba(31, 122, 63, 0.1);
+  color: var(--ok);
+  font-weight: 800;
+  text-align: center;
+}
+
+.site-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin-top: 0.3rem;
+}
+
+.site-modal-actions .btn {
+  width: 100%;
+  min-height: 2.85rem;
 }
 
 /* Marketing pages */

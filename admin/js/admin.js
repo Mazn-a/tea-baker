@@ -4,6 +4,8 @@ const state = {
   status: "all",
   orders: [],
   visits: [],
+  issues: [],
+  issueStatus: "open",
   selectedOrderId: null,
   pendingOpenId: null,
   charts: {},
@@ -890,6 +892,66 @@ function updateVisitorsChoiceHint(todayCount) {
   el.textContent = today > 0 ? `${today} زيارة اليوم — اضغط للتفاصيل` : "كم شخص دخل الموقع";
 }
 
+function issueStatusLabel(s) {
+  return s === "resolved" ? "تم الحل" : "مفتوحة";
+}
+
+function filteredIssues() {
+  const list = state.issues || [];
+  if (state.issueStatus === "all") return list;
+  return list.filter((r) => (r.status || "open") === state.issueStatus);
+}
+
+function renderIssues() {
+  const box = $("#issuesList");
+  if (!box) return;
+  const list = filteredIssues();
+
+  if (!list.length) {
+    box.innerHTML = `<p class="empty-hint">لا توجد بلاغات في هذا التبويب.</p>`;
+    return;
+  }
+
+  box.innerHTML = list
+    .map((r) => {
+      const stepText = r.step ? STEP_LABELS[r.step] || r.step : "";
+      const pageText = [stepText, r.page].filter(Boolean).join(" — ") || "—";
+      const contactBtn = r.contact
+        ? `<button type="button" class="btn btn-ghost btn-sm" data-issue-wa="${escapeAttr(r.id)}">واتساب العميل</button>`
+        : "";
+      const toggleLabel = r.status === "resolved" ? "إعادة فتح" : "تحديد كمحلولة";
+      return `
+      <article class="order-row is-${escapeAttr(r.status || "open")}" data-issue-id="${escapeAttr(r.id)}">
+        <div class="order-row-main">
+          <div class="order-row-title">
+            <strong>${escapeHtml(r.message)}</strong>
+            <span class="status-pill ${escapeAttr(r.status || "open")}">${issueStatusLabel(r.status)}</span>
+          </div>
+          <p class="issue-meta">${escapeHtml(pageText)} · ${escapeHtml(formatDateTime(r.created_at))}</p>
+          ${r.contact ? `<p class="issue-meta">جوال: ${escapeHtml(r.contact)}</p>` : ""}
+        </div>
+        <div class="order-row-side">
+          ${contactBtn}
+          <button type="button" class="btn btn-primary btn-sm" data-issue-toggle="${escapeAttr(r.id)}">${toggleLabel}</button>
+        </div>
+      </article>`;
+    })
+    .join("");
+}
+
+function updateIssuesChoiceHint() {
+  const el = $("#issuesChoiceHint");
+  const open = (state.issues || []).filter((r) => (r.status || "open") === "open").length;
+  if (el) {
+    el.textContent = open > 0 ? `${open} بلاغ يحتاج مراجعة` : "بلاغات العملاء عن أخطاء بالموقع";
+  }
+  const badge = $("#issuesBadge");
+  if (badge) {
+    badge.hidden = open === 0;
+    badge.textContent = String(open);
+  }
+}
+
 function updateOrdersChoiceHint() {
   const el = $("#ordersChoiceHint");
   const pending = activeOrders().filter((o) => o.status === "pending").length;
@@ -956,6 +1018,9 @@ function showPage(page) {
   }
   if (state.page === "visitors") {
     requestAnimationFrame(() => renderVisitors());
+  }
+  if (state.page === "reports") {
+    requestAnimationFrame(() => renderIssues());
   }
   if (state.page === "orders") {
     renderOrders();
@@ -1208,19 +1273,23 @@ async function loadData() {
       `<p class="empty-hint">تعذر تحميل مخزن البيانات. حدّث الصفحة.</p>`;
     return;
   }
-  const [orders, visits] = await Promise.all([
+  const [orders, visits, issues] = await Promise.all([
     window.BakrStore.listOrders(),
     window.BakrStore.listVisits(),
+    window.BakrStore.listIssueReports?.() ?? Promise.resolve([]),
   ]);
   state.orders = (orders || []).filter(
     (o) => !window.BakrStore.isDeletedOrder?.(o) && o.status !== "deleted"
   );
   state.visits = visits || [];
+  state.issues = issues || [];
   renderStats();
   renderOrders();
   updateOrdersChoiceHint();
   updateVisitorsChoiceHint();
+  updateIssuesChoiceHint();
   if (state.page === "visitors") renderVisitors();
+  if (state.page === "reports") renderIssues();
   if (state.selectedOrderId) {
     const still = state.orders.find((o) => String(o.id) === String(state.selectedOrderId));
     if (still) renderOrderDetail(still);
@@ -1425,6 +1494,39 @@ async function setup() {
     });
   });
 
+  $$("#issueStatusTabs .filter-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      $$("#issueStatusTabs .filter-tab").forEach((b) => b.classList.remove("is-on"));
+      btn.classList.add("is-on");
+      state.issueStatus = btn.dataset.issueStatus;
+      renderIssues();
+    });
+  });
+
+  $("#issuesList")?.addEventListener("click", async (e) => {
+    const waBtn = e.target.closest("[data-issue-wa]");
+    const toggleBtn = e.target.closest("[data-issue-toggle]");
+    if (waBtn) {
+      const id = waBtn.dataset.issueWa;
+      const report = state.issues.find((r) => String(r.id) === String(id));
+      if (report?.contact) {
+        window.open(`https://wa.me/${phoneToWa(report.contact)}`, "_blank", "noopener");
+      }
+      return;
+    }
+    if (toggleBtn) {
+      const id = toggleBtn.dataset.issueToggle;
+      const report = state.issues.find((r) => String(r.id) === String(id));
+      if (!report) return;
+      toggleBtn.disabled = true;
+      const nextStatus = report.status === "resolved" ? "open" : "resolved";
+      await window.BakrStore?.updateIssueStatus?.(id, nextStatus);
+      report.status = nextStatus;
+      renderIssues();
+      updateIssuesChoiceHint();
+    }
+  });
+
   document.addEventListener("click", (e) => {
     // أزرار التنقل فقط — لا تلتقط أقسام الصفحة ذات data-page
     const pageBtn = e.target.closest("button[data-page], a[data-page]");
@@ -1582,6 +1684,7 @@ async function setup() {
   else if (hash === "#orders") state.page = "orders";
   else if (hash === "#visitors") state.page = "visitors";
   else if (hash === "#stats") state.page = "stats";
+  else if (hash === "#reports") state.page = "reports";
 
   if (await isAuthed()) {
     showApp();
