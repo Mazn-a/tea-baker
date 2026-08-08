@@ -393,6 +393,7 @@ function startBooking(preselectPackage) {
   state.stepIndex = 0;
   // #book يخلي زر الرجوع في الجوال يخرج من الحجز بدل ما يخرج من الموقع
   if (currentHash() !== "book") location.hash = "book";
+  window.BakrStore?.trackStep?.(currentStep());
   showView("booking");
   renderWizard();
 }
@@ -404,6 +405,8 @@ function goHomeMarketing() {
 function setStep(index) {
   state.stepIndex = Math.max(0, Math.min(FLOW.length - 1, index));
   saveDraft();
+  // لمعرفة أين يتوقف الزوار — يُسجَّل مرة واحدة لكل خطوة في الجلسة
+  window.BakrStore?.trackStep?.(currentStep());
   renderWizard();
 }
 
