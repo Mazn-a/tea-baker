@@ -125,19 +125,23 @@
     const mapLink = String(order.location_link || "").trim();
 
     return `
-      <div class="head">
-        <div class="brand">
-          <img src="${logoSrc()}" alt="شاي بكر" />
-          <div>
-            <h1>شاي بكر</h1>
-            <p>للضيافة والمناسبات · مكة · جدة · الطائف</p>
-          </div>
-        </div>
-        <div class="meta-side">
-          <div>رقم المرجع: ${shortId}</div>
-          <div>${formatDateTime(order.created_at)}</div>
-        </div>
-      </div>
+      <table class="head">
+        <tr>
+          <td class="brand-cell">
+            <div class="brand">
+              <img src="${logoSrc()}" alt="شاي بكر" />
+              <div>
+                <h1>شاي بكر</h1>
+                <p>للضيافة والمناسبات · مكة · جدة · الطائف</p>
+              </div>
+            </div>
+          </td>
+          <td class="meta-side">
+            <div>رقم المرجع: ${shortId}</div>
+            <div>${formatDateTime(order.created_at)}</div>
+          </td>
+        </tr>
+      </table>
 
       <div class="banner" style="background:${meta.toneBg};border-color:${meta.tone}33">
         <div class="mark" style="background:${meta.tone}">${meta.icon}</div>
@@ -176,10 +180,12 @@
         <tbody>${addonRows}</tbody>
       </table>
 
-      <div class="total-box">
-        <span>الإجمالي النهائي</span>
-        <strong dir="ltr">${money(order.grand_total)}</strong>
-      </div>
+      <table class="total-box">
+        <tr>
+          <td class="total-label">الإجمالي النهائي</td>
+          <td class="total-value">${money(order.grand_total)}</td>
+        </tr>
+      </table>
 
       ${
         notes
@@ -227,9 +233,11 @@
       box-shadow: 0 18px 40px rgba(42, 24, 16, 0.14); border-radius: 1rem;
     }
     .head {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 20px; padding-bottom: 22px; border-bottom: 3px solid #633a11;
+      width: 100%; border-collapse: collapse;
+      padding-bottom: 22px; border-bottom: 3px solid #633a11;
     }
+    .head td { vertical-align: middle; padding: 0; }
+    .brand-cell { width: 70%; }
     .brand { display: flex; align-items: center; gap: 16px; min-width: 0; }
     .brand img {
       width: 110px; height: 110px; object-fit: contain;
@@ -241,8 +249,8 @@
     }
     .brand p { margin: 4px 0 0; color: #6b5344; font-size: 14px; }
     .meta-side {
-      text-align: left; direction: ltr; font-size: 13px;
-      color: #6b5344; line-height: 1.7; flex-shrink: 0;
+      width: 30%; font-size: 13px;
+      color: #6b5344; line-height: 1.7;
     }
     .banner {
       margin: 24px 0 20px; padding: 16px 20px; border-radius: 16px;
@@ -283,18 +291,19 @@
     }
     table.addons td { padding: 10px 12px; border-bottom: 1px solid #ead4bd; }
     table.addons .num {
-      text-align: left; direction: ltr;
       font-variant-numeric: tabular-nums; white-space: nowrap;
     }
     .muted { color: #8a7363; font-weight: 500; }
     .total-box {
-      margin-top: 18px; padding: 16px 18px; border-radius: 14px;
+      width: 100%; margin-top: 18px; border-radius: 14px;
       background: linear-gradient(135deg, #633a11, #4a3222);
-      color: #fffdf9; display: flex; justify-content: space-between;
-      align-items: center; gap: 12px;
+      color: #fffdf9; border-collapse: collapse;
     }
-    .total-box span { font-size: 15px; opacity: 0.92; }
-    .total-box strong { font-size: 26px; }
+    .total-box td {
+      padding: 16px 18px; vertical-align: middle;
+    }
+    .total-label { font-size: 15px; opacity: 0.92; width: 60%; }
+    .total-value { font-size: 26px; font-weight: 800; width: 40%; }
     .notes {
       margin-top: 16px; padding: 14px 16px; border-radius: 12px;
       background: #f3ebe0; border: 1px dashed #c4a35a;
