@@ -867,11 +867,6 @@ function escapeAttr(value) {
   return escapeHtml(value).replace(/'/g, "&#39;");
 }
 
-function extractLocationArea(notes) {
-  const m = String(notes || "").match(/(?:^|\|\s*)الموقع:\s*([^|]+)/);
-  return m ? m[1].trim() : "";
-}
-
 async function loadData() {
   if (!window.BakrStore) {
     $("#ordersList").innerHTML =
