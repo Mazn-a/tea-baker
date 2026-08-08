@@ -21,46 +21,20 @@
         <img class="login-logo" src="../assets/logo-brand.png?v=11" alt="شاي بكر" />
         <h1>لوحة إدارة شاي بكر</h1>
         <p>أدخل رمز الدخول للمتابعة</p>
-
-        <div id="pinLoginPanel">
-          <label class="field">
-            <span>رمز الدخول</span>
-            <input
-              id="adminPin"
-              type="password"
-              inputmode="numeric"
-              autocomplete="current-password"
-              placeholder="••••"
-              dir="ltr"
-              maxlength="12"
-            />
-          </label>
-          <p class="login-error" id="loginError" hidden>رمز غير صحيح</p>
-          <button type="button" class="btn btn-primary" id="loginBtn">دخول</button>
-          <button type="button" class="login-forgot" id="forgotPinBtn">نسيت رمز الدخول؟</button>
-        </div>
-
-        <div id="recoverPanel" class="recover-panel" hidden>
-          <p class="recover-lead">أدخل رقم الجوال المسجّل للتحقق واستعادة رمز الدخول</p>
-          <label class="field">
-            <span>رقم الجوال</span>
-            <input
-              id="recoverPhone"
-              type="tel"
-              inputmode="numeric"
-              autocomplete="tel"
-              placeholder="05xxxxxxxx"
-              dir="ltr"
-              maxlength="14"
-            />
-          </label>
-          <p class="login-error" id="recoverError" hidden>الرقم غير مطابق</p>
-          <p class="login-ok" id="recoverOk" hidden></p>
-          <div class="recover-actions">
-            <button type="button" class="btn btn-primary" id="recoverBtn">تحقق</button>
-            <button type="button" class="btn btn-ghost" id="backToPinBtn">رجوع</button>
-          </div>
-        </div>
+        <label class="field">
+          <span>رمز الدخول</span>
+          <input
+            id="adminPin"
+            type="password"
+            inputmode="numeric"
+            autocomplete="current-password"
+            placeholder="••••"
+            dir="ltr"
+            maxlength="12"
+          />
+        </label>
+        <p class="login-error" id="loginError" hidden>رمز غير صحيح</p>
+        <button type="button" class="btn btn-primary" id="loginBtn">دخول</button>
       </div>
     </div>
 
