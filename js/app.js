@@ -838,10 +838,9 @@ function renderDayCell(iso, dayLabel) {
   else if (booked) cls += " booked";
   else cls += " available";
   if (selected) cls += " selected";
-  let mark = "";
-  if (booked) mark = "<small>محجوز</small>";
-  else if (beyond) mark = "<small>خارج المدى</small>";
-  return `<button class="${cls}" type="button" data-date="${iso}" ${
+  const mark = booked ? "<small>محجوز</small>" : "";
+  const title = beyond ? ' title="خارج مدى الـ ١٢ شهراً"' : booked ? ' title="محجوز"' : "";
+  return `<button class="${cls}" type="button" data-date="${iso}"${title} ${
     locked ? "disabled" : ""
   }>${dayLabel}${mark}</button>`;
 }
