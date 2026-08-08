@@ -639,12 +639,35 @@ function renderStats() {
 
 function updateOrdersChoiceHint() {
   const el = $("#ordersChoiceHint");
-  if (!el) return;
   const pending = state.orders.filter((o) => o.status === "pending").length;
+  if (el) {
+    if (pending > 0) {
+      el.textContent = `${pending} طلب بانتظار القرار — اضغط للعرض`;
+    } else {
+      el.textContent = "عرض الطلبات واتخاذ القرار";
+    }
+  }
+  updatePendingBadge(pending);
+}
+
+function updatePendingBadge(count) {
+  const pending =
+    typeof count === "number"
+      ? count
+      : state.orders.filter((o) => o.status === "pending").length;
+  const badge = $("#pendingBadge");
+  const tab = $("#pendingFilterTab") || document.querySelector('#statusTabs [data-status="pending"]');
+  if (!badge) return;
   if (pending > 0) {
-    el.textContent = `${pending} طلب بانتظار القرار — اضغط للعرض`;
+    badge.hidden = false;
+    badge.textContent = String(pending);
+    badge.setAttribute("aria-label", `${pending} طلب جديد`);
+    tab?.classList.add("has-new");
   } else {
-    el.textContent = "عرض الطلبات واتخاذ القرار";
+    badge.hidden = true;
+    badge.textContent = "";
+    badge.removeAttribute("aria-label");
+    tab?.classList.remove("has-new");
   }
 }
 

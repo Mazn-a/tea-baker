@@ -530,12 +530,44 @@ code {
   color: var(--tea-deep);
   cursor: pointer;
   font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .range-tab.is-on,
 .filter-tab.is-on {
   background: var(--tea);
   color: #fff8ef;
+}
+
+.filter-tab.has-new {
+  position: relative;
+}
+
+.filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  padding: 0 0.28rem;
+  border-radius: 999px;
+  background: #d92d20;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 0 0 2px rgba(255, 248, 239, 0.95);
+}
+
+.filter-tab.is-on .filter-badge {
+  background: #ff5a4f;
+  box-shadow: 0 0 0 2px rgba(99, 58, 17, 0.25);
+}
+
+.filter-badge[hidden] {
+  display: none !important;
 }
 
 .stat-grid {

@@ -150,7 +150,10 @@
                 <button type="button" class="btn btn-primary" id="newBookingBtn">+ حجز جديد</button>
                 <div class="filter-tabs" id="statusTabs">
                   <button type="button" class="filter-tab is-on" data-status="all">الكل</button>
-                  <button type="button" class="filter-tab" data-status="pending">جديد</button>
+                  <button type="button" class="filter-tab" data-status="pending" id="pendingFilterTab">
+                    جديد
+                    <span class="filter-badge" id="pendingBadge" hidden aria-label="طلبات جديدة"></span>
+                  </button>
                   <button type="button" class="filter-tab" data-status="accepted">مقبول</button>
                   <button type="button" class="filter-tab" data-status="rejected">مرفوض</button>
                 </div>
