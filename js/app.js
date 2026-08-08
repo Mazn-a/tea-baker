@@ -17,6 +17,7 @@ const state = {
   name: "",
   phone: "",
   hallName: "",
+  locationArea: "",
   locationLink: "",
   notes: "",
   calendar: new Date(),
@@ -169,6 +170,7 @@ function saveDraft() {
     name: state.name,
     phone: state.phone,
     hallName: state.hallName,
+    locationArea: state.locationArea,
     locationLink: state.locationLink,
     notes: state.notes,
     discountCode: state.discountCode,
@@ -193,6 +195,7 @@ function loadDraft() {
     }
     // توافق مع المسودات القديمة
     if (!state.hallName && d.location) state.hallName = d.location;
+    if (!state.locationArea && d.locationArea) state.locationArea = d.locationArea;
     state.phone = sanitizePhoneInput(state.phone || "");
     if (d.discountCode) tryApplyDiscount(d.discountCode);
     if (state.date) {
@@ -278,7 +281,7 @@ function canProceed() {
     case "phone":
       return /^05\d{8}$/.test(state.phone.replace(/\s+/g, ""));
     case "location":
-      return state.hallName.trim().length >= 2 && isValidLocationLink(state.locationLink);
+      return state.hallName.trim().length >= 2 && state.locationArea.trim().length >= 2;
     case "notes":
       return true;
     case "review":
@@ -374,13 +377,19 @@ function validateCurrent() {
       if (err) err.textContent = "اكتب اسم القاعة.";
       return false;
     }
-    if (!isValidLocationLink(state.locationLink)) {
-      if (err)
-        err.textContent =
-          "الرابط غير صالح. الصق رابط خرائط قوقل فقط (maps.google أو maps.app.goo.gl).";
+    if (state.locationArea.trim().length < 2) {
+      if (err) err.textContent = "اكتب الحي أو وصف موقع القاعة.";
       return false;
     }
-    state.locationLink = sanitizeLocationLink(state.locationLink);
+    if (state.locationLink.trim() && !isValidLocationLink(state.locationLink)) {
+      if (err)
+        err.textContent =
+          "رابط الخريطة غير صالح. الصق رابط قوقل ماب أو اتركه فارغاً.";
+      return false;
+    }
+    if (state.locationLink.trim()) {
+      state.locationLink = sanitizeLocationLink(state.locationLink);
+    }
   }
   if (step === "date" && (!state.date || isBooked(state.date))) {
     return false;
@@ -445,8 +454,10 @@ async function confirmBooking() {
         customerName: state.name.trim(),
         customerPhone: state.phone.replace(/\s+/g, ""),
         hallName: state.hallName.trim(),
+        locationArea: state.locationArea.trim(),
         locationLink: state.locationLink.trim(),
         notes: [
+          state.locationArea.trim() ? `الموقع: ${state.locationArea.trim()}` : "",
           state.notes.trim(),
           state.discountApplied
             ? `كود خصم مطبّق: ${state.discountCode} (سعر البكج ${packageTotal()} بدل ${packageListPrice()})`
@@ -485,7 +496,8 @@ function buildWhatsAppMessage() {
     ...addonLines,
     `• التاريخ: ${formatDateLabel(state.date)}`,
     `• اسم القاعة: ${state.hallName}`,
-    `• رابط موقع القاعة: ${state.locationLink}`,
+    `• موقع القاعة: ${state.locationArea}`,
+    state.locationLink.trim() ? `• رابط الخريطة: ${state.locationLink}` : null,
     `• الإجمالي: ${money(grandTotal())}`,
     `• الاسم: ${state.name}`,
     `• الجوال: ${state.phone}`,
@@ -853,7 +865,8 @@ function renderReview() {
     ],
     ["تاريخ المناسبة", formatDateLabel(state.date)],
     ["اسم القاعة", state.hallName || "—"],
-    ["رابط موقع القاعة", state.locationLink || "—"],
+    ["موقع القاعة", state.locationArea || "—"],
+    ["رابط الخريطة", state.locationLink || "—"],
     ["الاسم", state.name || "—"],
     ["الجوال", state.phone || "—"],
   ];
@@ -1004,7 +1017,7 @@ function renderWizard() {
     date: "اختر تاريخ المناسبة",
     name: "ما اسمك الكامل؟",
     phone: "ما رقم جوالك؟",
-    location: "اسم القاعة ورابط موقعها",
+    location: "اسم القاعة وموقعها",
     notes: "هل لديك ملاحظات؟",
     review: "طلبك الكامل — راجع قبل التأكيد",
     success: "",
@@ -1017,7 +1030,7 @@ function renderWizard() {
     date: "ميلادي أو هجري، واكتب التاريخ أو اختره من التقويم.",
     name: "خطوة واحدة فقط الآن.",
     phone: "للتواصل وإرسال رسالة القبول أو الرفض على واتساب.",
-    location: "اكتب اسم القاعة، ثم الصق رابط موقعها من خرائط قوقل.",
+    location: "اكتب اسم القاعة والحي من هنا مباشرة — رابط الخريطة اختياري.",
     notes: "اختياري — يمكنك تركها فارغة والضغط على التالي.",
     review: "راجع كل التفاصيل والسعر، ثم أكّد الطلب من الموقع.",
     success: "",
@@ -1196,24 +1209,32 @@ function renderWizard() {
           )}" />
         </div>
         <div class="field-card">
-          <label for="inputLocationLink">رابط موقع القاعة</label>
+          <label for="inputLocationArea">الحي / وصف الموقع</label>
+          <input
+            id="inputLocationArea"
+            type="text"
+            placeholder="مثال: حي الشوقية — قرب جامع…"
+            value="${esc(state.locationArea)}"
+          />
+          <p class="field-hint">اكتب الموقع من هنا مباشرة بدون ما تطلع من الصفحة.</p>
+        </div>
+        <div class="field-card">
+          <label for="inputLocationLink">رابط خرائط قوقل <span class="field-optional">(اختياري)</span></label>
           <input
             id="inputLocationLink"
             type="url"
             inputmode="url"
             dir="ltr"
-            placeholder="الصق رابط قوقل ماب هنا"
+            placeholder="اختياري — الصق الرابط إن توفر"
             value="${esc(state.locationLink)}"
           />
-          <p class="field-hint">
-            افتح خرائط قوقل → مشاركة → انسخ الرابط والصقه هنا.
-            يُقبل فقط رابط قوقل ماب الرسمي لتجنب الروابط الضارة.
-          </p>
+          <p class="field-hint">مو لازم — فقط إن عندك رابط جاهز.</p>
           <div class="field-error" id="fieldError"></div>
         </div>
       </div>`;
     const sync = () => {
       state.hallName = $("#inputHallName").value;
+      state.locationArea = $("#inputLocationArea").value;
       state.locationLink = $("#inputLocationLink").value.trim();
       nextBtn.disabled = !canProceed();
       const err = $("#fieldError");
@@ -1225,9 +1246,10 @@ function renderWizard() {
       }
       err.textContent = isValidLocationLink(link)
         ? ""
-        : "هذا ليس رابط خرائط قوقل صالحاً.";
+        : "هذا ليس رابط خرائط قوقل صالحاً — عدّله أو امسحه.";
     };
     $("#inputHallName").addEventListener("input", sync);
+    $("#inputLocationArea").addEventListener("input", sync);
     $("#inputLocationLink").addEventListener("input", sync);
   } else if (step === "notes") {
     body.innerHTML = renderField(
@@ -1277,6 +1299,7 @@ function resetBookingSoft() {
   state.name = "";
   state.phone = "";
   state.hallName = "";
+  state.locationArea = "";
   state.locationLink = "";
   state.notes = "";
   state.dateFeedback = "idle";

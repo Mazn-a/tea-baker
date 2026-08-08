@@ -80,6 +80,11 @@
       .replace(/"/g, "&quot;");
   }
 
+  function extractAreaFromNotes(notes) {
+    const m = String(notes || "").match(/(?:^|\|\s*)الموقع:\s*([^|]+)/);
+    return m ? m[1].trim() : "";
+  }
+
   function fileName(order) {
     const status =
       order.status === "accepted"
@@ -152,7 +157,11 @@
         ${row("تاريخ المناسبة", formatDate(order.event_date))}
         ${row("القاعة", escapeHtml(order.hall_name || "—"))}
         ${row(
-          "موقع القاعة",
+          "الموقع / الحي",
+          escapeHtml(order.location_area || extractAreaFromNotes(order.notes) || "—")
+        )}
+        ${row(
+          "رابط الخريطة",
           order.location_link
             ? `<span dir="ltr" style="font-size:12px">${escapeHtml(order.location_link)}</span>`
             : "—"
@@ -347,25 +356,56 @@
       throw new Error("مكتبة PDF غير محمّلة");
     }
 
+    const style = document.createElement("style");
+    style.setAttribute("data-bakr-pdf", "1");
+    style.textContent = `${RECEIPT_CSS}
+      .bakr-receipt-pdf-root {
+        width: 794px !important;
+        margin: 0 !important;
+        padding: 36px 40px 44px !important;
+        background: #fffdf9 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        direction: rtl;
+        text-align: right;
+        color: #1a120c;
+        font-family: "Tajawal", "Segoe UI", Tahoma, sans-serif;
+      }
+    `;
+
+    const host = document.createElement("div");
+    host.setAttribute("data-bakr-pdf-host", "1");
+    host.style.cssText =
+      "position:fixed;left:0;top:0;width:794px;opacity:0;pointer-events:none;z-index:-1;";
+
     const el = document.createElement("div");
-    el.className = "bakr-receipt";
+    el.className = "bakr-receipt bakr-receipt-pdf-root";
     el.setAttribute("dir", "rtl");
-    el.innerHTML = `<style>${RECEIPT_CSS}</style>${buildReceiptInner(order)}`;
-    el.style.cssText =
-      "position:fixed;left:-10000px;top:0;width:794px;background:#fffdf9;padding:36px 40px 44px;";
-    document.body.appendChild(el);
+    el.innerHTML = buildReceiptInner(order);
+
+    document.head.appendChild(style);
+    host.appendChild(el);
+    document.body.appendChild(host);
 
     const img = el.querySelector("img");
-    if (img && !img.complete) {
+    if (img) {
       await new Promise((resolve) => {
+        if (img.complete && img.naturalWidth) {
+          resolve();
+          return;
+        }
         img.onload = resolve;
         img.onerror = resolve;
-        setTimeout(resolve, 1500);
+        setTimeout(resolve, 2500);
       });
     }
+    try {
+      await document.fonts?.ready;
+    } catch (_) {}
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
     try {
-      const worker = html2pdf()
+      const blob = await html2pdf()
         .set({
           margin: [8, 8, 8, 8],
           filename: fileName(order),
@@ -373,19 +413,26 @@
           html2canvas: {
             scale: 2,
             useCORS: true,
-            allowTaint: true,
             backgroundColor: "#fffdf9",
             logging: false,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: 794,
           },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+          pagebreak: { mode: ["avoid-all", "css", "legacy"] },
         })
-        .from(el);
+        .from(el)
+        .outputPdf("blob");
 
-      const blob = await worker.outputPdf("blob");
-      const name = fileName(order);
-      return new File([blob], name, { type: "application/pdf" });
+      if (!blob || blob.size < 1500) {
+        throw new Error("ملف PDF فاضي — حدّث الصفحة وحاول مرة ثانية");
+      }
+
+      return new File([blob], fileName(order), { type: "application/pdf" });
     } finally {
-      el.remove();
+      host.remove();
+      style.remove();
     }
   }
 

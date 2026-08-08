@@ -1064,6 +1064,12 @@ select {
   line-height: 1.5;
 }
 
+.field-optional {
+  font-weight: 600;
+  color: var(--tea-mid);
+  font-size: 0.9em;
+}
+
 .field-error {
   color: var(--err);
   font-weight: 700;

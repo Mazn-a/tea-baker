@@ -108,7 +108,8 @@
       customer_name: payload.customerName,
       customer_phone: payload.customerPhone,
       hall_name: payload.hallName,
-      location_link: payload.locationLink,
+      location_link: payload.locationLink || "",
+      location_area: payload.locationArea || "",
       notes: payload.notes || "",
       hour_of_day: now.getHours(),
     };
@@ -116,7 +117,12 @@
     try {
       const sb = await getClient();
       if (sb) {
-        const { data, error } = await sb.from("orders").insert(row).select().single();
+        // إن ما كان عمود location_area موجود في السحابة، نعيد المحاولة بدونه
+        let { data, error } = await sb.from("orders").insert(row).select().single();
+        if (error && /location_area/i.test(String(error.message || ""))) {
+          const { location_area, ...fallback } = row;
+          ({ data, error } = await sb.from("orders").insert(fallback).select().single());
+        }
         if (error) throw error;
         return data;
       }

@@ -188,7 +188,7 @@ function showShareModal({ order, file, text }) {
   modal.className = "share-modal";
   modal.innerHTML = `
     <div class="share-card" role="dialog" aria-modal="true">
-      <img src="../assets/logo.png?v=8" alt="" class="share-logo" />
+      <img src="../assets/logo.png?v=9" alt="" class="share-logo" />
       <h3>إرسال القرار مع ملف PDF</h3>
       <p>الملف جاهز بشعار شاي بكر. اختر طريقة الإرسال:</p>
       <ol class="share-steps">
@@ -782,16 +782,20 @@ function renderOrderDetail(o) {
       ? `<ul class="addon-list">${addons
           .map(
             (a) =>
-              `<li><span>${a.name}</span><span class="qty">× ${a.qty} · ${money(a.price * a.qty)}</span></li>`
+              `<li><span>${escapeHtml(a.name)}</span><span class="qty">× ${a.qty} · ${money(a.price * a.qty)}</span></li>`
           )
           .join("")}</ul>`
       : `<p class="empty-hint">بدون إضافات</p>`;
 
+  const locationArea = o.location_area || extractLocationArea(o.notes) || "";
+  const mapLink = o.location_link || "";
+  const isMap = /^https?:\/\//i.test(mapLink);
+
   root.innerHTML = `
     <div class="order-top">
       <div>
-        <h3>${o.customer_name}</h3>
-        <p>${formatDateTime(o.created_at)} · <span class="order-phone">${o.customer_phone}</span></p>
+        <h3>${escapeHtml(o.customer_name)}</h3>
+        <p>${formatDateTime(o.created_at)} · <span class="order-phone">${escapeHtml(o.customer_phone)}</span></p>
       </div>
       <span class="status-pill ${o.status}">${statusLabel(o.status)}</span>
     </div>
@@ -799,29 +803,34 @@ function renderOrderDetail(o) {
     <section class="order-section">
       <h4 class="order-section-title">المناسبة والبكج</h4>
       <div class="order-kv">
-        <div class="item"><span class="lbl">المدينة</span><span class="val">${o.city_label}</span></div>
-        <div class="item"><span class="lbl">المناسبة</span><span class="val">${o.event_label}</span></div>
-        <div class="item"><span class="lbl">البكج</span><span class="val">${o.package_name}</span></div>
+        <div class="item"><span class="lbl">المدينة</span><span class="val">${escapeHtml(o.city_label)}</span></div>
+        <div class="item"><span class="lbl">المناسبة</span><span class="val">${escapeHtml(o.event_label)}</span></div>
+        <div class="item"><span class="lbl">البكج</span><span class="val">${escapeHtml(o.package_name)}</span></div>
         <div class="item"><span class="lbl">سعر البكج</span><span class="val">${money(o.package_price)}</span></div>
+        <div class="item"><span class="lbl">مجموع الإضافات</span><span class="val">${money(o.addons_total)}</span></div>
         <div class="item"><span class="lbl">تاريخ المناسبة</span><span class="val">${formatDate(o.event_date)}</span></div>
-        <div class="item total"><span class="lbl">الإجمالي</span><span class="val">${money(o.grand_total)}</span></div>
+        <div class="item total span-2"><span class="lbl">الإجمالي</span><span class="val">${money(o.grand_total)}</span></div>
       </div>
     </section>
 
     <section class="order-section">
       <h4 class="order-section-title">القاعة والموقع</h4>
       <div class="order-kv">
-        <div class="item"><span class="lbl">اسم القاعة</span><span class="val">${o.hall_name || "—"}</span></div>
+        <div class="item"><span class="lbl">اسم القاعة</span><span class="val">${escapeHtml(o.hall_name || "—")}</span></div>
+        <div class="item"><span class="lbl">الحي / الموقع</span><span class="val">${escapeHtml(locationArea || "—")}</span></div>
         <div class="item span-2"><span class="lbl">رابط الخريطة</span><span class="val">${
-          o.location_link
-            ? `<a href="${o.location_link}" target="_blank" rel="noopener">فتح في خرائط قوقل</a>`
+          mapLink
+            ? isMap
+              ? `<a href="${escapeAttr(mapLink)}" target="_blank" rel="noopener">فتح في خرائط قوقل</a>
+                 <div class="map-url" dir="ltr">${escapeHtml(mapLink)}</div>`
+              : escapeHtml(mapLink)
             : "—"
         }</span></div>
       </div>
     </section>
 
     <section class="order-section">
-      <h4 class="order-section-title">الإضافات</h4>
+      <h4 class="order-section-title">الإضافات (${addons.length})</h4>
       ${addonList}
     </section>
 
@@ -829,7 +838,7 @@ function renderOrderDetail(o) {
       o.notes
         ? `<section class="order-section">
             <h4 class="order-section-title">ملاحظات العميل</h4>
-            <p class="order-notes">${o.notes}</p>
+            <p class="order-notes">${escapeHtml(o.notes)}</p>
           </section>`
         : ""
     }
@@ -841,6 +850,23 @@ function renderOrderDetail(o) {
       <button type="button" class="btn btn-wa" data-action="whatsapp">واتساب نص فقط</button>
     </div>
   `;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value).replace(/'/g, "&#39;");
+}
+
+function extractLocationArea(notes) {
+  const m = String(notes || "").match(/(?:^|\|\s*)الموقع:\s*([^|]+)/);
+  return m ? m[1].trim() : "";
 }
 
 async function loadData() {
