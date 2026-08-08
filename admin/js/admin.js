@@ -935,7 +935,6 @@ function renderOrderDetail(o) {
       <button type="button" class="btn btn-wa" data-action="whatsapp">واتساب نص فقط</button>
     </div>
     <div class="order-delete-box">
-      <p>إذا كان الطلب تجربة أو تبي تحرير التاريخ</p>
       <button type="button" class="btn btn-delete" data-action="delete">حذف الطلب وتحرير التاريخ</button>
     </div>
   `;
@@ -1041,7 +1040,7 @@ async function deleteOrderById(order, btn) {
   const name = order.customer_name || "هذا الطلب";
   const dateLabel = formatDate(order.event_date);
   const ok = window.confirm(
-    `حذف طلب «${name}» بتاريخ ${dateLabel}؟\n\nسيختفي من القائمة ويتحرر التاريخ إن لم يكن عليه طلب آخر.`
+    `هل أنت متأكد؟\n\nسيتم حذف طلب «${name}» بتاريخ ${dateLabel} نهائياً من الموقع.\nلا يمكن التراجع عن هذا الإجراء.`
   );
   if (!ok) return false;
 
@@ -1063,7 +1062,7 @@ async function deleteOrderById(order, btn) {
       releaseLocalBookedDate(eventDate);
     }
     await loadData();
-    showToast("تم حذف الطلب — التاريخ صار متاحاً");
+    showToast("تم حذف الطلب نهائياً من الموقع");
     return true;
   } catch (err) {
     console.warn(err);

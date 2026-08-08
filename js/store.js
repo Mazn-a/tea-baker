@@ -195,39 +195,38 @@
   }
 
   /**
-   * حذف طلب (تجارب/تنظيف): نعلّمه deleted عبر التحديث
-   * ليعمل مع صلاحيات السحابة الحالية، ويختفي من القائمة ويتحرر التاريخ.
+   * حذف طلب نهائياً: نحاول DELETE من السحابة،
+   * وإن منعته الصلاحيات نعلّمه deleted حتى يختفي من الموقع ويتحرر التاريخ.
    */
   async function deleteOrder(id) {
     let cloudOk = false;
     try {
       const sb = await getClient();
       if (sb) {
-        const { data, error } = await sb
-          .from("orders")
-          .update({ status: "deleted" })
-          .eq("id", id)
-          .select()
-          .single();
-        if (error) throw error;
-        cloudOk = Boolean(data);
+        const { error: delErr } = await sb.from("orders").delete().eq("id", id);
+        if (!delErr) {
+          cloudOk = true;
+        } else {
+          const { data, error } = await sb
+            .from("orders")
+            .update({ status: "deleted" })
+            .eq("id", id)
+            .select()
+            .single();
+          if (error) throw error;
+          cloudOk = Boolean(data);
+        }
       }
     } catch (err) {
       console.warn("deleteOrder cloud → local:", err);
     }
 
+    // محلياً: احذف السجل نهائياً من القائمة
     const all = readLocal(KEYS.orders, []);
-    const idx = all.findIndex((o) => String(o.id) === String(id));
-    if (idx >= 0) {
-      all[idx] = { ...all[idx], status: "deleted" };
-      writeLocal(KEYS.orders, all);
-    } else if (!cloudOk) {
-      // إن لم يوجد محلياً وما نجح السحاب، احذفه من القائمة المحلية فقط
-      writeLocal(
-        KEYS.orders,
-        all.filter((o) => String(o.id) !== String(id))
-      );
-    }
+    writeLocal(
+      KEYS.orders,
+      all.filter((o) => String(o.id) !== String(id))
+    );
     return { ok: true, cloud: cloudOk };
   }
 
