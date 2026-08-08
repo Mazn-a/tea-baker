@@ -11,7 +11,7 @@ window.BAKR_CONFIG = {
    *   "supabase" = بريد وكلمة مرور فقط (الوضع الآمن — بعد تنفيذ sql/patch-secure-admin.sql)
    *   أي قيمة أخرى = يسمح أيضاً بالدخول بالرمز المؤقت أدناه
    */
-  adminAuth: "pin",
+  adminAuth: "supabase",
   adminPin: "1234",
   waNumber: "966533508361",
 
