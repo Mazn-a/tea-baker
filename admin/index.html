@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <link rel="stylesheet" href="./css/admin.css?v=49" />
+    <link rel="stylesheet" href="./css/admin.css?v=50" />
   </head>
   <body>
     <div id="loginView" class="login-view">
@@ -84,27 +84,6 @@
         </label>
         <p class="login-error" id="loginError" hidden></p>
         <button type="button" class="btn btn-primary" id="loginBtn">دخول</button>
-
-        <button type="button" class="login-alt" id="showPinLogin" hidden>الدخول برمز مؤقت</button>
-        <div class="pin-block" id="pinBlock" hidden>
-          <label class="field">
-            <span>رمز الدخول المؤقت</span>
-            <input
-              id="adminPin"
-              type="password"
-              inputmode="numeric"
-              placeholder="********"
-              dir="ltr"
-              maxlength="8"
-              aria-label="رمز الدخول"
-            />
-          </label>
-          <button type="button" class="btn btn-ghost" id="pinLoginBtn">دخول بالرمز</button>
-          <p class="login-note">
-            مؤقت فقط — بيانات العملاء تبقى غير محمية حتى تنفّذ
-            <code>sql/patch-secure-admin.sql</code>
-          </p>
-        </div>
       </div>
     </div>
 
@@ -126,13 +105,6 @@
       </header>
 
       <main class="admin-main">
-        <div id="pinModeAlert" class="conn-alert is-warn is-hidden" hidden>
-          <span class="setup-status">
-            أنت داخل برمز مؤقت — بيانات العملاء غير محمية. نفّذ
-            <code>sql/patch-secure-admin.sql</code> وأنشئ حساب دخول.
-          </span>
-        </div>
-
         <div id="connAlert" class="conn-alert is-hidden" hidden>
           <span id="setupStatus" class="setup-status">جاري الفحص…</span>
           <button type="button" class="btn btn-ghost" id="pingBtn">إعادة المحاولة</button>
@@ -330,7 +302,7 @@
       </div>
     </div>
 
-    <script src="../js/config.js?v=10"></script>
+    <script src="../js/config.js?v=12"></script>
     <script src="../js/catalog.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./vendor/html2pdf.bundle.min.js"></script>
@@ -339,6 +311,6 @@
     <script src="./js/logo-data.js?v=11"></script>
     <script src="./js/order-pdf.js?v=12"></script>
     <script src="./js/wa-send.js?v=8"></script>
-    <script src="./js/admin.js?v=49"></script>
+    <script src="./js/admin.js?v=50"></script>
   </body>
 </html>

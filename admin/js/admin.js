@@ -1,5 +1,3 @@
-const AUTH_KEY = "bakr-admin-auth";
-
 const state = {
   range: "month", // month | year
   cursor: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -26,10 +24,6 @@ function normalizeDigits(value) {
     .replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d))
     .replace(/\s+/g, "")
     .trim();
-}
-
-function expectedPin() {
-  return normalizeDigits(cfg().adminPin || "1234") || "1234";
 }
 
 /** نفس أسلوب الموقع: نص عربي وأرقام إنجليزية وتقويم ميلادي مثبّت */
@@ -308,38 +302,11 @@ async function deliverDecision(order) {
 }
 
 /* =========================================================
- * الدخول
- * الأساس: حساب حقيقي في Supabase (بريد + كلمة مرور) والجلسة تبقى محفوظة
- * الاحتياط: رمز مؤقت — يبقى متاحاً حتى تُضبط الحماية، ثم يُخفى
+ * الدخول — حساب Supabase فقط (بريد + كلمة مرور)
  * ========================================================= */
 
-/** هل ما زال الدخول بالرمز مسموحاً؟ يُقفل بوضع adminAuth: "supabase" */
-function pinLoginAllowed() {
-  return String(cfg().adminAuth || "").toLowerCase() !== "supabase";
-}
-
-function pinAuthed() {
-  return sessionStorage.getItem(AUTH_KEY) === "1";
-}
-
-function setPinAuthed(on) {
-  if (on) sessionStorage.setItem(AUTH_KEY, "1");
-  else sessionStorage.removeItem(AUTH_KEY);
-}
-
 async function isAuthed() {
-  if (await window.BakrStore?.currentUser?.()) return true;
-  return pinLoginAllowed() && pinAuthed();
-}
-
-/** تنبيه واضح داخل اللوحة إن كان الدخول برمز مؤقت */
-async function updatePinModeAlert() {
-  const el = $("#pinModeAlert");
-  if (!el) return;
-  const realUser = await window.BakrStore?.currentUser?.();
-  const show = !realUser && pinAuthed() && Boolean(window.BakrStore?.hasCloud?.());
-  el.hidden = !show;
-  el.classList.toggle("is-hidden", !show);
+  return Boolean(await window.BakrStore?.currentUser?.());
 }
 
 async function refreshConnectionStatus() {
@@ -397,7 +364,6 @@ function showApp() {
     app.classList.remove("is-hidden");
   }
   refreshConnectionStatus();
-  updatePinModeAlert();
   loadData()
     .then(() => {
       if (!state.selectedOrderId && !state.pendingOpenId) {
@@ -462,26 +428,6 @@ async function tryLogin() {
   showLoginError("");
   const pass = $("#adminPassword");
   if (pass) pass.value = "";
-  setPinAuthed(false);
-  showApp();
-  showPage(state.page || "home");
-  return true;
-}
-
-function tryPinLogin() {
-  const pin = normalizeDigits($("#adminPin")?.value);
-  const expected = expectedPin();
-  const errEl = $("#loginError");
-  if (!pinLoginAllowed()) {
-    showLoginError("الدخول بالرمز موقوف — استخدم البريد وكلمة المرور");
-    return false;
-  }
-  if (!pin || pin !== expected) {
-    showLoginError("رمز غير صحيح");
-    return false;
-  }
-  showLoginError("");
-  setPinAuthed(true);
   showApp();
   showPage(state.page || "home");
   return true;
@@ -1403,10 +1349,6 @@ function openWhatsApp(order) {
 }
 
 async function setup() {
-  // يُضبط فوراً قبل أي انتظار حتى لا يظهر الزر متأخراً
-  const pinAlt = $("#showPinLogin");
-  if (pinAlt) pinAlt.hidden = !pinLoginAllowed();
-
   $("#loginBtn")?.addEventListener("click", (e) => {
     e.preventDefault();
     tryLogin();
@@ -1433,43 +1375,6 @@ async function setup() {
     input.focus();
   });
 
-  $("#adminPin")?.addEventListener("input", (e) => {
-    const el = e.target;
-    const start = el.selectionStart;
-    const before = el.value;
-    const next = normalizeDigits(before).replace(/\D/g, "").slice(0, 8);
-    if (next !== before) {
-      el.value = next;
-      const pos = Math.min(start ?? next.length, next.length);
-      try {
-        el.setSelectionRange(pos, pos);
-      } catch (_) {
-        /* ignore */
-      }
-    }
-  });
-
-  $("#adminPin")?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      tryPinLogin();
-    }
-  });
-
-  $("#pinLoginBtn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    tryPinLogin();
-  });
-
-  $("#showPinLogin")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    const block = $("#pinBlock");
-    if (!block) return;
-    block.hidden = false;
-    e.currentTarget.hidden = true;
-    $("#adminPin")?.focus();
-  });
-
   [$("#adminEmail"), $("#adminPassword")].forEach((el) => {
     el?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
@@ -1480,7 +1385,6 @@ async function setup() {
   });
 
   $("#logoutBtn")?.addEventListener("click", async () => {
-    setPinAuthed(false);
     await window.BakrStore?.signOut?.();
     showLogin();
   });
