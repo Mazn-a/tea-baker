@@ -110,15 +110,12 @@ function grandTotal() {
 }
 
 function formatPkgPriceHtml(p, { compact = false } = {}) {
-  const list = packageListPrice(p);
-  const sale = packageSalePrice(p);
-  if (state.discountApplied && sale < list) {
-    return `<span class="pkg-price-stack">
-      <span class="pkg-price-old">${money(list)}</span>
-      <span class="pkg-price-now">${money(sale)}</span>
-    </span>`;
-  }
-  return `<span class="pkg-price-now">${money(list)}</span>`;
+  // اعرض سعر القائمة فقط — لا تكشف سعر الخصم على البكج
+  return `<span class="pkg-price-now">${money(packageListPrice(p))}</span>`;
+}
+
+function orderListSubtotal() {
+  return packageListPrice() + addonsTotal();
 }
 
 function getAddonQty(id) {
@@ -521,9 +518,7 @@ async function confirmBooking() {
         locationLink: state.locationLink.trim(),
         notes: [
           state.notes.trim(),
-          state.discountApplied
-            ? `كود خصم مطبّق: ${state.discountCode} (سعر البكج ${packageTotal()} بدل ${packageListPrice()})`
-            : "",
+          state.discountApplied ? `كود خصم مطبّق: ${state.discountCode}` : "",
         ]
           .filter(Boolean)
           .join(" | "),
@@ -551,9 +546,7 @@ function buildWhatsAppMessage() {
     "مرحباً، أرغب بتأكيد طلب حجز من شاي بكر:",
     `• المدينة: ${labelOf(CITIES, state.city)}`,
     `• نوع المناسبة: ${eventLabel()}`,
-    `• البكج: ${p?.name || "—"} (${money(packageTotal())}${
-      state.discountApplied ? ` بعد الخصم من ${money(packageListPrice())}` : ""
-    })`,
+    `• البكج: ${p?.name || "—"}`,
     state.discountApplied ? `• كود الخصم: ${state.discountCode}` : null,
     ...addonLines,
     `• التاريخ: ${formatDateLabel(state.date)}`,
@@ -941,9 +934,10 @@ function sanitizePhoneInput(value) {
 function renderReview() {
   const p = pkg();
   const addons = selectedAddons();
-  const list = packageListPrice();
-  const charged = packageTotal();
+  const listPkg = packageListPrice();
   const savings = packageSavings();
+  const listSubtotal = orderListSubtotal();
+  const chargedTotal = grandTotal();
   const rows = [
     ["المدينة", labelOf(CITIES, state.city)],
     ["نوع المناسبة", eventLabel()],
@@ -967,6 +961,43 @@ function renderReview() {
     : state.discountCode
       ? `<p class="discount-feedback is-err">كود الخصم غير صحيح</p>`
       : "";
+
+  // واجهة الخصم تبدو على الإجمالي؛ الحساب الفعلي يبقى على البكج فقط
+  const totalsHtml =
+    state.discountApplied && savings > 0
+      ? `
+      <div class="review-row">
+        <span>سعر البكج</span>
+        <strong>${money(listPkg)}</strong>
+      </div>
+      <div class="review-row">
+        <span>مجموع الإضافات</span>
+        <strong>${money(addonsTotal())}</strong>
+      </div>
+      <div class="review-row discount-save">
+        <span>الخصم</span>
+        <strong>− ${money(savings)}</strong>
+      </div>
+      <div class="review-row price">
+        <span>الإجمالي</span>
+        <strong class="pkg-price-stack">
+          <span class="pkg-price-old">${money(listSubtotal)}</span>
+          <span class="pkg-price-now">${money(chargedTotal)}</span>
+        </strong>
+      </div>`
+      : `
+      <div class="review-row">
+        <span>سعر البكج</span>
+        <strong>${money(listPkg)}</strong>
+      </div>
+      <div class="review-row">
+        <span>مجموع الإضافات</span>
+        <strong>${money(addonsTotal())}</strong>
+      </div>
+      <div class="review-row price">
+        <span>الإجمالي</span>
+        <strong>${money(chargedTotal)}</strong>
+      </div>`;
 
   return `
     <div class="review-card">
@@ -997,29 +1028,7 @@ function renderReview() {
         ${discountMsg}
       </div>
 
-      <div class="review-row">
-        <span>سعر البكج</span>
-        <strong class="pkg-price-stack">
-          ${
-            state.discountApplied && savings > 0
-              ? `<span class="pkg-price-old">${money(list)}</span><span class="pkg-price-now">${money(charged)}</span>`
-              : `<span class="pkg-price-now">${money(charged)}</span>`
-          }
-        </strong>
-      </div>
-      ${
-        state.discountApplied && savings > 0
-          ? `<div class="review-row discount-save"><span>وفّرت على البكج</span><strong>${money(savings)}</strong></div>`
-          : ""
-      }
-      <div class="review-row">
-        <span>مجموع الإضافات</span>
-        <strong>${money(addonsTotal())}</strong>
-      </div>
-      <div class="review-row price">
-        <span>الإجمالي</span>
-        <strong>${money(grandTotal())}</strong>
-      </div>
+      ${totalsHtml}
     </div>
     <div class="procedure-box">
       <h3>ماذا بعد تأكيد الطلب؟</h3>
