@@ -801,7 +801,7 @@ function renderOrders() {
         status === "pending" ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm";
       const tone = index % 2 === 0 ? "tone-a" : "tone-b";
       return `
-      <article class="order-row is-${escapeAttr(status)} ${tone}" data-id="${escapeAttr(o.id)}" data-open-order="1">
+      <article class="order-row is-${escapeAttr(status)} ${tone}" data-id="${String(o.id || "").replace(/"/g, "")}" data-open-order="1">
         <div class="order-row-main">
           <div class="order-row-title">
             <strong>${escapeHtml(o.customer_name)}</strong>
@@ -1114,7 +1114,8 @@ function setup() {
   });
 
   document.addEventListener("click", (e) => {
-    const pageBtn = e.target.closest("[data-page]");
+    // أزرار التنقل فقط — لا تلتقط أقسام الصفحة ذات data-page
+    const pageBtn = e.target.closest("button[data-page], a[data-page]");
     if (pageBtn && pageBtn.dataset.page) {
       e.preventDefault();
       showPage(pageBtn.dataset.page);
@@ -1127,6 +1128,7 @@ function setup() {
     const id = row.dataset.id;
     if (!id) return;
     e.preventDefault();
+    e.stopPropagation();
     showOrderDetail(id);
   });
 
