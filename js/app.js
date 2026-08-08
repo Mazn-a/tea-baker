@@ -828,6 +828,20 @@ function renderCalendar() {
     </div>`;
 }
 
+/** اختصارات أيام الأسبوع من ar-SA (Intl) — ليست اختصارات يدوية */
+function weekdayHeadersAr() {
+  const fmt = new Intl.DateTimeFormat("ar-SA", { weekday: "short" });
+  // أحد معروف: 2 أغسطس 2026
+  const sunday = new Date(2026, 7, 2, 12, 0, 0);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(sunday);
+    d.setDate(sunday.getDate() + i);
+    return String(fmt.format(d) || "")
+      .replace(/^ال/, "")
+      .trim();
+  });
+}
+
 function renderDayCell(iso, dayLabel) {
   const past = isPastDate(iso);
   const beyond = isBeyondBookingWindow(iso);
