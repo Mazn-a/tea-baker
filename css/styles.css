@@ -2219,38 +2219,6 @@ select {
   text-align: start;
 }
 
-/* زر واتساب العائم */
-.wa-float {
-  position: fixed;
-  inset-inline-start: 1rem;
-  bottom: calc(1rem + var(--safe-bottom));
-  z-index: 70;
-  width: 3.35rem;
-  height: 3.35rem;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: #25d366;
-  color: #fff;
-  box-shadow: 0 10px 24px rgba(18, 140, 126, 0.35);
-  transition: transform 0.15s ease;
-}
-
-.wa-float:hover {
-  transform: translateY(-2px);
-}
-
-.wa-float svg {
-  width: 60%;
-  height: 60%;
-}
-
-/* يختفي داخل خطوات الحجز حتى لا يغطي أزرار رجوع/التالي */
-body.booking-open .wa-float,
-body:has(.view[data-view="booking"].is-active) .wa-float {
-  display: none;
-}
-
 /* Marketing pages */
 .page {
   padding: 2rem 0 3.5rem;
