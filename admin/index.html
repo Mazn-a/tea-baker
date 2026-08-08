@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <link rel="stylesheet" href="./css/admin.css?v=36" />
+    <link rel="stylesheet" href="./css/admin.css?v=37" />
   </head>
   <body>
     <div id="loginView" class="login-view">
@@ -80,15 +80,15 @@
 
     <div id="appView" class="app-view is-hidden" hidden>
       <header class="admin-header">
-        <div class="admin-brand">
-          <div class="brand-mark">
+        <button type="button" class="admin-brand" id="brandHomeBtn" aria-label="الرجوع للرئيسية">
+          <span class="brand-mark">
             <img src="../assets/logo-brand.png?v=11" alt="شاي بكر" />
             <span id="storageBadge" class="status-dot" title="حالة الاتصال" aria-label="حالة الاتصال"></span>
-          </div>
-          <div class="admin-brand-text">
+          </span>
+          <span class="admin-brand-text">
             <strong>إدارة شاي بكر</strong>
-          </div>
-        </div>
+          </span>
+        </button>
         <div class="admin-actions">
           <button type="button" class="btn btn-refresh" id="refreshBtn">تحديث</button>
           <button type="button" class="btn btn-logout" id="logoutBtn">خروج</button>
