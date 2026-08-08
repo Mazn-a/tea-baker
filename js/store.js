@@ -42,6 +42,8 @@
   }
 
   let client = null;
+  /** يصير true إذا لم تُنشأ دالة booked_days بعد، فلا نكرر طلبها */
+  let bookedDaysRpcMissing = false;
 
   async function getClient() {
     if (!hasCloud()) return null;
@@ -238,18 +240,23 @@
   async function listBookedDates() {
     // الطريقة الآمنة: دالة في قاعدة البيانات ترجّع التواريخ فقط بدون بيانات العملاء.
     // إن لم تكن منشأة بعد (قبل تنفيذ sql/patch-secure-admin.sql) نرجع للطريقة القديمة.
-    try {
-      const sb = await getClient();
-      if (sb) {
-        const { data, error } = await sb.rpc("booked_days");
-        if (!error && Array.isArray(data)) {
-          return data
-            .map((row) => String(row?.booked_days ?? row?.event_date ?? row).slice(0, 10))
-            .filter(Boolean);
+    if (!bookedDaysRpcMissing) {
+      try {
+        const sb = await getClient();
+        if (sb) {
+          const { data, error } = await sb.rpc("booked_days");
+          if (!error && Array.isArray(data)) {
+            return data
+              .map((row) => String(row?.booked_days ?? row?.event_date ?? row).slice(0, 10))
+              .filter(Boolean);
+          }
+          // غير منشأة بعد — لا نعيد المحاولة في هذه الجلسة
+          bookedDaysRpcMissing = true;
         }
+      } catch (err) {
+        bookedDaysRpcMissing = true;
+        console.warn("booked_days RPC → fallback:", err);
       }
-    } catch (err) {
-      console.warn("booked_days RPC → fallback:", err);
     }
 
     const orders = await listOrders();
