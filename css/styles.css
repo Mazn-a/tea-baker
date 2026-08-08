@@ -929,10 +929,12 @@ select {
 }
 
 .cal-week span {
-  font-size: 0.72rem;
+  font-size: 0.9rem;
   font-weight: 800;
-  color: var(--tea-mid);
-  padding: 0.15rem 0;
+  color: var(--tea-deep);
+  padding: 0.35rem 0 0.2rem;
+  letter-spacing: 0;
+  line-height: 1.2;
 }
 
 .day-btn {
@@ -2764,8 +2766,8 @@ select {
   }
 
   .cal-week span {
-    font-size: 0.65rem;
-    padding: 0;
+    font-size: 0.78rem;
+    padding: 0.2rem 0 0.1rem;
   }
 
   .day-btn {

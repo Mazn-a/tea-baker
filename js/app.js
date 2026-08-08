@@ -819,9 +819,10 @@ function renderCalendar() {
         }>›</button>
       </div>
       <p class="cal-window-hint">الحجز متاح حتى ${formatDateLabel(maxBookingIso())} (١٢ شهراً قادمة فقط).</p>
-      <div class="cal-week">
-        <span>أحد</span><span>إثن</span><span>ثلا</span><span>أرب</span>
-        <span>خمي</span><span>جمع</span><span>سبت</span>
+      <div class="cal-week" aria-label="أيام الأسبوع">
+        ${weekdayHeadersAr()
+          .map((day) => `<span>${day}</span>`)
+          .join("")}
       </div>
       <div class="cal-days">${cells}</div>
       <div class="date-status ${state.dateFeedback === "beyond" ? "bad" : state.dateFeedback}" id="dateStatus">${dateStatusText()}</div>
