@@ -373,27 +373,53 @@
       throw new Error("مكتبة PDF غير محمّلة");
     }
 
+    const CAPTURE_WIDTH = 794;
+
     const style = document.createElement("style");
     style.setAttribute("data-bakr-pdf", "1");
     style.textContent = `${RECEIPT_CSS}
+      .bakr-receipt-pdf-host {
+        position: fixed !important;
+        left: 0 !important;
+        right: auto !important;
+        top: 0 !important;
+        width: ${CAPTURE_WIDTH}px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        /* لا تستخدم opacity:0 / z-index:-1 — سفاري الجوال يلتقط بإزاحة RTL خاطئة */
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: none !important;
+        z-index: 2147483646 !important;
+        transform: translateY(-12000px) !important;
+        direction: ltr !important;
+        text-align: left !important;
+        background: transparent !important;
+        overflow: visible !important;
+      }
       .bakr-receipt-pdf-root {
-        width: 794px !important;
+        width: ${CAPTURE_WIDTH}px !important;
+        max-width: ${CAPTURE_WIDTH}px !important;
         margin: 0 !important;
         padding: 36px 40px 44px !important;
         background: #fffdf9 !important;
         box-shadow: none !important;
         border-radius: 0 !important;
-        direction: rtl;
-        text-align: right;
+        direction: rtl !important;
+        text-align: right !important;
         color: #1a120c;
         font-family: "Tajawal", "Segoe UI", Tahoma, sans-serif;
+        position: relative !important;
+        left: 0 !important;
+        right: auto !important;
+        transform: none !important;
       }
     `;
 
     const host = document.createElement("div");
+    host.className = "bakr-receipt-pdf-host";
     host.setAttribute("data-bakr-pdf-host", "1");
-    host.style.cssText =
-      "position:fixed;left:0;top:0;width:794px;opacity:0;pointer-events:none;z-index:-1;";
+    host.setAttribute("dir", "ltr");
 
     const el = document.createElement("div");
     el.className = "bakr-receipt bakr-receipt-pdf-root";
@@ -421,6 +447,11 @@
     } catch (_) {}
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 
+    const captureHeight = Math.max(
+      Math.ceil(el.scrollHeight || el.offsetHeight || 1123),
+      400
+    );
+
     try {
       const blob = await html2pdf()
         .set({
@@ -430,11 +461,71 @@
           html2canvas: {
             scale: 2,
             useCORS: true,
+            allowTaint: true,
             backgroundColor: "#fffdf9",
             logging: false,
             scrollX: 0,
             scrollY: 0,
-            windowWidth: 794,
+            x: 0,
+            y: 0,
+            width: CAPTURE_WIDTH,
+            height: captureHeight,
+            windowWidth: CAPTURE_WIDTH,
+            windowHeight: captureHeight,
+            foreignObjectRendering: false,
+            onclone(clonedDoc) {
+              const clonedHost = clonedDoc.querySelector("[data-bakr-pdf-host]");
+              const clonedEl = clonedDoc.querySelector(".bakr-receipt-pdf-root");
+              if (clonedHost) {
+                clonedHost.style.cssText = [
+                  "position:fixed",
+                  "left:0",
+                  "right:auto",
+                  "top:0",
+                  `width:${CAPTURE_WIDTH}px`,
+                  "margin:0",
+                  "padding:0",
+                  "opacity:1",
+                  "visibility:visible",
+                  "pointer-events:none",
+                  "transform:none",
+                  "direction:ltr",
+                  "text-align:left",
+                  "background:transparent",
+                  "overflow:visible",
+                ].join(";");
+                clonedHost.setAttribute("dir", "ltr");
+              }
+              if (clonedEl) {
+                clonedEl.style.cssText = [
+                  `width:${CAPTURE_WIDTH}px`,
+                  `max-width:${CAPTURE_WIDTH}px`,
+                  "margin:0",
+                  "padding:36px 40px 44px",
+                  "background:#fffdf9",
+                  "box-shadow:none",
+                  "border-radius:0",
+                  "direction:rtl",
+                  "text-align:right",
+                  "position:relative",
+                  "left:0",
+                  "right:auto",
+                  "transform:none",
+                ].join(";");
+                clonedEl.setAttribute("dir", "rtl");
+              }
+              const htmlEl = clonedDoc.documentElement;
+              const bodyEl = clonedDoc.body;
+              if (htmlEl) {
+                htmlEl.style.direction = "ltr";
+                htmlEl.setAttribute("dir", "ltr");
+              }
+              if (bodyEl) {
+                bodyEl.style.direction = "ltr";
+                bodyEl.style.margin = "0";
+                bodyEl.setAttribute("dir", "ltr");
+              }
+            },
           },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
           pagebreak: { mode: ["avoid-all", "css", "legacy"] },
