@@ -1,7 +1,5 @@
--- =========================================================
--- شاي بكر — قاعدة البيانات (مجانية عبر Supabase Free)
--- أين تنفّذ؟ Supabase → SQL Editor → New query → الصق الكل → Run
--- =========================================================
+-- شاي بكر — قاعدة البيانات
+-- التنفيذ: Supabase → SQL Editor → New query → الصق الكل → Run
 
 -- امتدادات مفيدة
 create extension if not exists "pgcrypto";
@@ -101,5 +99,3 @@ create policy "visits_select_anon" on public.visits
 drop policy if exists "settings_select_anon" on public.app_settings;
 create policy "settings_select_anon" on public.app_settings
   for select to anon using (true);
-
--- تم. ارجع للموقع وضع المفاتيح في js/config.js
