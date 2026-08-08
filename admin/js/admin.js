@@ -1033,6 +1033,11 @@ function setup() {
     tryLogin();
   });
 
+  $("#brandHomeBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    showPage("home");
+  });
+
   $("#togglePinVisibility")?.addEventListener("click", (e) => {
     e.preventDefault();
     const input = $("#adminPin");
