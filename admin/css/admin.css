@@ -1102,6 +1102,22 @@ body.admin-detail-open #orderDetailView {
   background: #f8e8e6;
 }
 
+.order-row.is-open {
+  border-right-color: #c9a227;
+  background: #fff8e8;
+}
+
+.order-row.is-resolved {
+  border-right-color: #1f7a3f;
+  background: #f3faf5;
+}
+
+.issue-meta {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--tea-mid);
+}
+
 .order-row:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 22px rgba(42, 24, 16, 0.1);
@@ -1538,6 +1554,14 @@ body.admin-detail-open #orderDetailView {
 
 .welcome-choice.is-visitors > span:last-child { color: #6a5240; }
 
+.welcome-choice.is-issues {
+  background: #fdf1e0;
+  color: #7a3a12;
+  border: 1.5px solid rgba(201, 162, 39, 0.6);
+}
+
+.welcome-choice.is-issues > span:last-child { color: #8a6a3d; }
+
 .welcome-end-line {
   position: relative;
   z-index: 2;
@@ -1653,6 +1677,8 @@ body:has(#adminHome.is-page-on) .admin-main {
 .status-pill.pending { background: var(--warn-bg); color: var(--warn); }
 .status-pill.accepted { background: var(--ok-bg); color: var(--ok); }
 .status-pill.rejected { background: var(--err-bg); color: var(--err); }
+.status-pill.open { background: var(--warn-bg); color: var(--warn); }
+.status-pill.resolved { background: var(--ok-bg); color: var(--ok); }
 
 .order-section {
   padding: 0.85rem 1rem;

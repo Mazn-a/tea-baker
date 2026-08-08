@@ -18,6 +18,7 @@
     visits: "bakr-visits-v1",
     visitSession: "bakr-visit-session",
     deletedIds: "bakr-deleted-orders-v1",
+    issues: "bakr-issues-v1",
   };
 
   /**
@@ -446,6 +447,79 @@
     return readLocal(KEYS.visits, []);
   }
 
+  /** بلاغ مشكلة من زائر الموقع — يصل مباشرة للإدارة */
+  async function reportIssue(payload) {
+    const row = {
+      created_at: new Date().toISOString(),
+      message: String(payload?.message || "").trim(),
+      contact: String(payload?.contact || "").trim(),
+      page: String(payload?.page || "").trim(),
+      step: String(payload?.step || "").trim(),
+      user_agent: String(payload?.userAgent || "").slice(0, 300),
+      session_id: sessionId(),
+      status: "open",
+    };
+
+    try {
+      const sb = await getClient();
+      if (sb) {
+        const { error } = await sb.from("issue_reports").insert(row);
+        if (error) throw error;
+        return { ...row, saved: true };
+      }
+    } catch (err) {
+      console.warn("reportIssue cloud → local:", err);
+    }
+
+    const localRow = { id: uid(), ...row };
+    const all = readLocal(KEYS.issues, []);
+    all.unshift(localRow);
+    writeLocal(KEYS.issues, all);
+    return { ...localRow, saved: !hasCloud() };
+  }
+
+  async function listIssueReports() {
+    try {
+      const sb = await getClient();
+      if (sb) {
+        const { data, error } = await sb
+          .from("issue_reports")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        return data || [];
+      }
+    } catch (err) {
+      console.warn("listIssueReports cloud → local:", err);
+    }
+    return readLocal(KEYS.issues, []);
+  }
+
+  async function updateIssueStatus(id, status) {
+    try {
+      const sb = await getClient();
+      if (sb) {
+        const { data, error } = await sb
+          .from("issue_reports")
+          .update({ status })
+          .eq("id", id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      }
+    } catch (err) {
+      console.warn("updateIssueStatus cloud → local:", err);
+    }
+
+    const all = readLocal(KEYS.issues, []);
+    const idx = all.findIndex((o) => o.id === id);
+    if (idx < 0) return null;
+    all[idx] = { ...all[idx], status };
+    writeLocal(KEYS.issues, all);
+    return all[idx];
+  }
+
   global.BakrStore = {
     createOrder,
     listOrders,
@@ -458,6 +532,9 @@
     isStepRow,
     stepName,
     listVisits,
+    reportIssue,
+    listIssueReports,
+    updateIssueStatus,
     signIn,
     signOut,
     currentUser,

@@ -500,6 +500,51 @@ function sanitizeLocationLink(value) {
   return normalizeLocationLink(value);
 }
 
+/**
+ * يبني رابط خرائط قوقل من موقع الجهاز الحالي عبر متصفح العميل مباشرة —
+ * بدون فتح أي تطبيق آخر أو الخروج من الموقع.
+ */
+function shareCurrentLocation(onDone) {
+  const btn = $("#btnShareLocation");
+  const err = $("#fieldError");
+  if (!navigator.geolocation) {
+    if (err) err.textContent = "جهازك لا يدعم تحديد الموقع — الصق الرابط يدوياً.";
+    return;
+  }
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "جاري تحديد موقعك…";
+  }
+  if (err) err.textContent = "";
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude, longitude } = pos.coords;
+      const link = `https://www.google.com/maps?q=${latitude},${longitude}`;
+      state.locationLink = link;
+      const input = $("#inputLocationLink");
+      if (input) input.value = link;
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "📍 تم تحديد موقعك — اضغط لو تبي تحدّثه";
+      }
+      onDone?.();
+    },
+    (geoErr) => {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "📍 استخدم موقعي الحالي — بدون ما تخرج من الموقع";
+      }
+      if (err) {
+        err.textContent =
+          geoErr?.code === geoErr?.PERMISSION_DENIED
+            ? "لازم تسمح للموقع بالوصول لموقعك، أو الصق الرابط يدوياً."
+            : "تعذر تحديد موقعك — تأكد من تفعيل GPS أو الصق الرابط يدوياً.";
+      }
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+  );
+}
+
 function validateCurrent() {
   const step = currentStep();
   const err = $("#fieldError");
@@ -1465,12 +1510,15 @@ function renderWizard() {
         </div>
         <div class="field-card">
           <label for="inputLocationLink">رابط خرائط قوقل <span class="field-optional">(اختياري)</span></label>
+          <button type="button" class="btn btn-locate" id="btnShareLocation">
+            📍 استخدم موقعي الحالي — بدون ما تخرج من الموقع
+          </button>
           <input
             id="inputLocationLink"
             type="url"
             inputmode="url"
             dir="ltr"
-            placeholder="الصق رابط خرائط قوقل"
+            placeholder="أو الصق رابط خرائط قوقل يدوياً"
             value="${esc(state.locationLink)}"
           />
           <div class="field-error" id="fieldError"></div>
@@ -1493,6 +1541,7 @@ function renderWizard() {
     };
     $("#inputHallName").addEventListener("input", sync);
     $("#inputLocationLink").addEventListener("input", sync);
+    $("#btnShareLocation")?.addEventListener("click", () => shareCurrentLocation(sync));
   } else if (step === "notes") {
     body.innerHTML = renderField(
       "inputNotes",
@@ -1697,6 +1746,109 @@ function setupNav() {
   $("#btnNext").addEventListener("click", nextStep);
 }
 
+function setupBackToTop() {
+  const btn = $("#backToTopBtn");
+  if (!btn) return;
+  const toggle = () => {
+    btn.hidden = window.scrollY < 480;
+  };
+  window.addEventListener("scroll", toggle, { passive: true });
+  toggle();
+  btn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+}
+
+/** يبني نصاً تلقائياً يساعدنا نفهم وين صارت المشكلة بدون إزعاج العميل بأسئلة */
+function issueContext() {
+  return {
+    page: `${location.pathname}${location.hash || ""}`,
+    step: isBookingOpen() ? FLOW[state.stepIndex] || "" : "",
+    userAgent: navigator.userAgent || "",
+  };
+}
+
+function setupIssueReporting() {
+  const openBtn = $("#reportIssueBtn");
+  const modal = $("#issueModal");
+  const cancelBtn = $("#issueCancelBtn");
+  const submitBtn = $("#issueSubmitBtn");
+  const messageInput = $("#issueMessage");
+  const contactInput = $("#issueContact");
+  const errEl = $("#issueError");
+  const successEl = $("#issueSuccess");
+  if (!openBtn || !modal) return;
+
+  const closeModal = () => {
+    modal.hidden = true;
+    modal.classList.add("is-hidden");
+  };
+
+  const resetForm = () => {
+    if (messageInput) messageInput.value = "";
+    if (contactInput) contactInput.value = "";
+    if (errEl) errEl.hidden = true;
+    if (successEl) successEl.hidden = true;
+    if (submitBtn) submitBtn.disabled = false;
+  };
+
+  openBtn.addEventListener("click", () => {
+    resetForm();
+    modal.hidden = false;
+    modal.classList.remove("is-hidden");
+    requestAnimationFrame(() => messageInput?.focus());
+  });
+
+  cancelBtn?.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  contactInput?.addEventListener("input", (e) => {
+    e.target.value = sanitizePhoneInput(e.target.value);
+  });
+
+  submitBtn?.addEventListener("click", async () => {
+    const message = String(messageInput?.value || "").trim();
+    const contact = String(contactInput?.value || "").trim();
+    if (errEl) errEl.hidden = true;
+
+    if (message.length < 5) {
+      if (errEl) {
+        errEl.textContent = "اكتب وصفاً أوضح للمشكلة (5 أحرف على الأقل).";
+        errEl.hidden = false;
+      }
+      return;
+    }
+    if (contact && !/^05\d{8}$/.test(contact)) {
+      if (errEl) {
+        errEl.textContent = "رقم الجوال غير صحيح — اتركه فارغاً إن ما تبي تكتبه.";
+        errEl.hidden = false;
+      }
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "جاري الإرسال…";
+    try {
+      await window.BakrStore?.reportIssue?.({ message, contact, ...issueContext() });
+      if (successEl) successEl.hidden = false;
+      messageInput.value = "";
+      contactInput.value = "";
+      setTimeout(closeModal, 1600);
+    } catch (err) {
+      console.warn("تعذر إرسال البلاغ:", err);
+      if (errEl) {
+        errEl.textContent = "تعذر إرسال البلاغ الآن — حاول مرة ثانية.";
+        errEl.hidden = false;
+      }
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "إرسال البلاغ";
+    }
+  });
+}
+
 async function init() {
   loadDraft();
   await loadBookedDates();
@@ -1707,6 +1859,8 @@ async function init() {
   renderMarketingPackages();
   renderMarketingAddons();
   setupNav();
+  setupBackToTop();
+  setupIssueReporting();
 
   try {
     await window.BakrStore?.trackVisit?.(location.pathname + location.hash);
