@@ -224,7 +224,8 @@ code {
   min-height: 3rem;
   border: 1.5px solid rgba(99, 58, 17, 0.18);
   border-radius: 0.95rem;
-  padding: 0.65rem 3rem 0.65rem 0.9rem;
+  /* مساحة العين على اليمين */
+  padding: 0.65rem 2.35rem 0.65rem 0.85rem;
   background: #fffaf3;
   outline: none;
   letter-spacing: 0.35em;
@@ -249,15 +250,16 @@ code {
 
 .pin-eye {
   position: absolute;
-  inset-inline-end: 0.45rem;
+  right: 0.4rem;
+  left: auto;
   top: 50%;
   transform: translateY(-50%);
-  width: 2.35rem;
-  height: 2.35rem;
+  width: 1.7rem;
+  height: 1.7rem;
   border: 0;
-  border-radius: 0.7rem;
+  border-radius: 0.45rem;
   background: transparent;
-  color: var(--tea-mid);
+  color: rgba(74, 43, 25, 0.55);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -265,13 +267,13 @@ code {
 }
 
 .pin-eye:hover {
-  background: rgba(99, 58, 17, 0.08);
+  background: rgba(99, 58, 17, 0.06);
   color: var(--tea-deep);
 }
 
 .pin-eye svg {
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1rem;
+  height: 1rem;
   display: block;
 }
 
