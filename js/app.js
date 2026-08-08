@@ -483,14 +483,131 @@ function sanitizeLocationLink(value) {
 }
 
 /**
- * يبني رابط خرائط قوقل من موقع الجهاز الحالي عبر متصفح العميل مباشرة —
- * بدون فتح أي تطبيق آخر أو الخروج من الموقع.
+ * خريطة اختيار موقع القاعة — يبحث العميل باسم المكان أو يحدده يدوياً على
+ * خريطة مجانية (OpenStreetMap عبر مكتبة Leaflet) بدون الخروج من الموقع
+ * وبدون أي مفتاح API. تُبنى النتيجة كرابط خرائط قوقل عادي للتوافق مع
+ * الإدارة وواتساب.
  */
+const CITY_MAP_CENTERS = {
+  makkah: [21.3891, 39.8579],
+  jeddah: [21.4858, 39.1925],
+  taif: [21.2703, 40.4158],
+};
+const DEFAULT_MAP_CENTER = CITY_MAP_CENTERS.makkah;
+
+let locationMapInstance = null;
+let locationMarker = null;
+
+function parseLatLngFromLink(link) {
+  const m = String(link || "").match(/[?&]q=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+  if (!m) return null;
+  return [Number(m[1]), Number(m[2])];
+}
+
+function mapsLinkFromLatLng(lat, lng) {
+  return `https://www.google.com/maps?q=${Number(lat).toFixed(6)},${Number(lng).toFixed(6)}`;
+}
+
+/** يحدّث الرابط المحفوظ وحقل الإدخال وعلامة الخريطة معاً من نقطة واحدة */
+function setPickedLocation(lat, lng, { pan = true } = {}) {
+  const link = mapsLinkFromLatLng(lat, lng);
+  state.locationLink = link;
+  const input = $("#inputLocationLink");
+  if (input) input.value = link;
+  if (locationMarker) locationMarker.setLatLng([lat, lng]);
+  if (pan && locationMapInstance) {
+    locationMapInstance.setView([lat, lng], Math.max(locationMapInstance.getZoom(), 15));
+  }
+  const err = $("#fieldError");
+  if (err) err.textContent = "";
+}
+
+/** تُنشأ من جديد في كل مرة تظهر فيها الخطوة، لأن body.innerHTML يمسح حاويتها القديمة */
+function initLocationMap(onPick) {
+  const el = $("#locationMap");
+  if (!el || !window.L) return;
+  if (locationMapInstance) {
+    locationMapInstance.remove();
+    locationMapInstance = null;
+    locationMarker = null;
+  }
+
+  const existing = parseLatLngFromLink(state.locationLink);
+  const center = existing || CITY_MAP_CENTERS[state.city] || DEFAULT_MAP_CENTER;
+  const zoom = existing ? 15 : 11;
+
+  locationMapInstance = L.map(el).setView(center, zoom);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "© OpenStreetMap",
+  }).addTo(locationMapInstance);
+
+  locationMarker = L.marker(center, { draggable: true }).addTo(locationMapInstance);
+  locationMarker.on("dragend", () => {
+    const { lat, lng } = locationMarker.getLatLng();
+    setPickedLocation(lat, lng, { pan: false });
+    onPick?.();
+  });
+  locationMapInstance.on("click", (e) => {
+    setPickedLocation(e.latlng.lat, e.latlng.lng);
+    onPick?.();
+  });
+
+  // الحاوية أحياناً تُقاس قبل ظهورها بالكامل في الشاشة
+  setTimeout(() => locationMapInstance?.invalidateSize(), 150);
+}
+
+/** بحث مجاني بدون مفتاح API عبر Nominatim (خرائط OpenStreetMap) */
+async function searchMapPlaces(query) {
+  const box = $("#mapSearchResults");
+  const q = String(query || "").trim();
+  if (!q) {
+    if (box) {
+      box.hidden = true;
+      box.innerHTML = "";
+    }
+    return;
+  }
+  const btn = $("#mapSearchBtn");
+  if (btn) btn.disabled = true;
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=sa&accept-language=ar&q=${encodeURIComponent(
+      q
+    )}`;
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    const data = await res.json();
+    if (!box) return;
+    if (!Array.isArray(data) || !data.length) {
+      box.hidden = false;
+      box.innerHTML = `<li class="map-search-empty">ما لقينا نتائج — جرّب اسماً آخر أو اضغط على الخريطة مباشرة.</li>`;
+      return;
+    }
+    box.hidden = false;
+    box.innerHTML = data
+      .map(
+        (r) =>
+          `<li><button type="button" class="map-result-btn" data-lat="${esc(r.lat)}" data-lon="${esc(
+            r.lon
+          )}">${esc(r.display_name)}</button></li>`
+      )
+      .join("");
+  } catch (err) {
+    console.warn("تعذر البحث عن الموقع:", err);
+    if (box) {
+      box.hidden = false;
+      box.innerHTML = `<li class="map-search-empty">تعذر البحث الآن — حاول مرة ثانية أو حدد الموقع على الخريطة.</li>`;
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+/** يبني رابط خرائط قوقل من موقع الجهاز الحالي عبر متصفح العميل مباشرة */
 function shareCurrentLocation(onDone) {
   const btn = $("#btnShareLocation");
   const err = $("#fieldError");
   if (!navigator.geolocation) {
-    if (err) err.textContent = "جهازك لا يدعم تحديد الموقع — الصق الرابط يدوياً.";
+    if (err) err.textContent = "جهازك لا يدعم تحديد الموقع — ابحث أو حدده على الخريطة.";
     return;
   }
   if (btn) {
@@ -500,27 +617,23 @@ function shareCurrentLocation(onDone) {
   if (err) err.textContent = "";
   navigator.geolocation.getCurrentPosition(
     (pos) => {
-      const { latitude, longitude } = pos.coords;
-      const link = `https://www.google.com/maps?q=${latitude},${longitude}`;
-      state.locationLink = link;
-      const input = $("#inputLocationLink");
-      if (input) input.value = link;
+      setPickedLocation(pos.coords.latitude, pos.coords.longitude);
       if (btn) {
         btn.disabled = false;
-        btn.textContent = "📍 تم تحديد موقعك — اضغط لو تبي تحدّثه";
+        btn.textContent = "📍 تم تحديد موقعك الحالي — اضغط لو تبي تحدّثه";
       }
       onDone?.();
     },
     (geoErr) => {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = "📍 استخدم موقعي الحالي — بدون ما تخرج من الموقع";
+        btn.textContent = "📍 أو استخدم موقعي الحالي الآن";
       }
       if (err) {
         err.textContent =
           geoErr?.code === geoErr?.PERMISSION_DENIED
-            ? "لازم تسمح للموقع بالوصول لموقعك، أو الصق الرابط يدوياً."
-            : "تعذر تحديد موقعك — تأكد من تفعيل GPS أو الصق الرابط يدوياً.";
+            ? "لازم تسمح للموقع بالوصول لموقعك — أو ابحث عن اسم المكان بالأعلى."
+            : "تعذر تحديد موقعك — ابحث عن اسم المكان أو حدده على الخريطة.";
       }
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
@@ -1466,24 +1579,41 @@ function renderWizard() {
           )}" />
         </div>
         <div class="field-card">
-          <label for="inputLocationLink">رابط خرائط قوقل <span class="field-optional">(اختياري)</span></label>
+          <label for="mapSearchInput">حدد موقع القاعة على الخريطة <span class="field-optional">(اختياري)</span></label>
+          <div class="map-search-row">
+            <input
+              id="mapSearchInput"
+              type="text"
+              dir="rtl"
+              autocomplete="off"
+              placeholder="ابحث باسم المكان، مثال: قاعة الأفراح"
+            />
+            <button type="button" class="btn btn-ghost" id="mapSearchBtn">بحث</button>
+          </div>
+          <ul id="mapSearchResults" class="map-search-results" hidden></ul>
+          <div id="locationMap" class="location-map"></div>
+          <p class="field-hint">اضغط على الخريطة أو اسحب العلامة 📍 لتثبيت موقع القاعة بدقة.</p>
           <button type="button" class="btn btn-locate" id="btnShareLocation">
-            📍 استخدم موقعي الحالي — بدون ما تخرج من الموقع
+            📍 أو استخدم موقعي الحالي الآن
           </button>
-          <input
-            id="inputLocationLink"
-            type="url"
-            inputmode="url"
-            dir="ltr"
-            placeholder="أو الصق رابط خرائط قوقل يدوياً"
-            value="${esc(state.locationLink)}"
-          />
+          <details class="map-manual-link">
+            <summary>عندك رابط خرائط قوقل جاهز؟ الصقه هنا</summary>
+            <input
+              id="inputLocationLink"
+              type="url"
+              inputmode="url"
+              dir="ltr"
+              placeholder="الصق رابط خرائط قوقل"
+              value="${esc(state.locationLink)}"
+            />
+          </details>
           <div class="field-error" id="fieldError"></div>
         </div>
       </div>`;
     const sync = () => {
       state.hallName = $("#inputHallName").value;
-      state.locationLink = $("#inputLocationLink").value.trim();
+      const linkInput = $("#inputLocationLink");
+      if (linkInput) state.locationLink = linkInput.value.trim();
       nextBtn.disabled = !canProceed();
       const err = $("#fieldError");
       if (!err) return;
@@ -1492,13 +1622,33 @@ function renderWizard() {
         err.textContent = "";
         return;
       }
-      err.textContent = isValidLocationLink(link)
-        ? ""
-        : "هذا ليس رابط خرائط قوقل صالحاً — عدّله أو امسحه.";
+      if (!isValidLocationLink(link)) {
+        err.textContent = "هذا ليس رابط خرائط قوقل صالحاً — عدّله أو امسحه.";
+        return;
+      }
+      err.textContent = "";
     };
     $("#inputHallName").addEventListener("input", sync);
     $("#inputLocationLink").addEventListener("input", sync);
     $("#btnShareLocation")?.addEventListener("click", () => shareCurrentLocation(sync));
+    $("#mapSearchBtn")?.addEventListener("click", () => searchMapPlaces($("#mapSearchInput")?.value));
+    $("#mapSearchInput")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        searchMapPlaces(e.target.value);
+      }
+    });
+    $("#mapSearchResults")?.addEventListener("click", (e) => {
+      const resultBtn = e.target.closest(".map-result-btn");
+      if (!resultBtn) return;
+      setPickedLocation(Number(resultBtn.dataset.lat), Number(resultBtn.dataset.lon));
+      const searchInput = $("#mapSearchInput");
+      const results = $("#mapSearchResults");
+      if (searchInput) searchInput.value = resultBtn.textContent.trim();
+      if (results) results.hidden = true;
+      sync();
+    });
+    requestAnimationFrame(() => initLocationMap(sync));
   } else if (step === "notes") {
     body.innerHTML = renderField(
       "inputNotes",
