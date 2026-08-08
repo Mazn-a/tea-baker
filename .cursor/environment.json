@@ -1,0 +1,16 @@
+{
+  "name": "tea-baker",
+  "terminals": [
+    {
+      "name": "web",
+      "command": "python3 -m http.server 8790",
+      "description": "Static file server for the customer booking site (http://127.0.0.1:8790/) and admin panel (http://127.0.0.1:8790/admin/)."
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 8790
+    }
+  ]
+}
