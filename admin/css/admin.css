@@ -214,9 +214,65 @@ code {
   margin: 0;
 }
 
-#adminPin {
+.pin-field {
+  position: relative;
+  display: grid;
+}
+
+.pin-field #adminPin {
+  width: 100%;
+  min-height: 3rem;
+  border: 1.5px solid rgba(99, 58, 17, 0.18);
+  border-radius: 0.95rem;
+  padding: 0.65rem 3rem 0.65rem 0.9rem;
+  background: #fffaf3;
+  outline: none;
+  letter-spacing: 0.35em;
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.pin-field #adminPin[type="password"] {
   -webkit-text-security: disc;
-  letter-spacing: 0.2em;
+}
+
+.pin-field #adminPin:focus {
+  border-color: var(--tea-mid);
+  box-shadow: 0 0 0 3px rgba(99, 58, 17, 0.1);
+}
+
+.pin-field #adminPin::placeholder {
+  letter-spacing: 0.28em;
+  color: rgba(74, 43, 25, 0.35);
+  font-weight: 800;
+}
+
+.pin-eye {
+  position: absolute;
+  inset-inline-end: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.35rem;
+  height: 2.35rem;
+  border: 0;
+  border-radius: 0.7rem;
+  background: transparent;
+  color: var(--tea-mid);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.pin-eye:hover {
+  background: rgba(99, 58, 17, 0.08);
+  color: var(--tea-deep);
+}
+
+.pin-eye svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: block;
 }
 
 /* App shell */

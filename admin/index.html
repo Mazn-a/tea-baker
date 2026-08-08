@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <link rel="stylesheet" href="./css/admin.css?v=32" />
+    <link rel="stylesheet" href="./css/admin.css?v=33" />
   </head>
   <body>
     <div id="loginView" class="login-view">
@@ -23,15 +23,39 @@
         <p>أدخل رمز الدخول للمتابعة</p>
         <label class="field">
           <span>رمز الدخول</span>
-          <input
-            id="adminPin"
-            type="password"
-            inputmode="numeric"
-            autocomplete="current-password"
-            placeholder="••••"
-            dir="ltr"
-            maxlength="12"
-          />
+          <div class="pin-field">
+            <input
+              id="adminPin"
+              type="password"
+              inputmode="numeric"
+              autocomplete="current-password"
+              placeholder="********"
+              dir="ltr"
+              maxlength="8"
+              aria-label="رمز الدخول"
+            />
+            <button
+              type="button"
+              class="pin-eye"
+              id="togglePinVisibility"
+              aria-label="إظهار رمز الدخول"
+              aria-pressed="false"
+              title="إظهار / إخفاء"
+            >
+              <svg class="eye-open" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  fill="currentColor"
+                  d="M12 5c-5.5 0-9.7 4.1-11 7 1.3 2.9 5.5 7 11 7s9.7-4.1 11-7c-1.3-2.9-5.5-7-11-7zm0 11.5A4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 0 1 0 9zm0-7.2a2.7 2.7 0 1 0 0 5.4 2.7 2.7 0 0 0 0-5.4z"
+                />
+              </svg>
+              <svg class="eye-closed" viewBox="0 0 24 24" aria-hidden="true" focusable="false" hidden>
+                <path
+                  fill="currentColor"
+                  d="M3.3 2.3 2 3.6l3.1 3.1C3.3 8.1 1.8 9.9 1 12c1.3 2.9 5.5 7 11 7 1.9 0 3.6-.4 5.1-1.1l3.9 3.9 1.3-1.3L3.3 2.3zM12 17c-4.3 0-7.7-3-9-5 .7-1.1 2-2.6 3.7-3.7l2.1 2.1A4.5 4.5 0 0 0 12 16.5V17zm2.8-5.7-3.1 3.1c.3.1.6.1.9.1A2.7 2.7 0 0 0 15.3 12c0-.3 0-.6-.1-.9zM12 7.5c.5 0 1 .1 1.5.2l1.6-1.6C14.2 5.7 13.1 5.5 12 5.5 6.5 5.5 2.3 9.6 1 12.5c.3.6.8 1.4 1.4 2.2l1.5-1.5C3.4 11.7 4.9 10 6.8 9c.9-.5 1.9-.9 3-.1.4-.5.9-.9 1.4-1.2-.4-.1-.8-.2-1.2-.2z"
+                />
+              </svg>
+            </button>
+          </div>
         </label>
         <p class="login-error" id="loginError" hidden>رمز غير صحيح</p>
         <button type="button" class="btn btn-primary" id="loginBtn">دخول</button>
