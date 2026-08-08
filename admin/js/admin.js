@@ -651,22 +651,27 @@ function updateOrdersChoiceHint() {
 function showPage(page) {
   state.page = page || "home";
   state.selectedOrderId = null;
+  document.body.classList.remove("admin-detail-open");
 
   const detail = $("#orderDetailView");
   if (detail) {
     detail.hidden = true;
+    detail.setAttribute("hidden", "");
     detail.classList.add("is-hidden");
   }
 
   const dash = $("#dashboardView");
   if (dash) {
     dash.hidden = false;
+    dash.removeAttribute("hidden");
     dash.classList.remove("is-hidden");
   }
 
   $$(".admin-page").forEach((el) => {
     const on = el.dataset.page === state.page;
     el.hidden = !on;
+    if (on) el.removeAttribute("hidden");
+    else el.setAttribute("hidden", "");
     el.classList.toggle("is-page-on", on);
   });
 
@@ -688,17 +693,19 @@ function showDashboard() {
 }
 
 function showOrderDetail(id) {
-  const order = state.orders.find((o) => o.id === id);
+  const order = state.orders.find((o) => String(o.id) === String(id));
   if (!order) {
     showToast("الطلب غير موجود", "warn");
     showPage("orders");
     return;
   }
-  state.selectedOrderId = id;
+  state.selectedOrderId = order.id;
   state.page = "orders";
+  document.body.classList.add("admin-detail-open");
 
   $$(".admin-page").forEach((el) => {
     el.hidden = true;
+    el.setAttribute("hidden", "");
     el.classList.remove("is-page-on");
   });
 
@@ -706,16 +713,18 @@ function showOrderDetail(id) {
   const dash = $("#dashboardView");
   if (dash) {
     dash.hidden = true;
+    dash.setAttribute("hidden", "");
     dash.classList.add("is-hidden");
   }
 
   const detail = $("#orderDetailView");
   if (detail) {
     detail.hidden = false;
+    detail.removeAttribute("hidden");
     detail.classList.remove("is-hidden");
   }
   renderOrderDetail(order);
-  history.replaceState(null, "", `#order=${encodeURIComponent(id)}`);
+  history.replaceState(null, "", `#order=${encodeURIComponent(order.id)}`);
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -759,17 +768,21 @@ function renderOrders() {
   }
 
   list.innerHTML = orders
-    .map((o) => {
+    .map((o, index) => {
       const addons = Array.isArray(o.addons) ? o.addons : [];
       const isExternal = o.package_id === "external";
+      const status = o.status || "pending";
       const pendingHint =
-        o.status === "pending" ? `<span class="order-row-hint pending-hint">بانتظار قرارك</span>` : "";
+        status === "pending" ? `<span class="order-row-hint pending-hint">بانتظار قرارك</span>` : "";
+      const ctaClass =
+        status === "pending" ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm";
+      const tone = index % 2 === 0 ? "tone-a" : "tone-b";
       return `
-      <article class="order-row" data-id="${o.id}">
-        <button type="button" class="order-row-main" data-open="1">
+      <article class="order-row is-${escapeAttr(status)} ${tone}" data-id="${escapeAttr(o.id)}" data-open-order="1">
+        <div class="order-row-main">
           <div class="order-row-title">
             <strong>${escapeHtml(o.customer_name)}</strong>
-            <span class="status-pill ${o.status}">${statusLabel(o.status)}</span>
+            <span class="status-pill ${escapeAttr(status)}">${statusLabel(status)}</span>
             ${isExternal ? `<span class="ext-pill">خارج الموقع</span>` : ""}
           </div>
           <div class="order-row-meta">
@@ -783,12 +796,12 @@ function renderOrders() {
             <span class="order-phone">${escapeHtml(o.customer_phone)}</span>
             <span>${formatDateTime(o.created_at)}</span>
           </div>
-        </button>
+        </div>
         <div class="order-row-side">
           <strong class="order-row-total">${money(o.grand_total)}</strong>
           <span class="order-row-hint">${addons.length ? `${addons.length} إضافة` : "بدون إضافات"}</span>
           ${pendingHint}
-          <button type="button" class="btn btn-ghost btn-sm" data-open="1">عرض التفاصيل والقرار</button>
+          <button type="button" class="${ctaClass}" data-open-order="1">فتح الطلب</button>
         </div>
       </article>`;
     })
@@ -1081,17 +1094,16 @@ function setup() {
   });
 
   $("#ordersList")?.addEventListener("click", (e) => {
-    const row = e.target.closest(".order-row");
+    const row = e.target.closest(".order-row[data-id]");
     if (!row) return;
     const id = row.dataset.id;
     if (!id) return;
-    // القرار فقط من صفحة التفاصيل بعد مراجعة كل المعلومات
-    if (e.target.closest("[data-open]") || e.target.closest(".order-row-main") || e.target.closest(".order-row-side")) {
-      showOrderDetail(id);
-    }
+    e.preventDefault();
+    showOrderDetail(id);
   });
 
-  $("#backToListBtn")?.addEventListener("click", () => {
+  $("#backToListBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
     showPage("orders");
   });
 
