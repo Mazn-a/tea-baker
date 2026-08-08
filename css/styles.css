@@ -543,6 +543,15 @@ select {
   font-size: 0.92rem;
 }
 
+.map-google-fallback {
+  display: inline-block;
+  color: var(--tea);
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-decoration: underline;
+  text-underline-offset: 0.15rem;
+}
+
 .location-map {
   width: 100%;
   height: 15rem;

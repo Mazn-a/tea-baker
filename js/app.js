@@ -579,7 +579,7 @@ async function searchMapPlaces(query) {
     if (!box) return;
     if (!Array.isArray(data) || !data.length) {
       box.hidden = false;
-      box.innerHTML = `<li class="map-search-empty">ما لقينا نتائج — جرّب اسماً آخر أو اضغط على الخريطة مباشرة.</li>`;
+      box.innerHTML = `<li class="map-search-empty">ما لقينا نتائج لهذا الاسم — هذا البحث المجاني أفضل للمناطق والأحياء وليس أسماء القاعات. جرّب اسم الحي، أو استخدم رابط خرائط قوقل بالأسفل.</li>`;
       return;
     }
     box.hidden = false;
@@ -1586,18 +1586,30 @@ function renderWizard() {
               type="text"
               dir="rtl"
               autocomplete="off"
-              placeholder="ابحث باسم المكان، مثال: قاعة الأفراح"
+              placeholder="ابحث باسم المنطقة أو الحي"
             />
             <button type="button" class="btn btn-ghost" id="mapSearchBtn">بحث</button>
           </div>
           <ul id="mapSearchResults" class="map-search-results" hidden></ul>
+          <a
+            id="googleSearchFallback"
+            class="map-google-fallback"
+            href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+              state.hallName || ""
+            )}"
+            target="_blank"
+            rel="noopener"
+          >
+            🔍 ما لقيت اسم القاعة؟ افتح خرائط قوقل وابحث فيها بدقة
+          </a>
           <div id="locationMap" class="location-map"></div>
           <p class="field-hint">اضغط على الخريطة أو اسحب العلامة 📍 لتثبيت موقع القاعة بدقة.</p>
           <button type="button" class="btn btn-locate" id="btnShareLocation">
             📍 أو استخدم موقعي الحالي الآن
           </button>
           <details class="map-manual-link">
-            <summary>عندك رابط خرائط قوقل جاهز؟ الصقه هنا</summary>
+            <summary>لقيت القاعة في خرائط قوقل؟ الصق رابطها هنا</summary>
+            <p class="field-hint">من خرائط قوقل اضغط «مشاركة» ثم انسخ الرابط والصقه هنا.</p>
             <input
               id="inputLocationLink"
               type="url"
@@ -1610,11 +1622,18 @@ function renderWizard() {
           <div class="field-error" id="fieldError"></div>
         </div>
       </div>`;
+    const updateGoogleFallbackLink = () => {
+      const link = $("#googleSearchFallback");
+      if (!link) return;
+      const query = ($("#mapSearchInput")?.value || state.hallName || "").trim();
+      link.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+    };
     const sync = () => {
       state.hallName = $("#inputHallName").value;
       const linkInput = $("#inputLocationLink");
       if (linkInput) state.locationLink = linkInput.value.trim();
       nextBtn.disabled = !canProceed();
+      updateGoogleFallbackLink();
       const err = $("#fieldError");
       if (!err) return;
       const link = state.locationLink;
@@ -1632,6 +1651,7 @@ function renderWizard() {
     $("#inputLocationLink").addEventListener("input", sync);
     $("#btnShareLocation")?.addEventListener("click", () => shareCurrentLocation(sync));
     $("#mapSearchBtn")?.addEventListener("click", () => searchMapPlaces($("#mapSearchInput")?.value));
+    $("#mapSearchInput")?.addEventListener("input", updateGoogleFallbackLink);
     $("#mapSearchInput")?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
