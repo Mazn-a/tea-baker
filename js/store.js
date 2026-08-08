@@ -17,7 +17,15 @@
     orders: "bakr-orders-v1",
     visits: "bakr-visits-v1",
     visitSession: "bakr-visit-session",
+    deletedIds: "bakr-deleted-orders-v1",
   };
+
+  /**
+   * علامة الحذف داخل حقل الملاحظات.
+   * سبب وجودها: عمود status في السحابة مقيّد بـ pending/accepted/rejected،
+   * وقد لا تكون صلاحية DELETE مفعّلة، فنحتاج علامة تعمل بصلاحية التحديث الحالية.
+   */
+  const DELETED_MARK = "__deleted__";
 
   function cfg() {
     return global.BAKR_CONFIG || {};
@@ -58,6 +66,27 @@
 
   function writeLocal(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
+  }
+
+  function deletedIds() {
+    const list = readLocal(KEYS.deletedIds, []);
+    return Array.isArray(list) ? list.map(String) : [];
+  }
+
+  function rememberDeleted(id) {
+    const list = deletedIds();
+    const key = String(id);
+    if (!list.includes(key)) {
+      list.push(key);
+      writeLocal(KEYS.deletedIds, list.slice(-500));
+    }
+  }
+
+  function isDeletedOrder(order) {
+    if (!order) return false;
+    if (order.status === "deleted") return true;
+    if (String(order.notes || "").startsWith(DELETED_MARK)) return true;
+    return deletedIds().includes(String(order.id));
   }
 
   function sessionId() {
@@ -145,7 +174,7 @@
     const orders = await listOrders();
     const dates = new Set();
     (orders || []).forEach((o) => {
-      if (o.status === "rejected" || o.status === "deleted") return;
+      if (o.status === "rejected") return;
       const d = String(o.event_date || "").slice(0, 10);
       if (d) dates.add(d);
     });
@@ -161,12 +190,12 @@
           .select("*")
           .order("created_at", { ascending: false });
         if (error) throw error;
-        return data || [];
+        return (data || []).filter((o) => !isDeletedOrder(o));
       }
     } catch (err) {
       console.warn("listOrders cloud → local:", err);
     }
-    return readLocal(KEYS.orders, []);
+    return readLocal(KEYS.orders, []).filter((o) => !isDeletedOrder(o));
   }
 
   async function updateOrderStatus(id, status) {
@@ -195,33 +224,60 @@
   }
 
   /**
-   * حذف طلب نهائياً: نحاول DELETE من السحابة،
-   * وإن منعته الصلاحيات نعلّمه deleted حتى يختفي من الموقع ويتحرر التاريخ.
+   * حذف طلب نهائياً من الموقع.
+   * نجرّب بالترتيب حتى ينجح واحد مع صلاحيات السحابة الحالية:
+   *  1) DELETE فعلي للصف
+   *  2) status = 'deleted'
+   *  3) status = 'rejected' + علامة حذف في الملاحظات (يتحرر التاريخ ويختفي الطلب)
    */
   async function deleteOrder(id) {
+    rememberDeleted(id);
+
     let cloudOk = false;
     try {
       const sb = await getClient();
       if (sb) {
-        const { error: delErr } = await sb.from("orders").delete().eq("id", id);
-        if (!delErr) {
-          cloudOk = true;
-        } else {
-          const { data, error } = await sb
+        // 1) حذف فعلي — RLS قد يمنعه بصمت فنتحقق من عدد الصفوف المحذوفة
+        const { data: removed } = await sb
+          .from("orders")
+          .delete()
+          .eq("id", id)
+          .select("id");
+        cloudOk = Boolean(removed?.length);
+
+        // 2) تعليمه محذوفاً (يفشل إن كان قيد status لا يسمح بالقيمة)
+        if (!cloudOk) {
+          const { data: marked } = await sb
             .from("orders")
             .update({ status: "deleted" })
             .eq("id", id)
-            .select()
-            .single();
-          if (error) throw error;
-          cloudOk = Boolean(data);
+            .select("id");
+          cloudOk = Boolean(marked?.length);
+        }
+
+        // 3) الحل المتوافق مع القيد الحالي: مرفوض + علامة في الملاحظات
+        if (!cloudOk) {
+          const { data: current } = await sb
+            .from("orders")
+            .select("notes")
+            .eq("id", id)
+            .maybeSingle();
+          const notes = String(current?.notes || "");
+          const { data: hidden } = await sb
+            .from("orders")
+            .update({
+              status: "rejected",
+              notes: notes.startsWith(DELETED_MARK) ? notes : `${DELETED_MARK}${notes}`,
+            })
+            .eq("id", id)
+            .select("id");
+          cloudOk = Boolean(hidden?.length);
         }
       }
     } catch (err) {
       console.warn("deleteOrder cloud → local:", err);
     }
 
-    // محلياً: احذف السجل نهائياً من القائمة
     const all = readLocal(KEYS.orders, []);
     writeLocal(
       KEYS.orders,
@@ -283,6 +339,7 @@
     listBookedDates,
     updateOrderStatus,
     deleteOrder,
+    isDeletedOrder,
     trackVisit,
     listVisits,
     ping,

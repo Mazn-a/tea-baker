@@ -962,7 +962,9 @@ async function loadData() {
     window.BakrStore.listOrders(),
     window.BakrStore.listVisits(),
   ]);
-  state.orders = (orders || []).filter((o) => o.status !== "deleted");
+  state.orders = (orders || []).filter(
+    (o) => !window.BakrStore.isDeletedOrder?.(o) && o.status !== "deleted"
+  );
   state.visits = visits || [];
   renderStats();
   renderOrders();
@@ -1057,12 +1059,16 @@ async function deleteOrderById(order, btn) {
   showPage("orders");
 
   try {
-    await window.BakrStore.deleteOrder(orderId);
+    const res = await window.BakrStore.deleteOrder(orderId);
     if (!isDateStillBooked(eventDate, orderId)) {
       releaseLocalBookedDate(eventDate);
     }
     await loadData();
-    showToast("تم حذف الطلب نهائياً من الموقع");
+    if (window.BakrStore.hasCloud?.() && res && res.cloud === false) {
+      showToast("اختفى من هذا الجهاز — تعذر الحذف من قاعدة البيانات", "warn");
+    } else {
+      showToast("تم حذف الطلب نهائياً من الموقع");
+    }
     return true;
   } catch (err) {
     console.warn(err);

@@ -13,7 +13,7 @@ create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
   status text not null default 'pending'
-    check (status in ('pending', 'accepted', 'rejected')),
+    check (status in ('pending', 'accepted', 'rejected', 'deleted')),
 
   city_id text not null,
   city_label text not null,
