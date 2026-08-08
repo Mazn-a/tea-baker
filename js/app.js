@@ -1038,11 +1038,8 @@ function renderReview() {
       <h3>ماذا بعد تأكيد الطلب؟</h3>
       <ol>
         <li>اضغط <strong>تأكيد الطلب</strong> بالأسفل لإرسال الطلب عبر الموقع.</li>
-        <li>تصل طلبك مباشرة إلى إدارة شاي بكر للمراجعة.</li>
-        <li>يصلك على رقم جوالك رسالة واتساب <strong>بالقبول أو الرفض</strong> مع تفاصيل الطلب.</li>
-        <li>الحجز يُعتمد فقط بعد رسالة القبول.</li>
+        <li>انتظر رسالة واتساب على رقمك لمعرفة قبول الطلب أو رفضه.</li>
       </ol>
-      <p class="procedure-note">لا تحتاج إرسال واتساب بنفسك — القرار والرسالة يأتيانك من الإدارة على رقمك.</p>
     </div>`;
 }
 
@@ -1054,23 +1051,16 @@ function renderSuccess() {
         <div class="success-mark">✓</div>
         <h2>تم استلام طلبكم</h2>
         <p class="success-lead">
-          وصل طلبك إلى إدارة شاي بكر عبر الموقع.
-          سيصلك على رقم جوالك <strong>${String(state.phone || "").replace(/</g, "")}</strong> رسالة واتساب
-          <strong>بالقبول أو الرفض</strong> مع تفاصيل الطلب.
+          وصل طلبك إلى إدارة شاي بكر.
+          انتظر رسالة واتساب على رقمك
+          <strong>${String(state.phone || "").replace(/</g, "")}</strong>
+          لمعرفة قبول الطلب أو رفضه.
         </p>
         <div class="review-card success-summary">
           <div class="review-row"><span>البكج</span><strong>${p?.name || "—"}</strong></div>
           <div class="review-row"><span>التاريخ</span><strong>${formatDateLabel(state.date)}</strong></div>
           <div class="review-row"><span>مجموع الإضافات</span><strong>${money(addonsTotal())}</strong></div>
           <div class="review-row price"><span>الإجمالي</span><strong>${money(grandTotal())}</strong></div>
-        </div>
-        <div class="procedure-box">
-          <h3>الإجراءات</h3>
-          <ol>
-            <li>تم تسجيل طلبك في الموقع بنجاح.</li>
-            <li>الإدارة تراجع الطلب ثم ترسل لك واتساب بالقبول أو الرفض.</li>
-            <li>بعد رسالة القبول يكون حجزك معتمداً.</li>
-          </ol>
         </div>
         <button type="button" class="btn btn-ghost" id="backHome" style="width:100%">العودة للعروض</button>
       </div>
