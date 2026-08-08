@@ -1103,13 +1103,6 @@ body.admin-detail-open #orderDetailView {
   flex-wrap: wrap;
 }
 
-.detail-toolbar .btn-delete {
-  margin-inline-start: auto;
-  min-height: 2.45rem;
-  padding-inline: 1rem;
-  font-weight: 800;
-}
-
 .order-delete-box {
   margin: 0.85rem 1rem 1.1rem;
   padding: 0;
@@ -1617,7 +1610,6 @@ body:has(#adminHome.is-page-on) .admin-main {
   gap: 0.65rem;
   flex-wrap: wrap;
 }
-.detail-toolbar .btn-delete { margin-inline-start: auto; }
 .detail-panel { padding: 0; overflow: visible; }
 
 .order-detail-view {

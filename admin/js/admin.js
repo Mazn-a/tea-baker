@@ -935,7 +935,7 @@ function renderOrderDetail(o) {
       <button type="button" class="btn btn-wa" data-action="whatsapp">واتساب نص فقط</button>
     </div>
     <div class="order-delete-box">
-      <button type="button" class="btn btn-delete" data-action="delete">حذف الطلب وتحرير التاريخ</button>
+      <button type="button" class="btn btn-delete" data-action="delete">حذف الطلب نهائياً</button>
     </div>
   `;
 }
@@ -1204,14 +1204,6 @@ function setup() {
   $("#backToListBtn")?.addEventListener("click", (e) => {
     e.preventDefault();
     showPage("orders");
-  });
-
-  $("#deleteOrderBtn")?.addEventListener("click", async (e) => {
-    e.preventDefault();
-    const id = state.selectedOrderId;
-    const order = state.orders.find((o) => String(o.id) === String(id));
-    if (!order) return;
-    await deleteOrderById(order, e.currentTarget);
   });
 
   $("#orderDetail")?.addEventListener("click", async (e) => {
