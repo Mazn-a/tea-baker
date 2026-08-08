@@ -946,16 +946,17 @@ function renderReview() {
   const savings = packageSavings();
   const listSubtotal = orderListSubtotal();
   const chargedTotal = grandTotal();
+  const addonsHtml = addons.length
+    ? `<ul class="review-addons-list">${addons
+        .map((a) => `<li>${a.name} <span class="review-addon-qty">× ${a.qty}</span></li>`)
+        .join("")}</ul>`
+    : "بدون";
+
   const rows = [
     ["المدينة", labelOf(CITIES, state.city)],
     ["نوع المناسبة", eventLabel()],
     ["البكج", p ? p.name : "—"],
-    [
-      "الإضافات",
-      addons.length
-        ? addons.map((a) => `${a.name} × ${a.qty} (${money(a.price * a.qty)})`).join("، ")
-        : "بدون",
-    ],
+    ["الإضافات", addonsHtml, addons.length ? "addons" : ""],
     ["تاريخ المناسبة", formatDateLabel(state.date)],
     ["اسم القاعة", state.hallName || "—"],
     ["رابط الخريطة", state.locationLink || "—"],
@@ -1011,9 +1012,13 @@ function renderReview() {
     <div class="review-card">
       <div class="review-banner">ملخص طلبك الكامل</div>
       ${rows
-        .map(
-          ([k, v]) => `
-        <div class="review-row">
+        .map(([k, v, kind]) =>
+          kind === "addons"
+            ? `<div class="review-row review-row-addons">
+          <span>${k}</span>
+          <div class="review-addons">${v}</div>
+        </div>`
+            : `<div class="review-row">
           <span>${k}</span>
           <strong>${v}</strong>
         </div>`
