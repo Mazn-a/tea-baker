@@ -1656,16 +1656,12 @@ function setupNav() {
     });
   });
 
-  // الشعار: تحديث الصفحة والرجوع للرئيسية داخل الموقع
+  // الشعار: رجوع للرئيسية مع تحديث التواريخ المحجوزة بدون إعادة تحميل الصفحة
   $("#brandHome")?.addEventListener("click", (e) => {
     e.preventDefault();
     links?.classList.remove("open");
-    if (location.hash === "#home") {
-      location.reload();
-      return;
-    }
-    location.hash = "home";
-    location.reload();
+    goToHash("home");
+    loadBookedDates().catch(() => {});
   });
 
   // كل روابط القائمة تغيّر العنوان فقط، و applyRoute يتكفّل بالعرض والتمرير
