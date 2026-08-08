@@ -70,13 +70,17 @@ function expectedDiscountCode() {
 }
 
 function tryApplyDiscount(raw) {
-  const got = String(raw || "")
-    .trim()
-    .toLowerCase();
+  const typed = String(raw || "").trim();
+  const got = typed.toLowerCase();
   const expected = expectedDiscountCode();
-  state.discountCode = String(raw || "").trim();
-  state.discountApplied = Boolean(expected && got === expected);
-  return state.discountApplied;
+  const canonical =
+    String(window.DISCOUNT_CODE || window.BAKR_CATALOG?.discountCode || "Bakr10").trim() ||
+    "Bakr10";
+  const ok = Boolean(expected && got === expected);
+  state.discountApplied = ok;
+  // احفظ الشكل الرسمي عند النجاح، وإلا ما كتبه العميل
+  state.discountCode = ok ? canonical : typed;
+  return ok;
 }
 
 function selectedAddons() {
