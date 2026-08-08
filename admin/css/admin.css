@@ -1591,7 +1591,14 @@ body:has(#adminHome.is-page-on) .admin-main {
 .order-actions .btn { min-height: 2.7rem; width: 100%; }
 
 .order-detail-view { display: grid; gap: 0.75rem; }
-.detail-toolbar { display: flex; align-items: center; }
+.detail-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+.detail-toolbar .btn-delete { margin-inline-start: auto; }
 .detail-panel { padding: 0; overflow: visible; }
 
 .order-detail-view {
