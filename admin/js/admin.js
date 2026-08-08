@@ -934,6 +934,10 @@ function renderOrderDetail(o) {
       <button type="button" class="btn btn-ghost" data-action="pdf">معاينة / تحميل PDF</button>
       <button type="button" class="btn btn-wa" data-action="whatsapp">واتساب نص فقط</button>
     </div>
+    <div class="order-delete-box">
+      <p>إذا كان الطلب تجربة أو تبي تحرير التاريخ</p>
+      <button type="button" class="btn btn-delete" data-action="delete">حذف الطلب وتحرير التاريخ</button>
+    </div>
   `;
 }
 

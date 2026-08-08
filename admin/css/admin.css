@@ -1103,6 +1103,31 @@ body.admin-detail-open #orderDetailView {
 
 .detail-toolbar .btn-delete {
   margin-inline-start: auto;
+  min-height: 2.45rem;
+  padding-inline: 1rem;
+  font-weight: 800;
+}
+
+.order-delete-box {
+  margin: 0.85rem 1rem 1.1rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.9rem;
+  border: 1.5px dashed rgba(180, 35, 24, 0.35);
+  background: #fff5f4;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.order-delete-box p {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #8a2b22;
+}
+
+.order-delete-box .btn-delete {
+  width: 100%;
+  min-height: 2.7rem;
 }
 
 .detail-panel {
