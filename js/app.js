@@ -29,11 +29,25 @@ const state = {
   dateFeedback: "idle",
   discountCode: "",
   discountApplied: false,
+  /** true أثناء إرسال الطلب — يمنع الإرسال مرتين */
+  submitting: false,
+  /** false إذا لم يصل الطلب للإدارة، فنعرض بديل واتساب */
+  orderSaved: true,
 };
 
 const money = (n) => `${Number(n).toLocaleString("ar-SA")} ر.س`;
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+/** أي نص يكتبه العميل يمر من هنا قبل وضعه داخل HTML */
+function esc(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 function labelOf(list, id) {
   return list.find((x) => x.id === id)?.label || "—";
@@ -309,16 +323,15 @@ function showView(name, opts = {}) {
     a.classList.toggle("active", isActive);
   });
   if (scroll) window.scrollTo({ top: 0, behavior: "smooth" });
-  const header = $(".site-header");
-  header.classList.toggle("is-booking", name === "booking");
+  $(".site-header")?.classList.toggle("is-booking", name === "booking");
+  // بديل :has() للمتصفحات الأقدم على الجوال
+  document.body.classList.toggle("booking-open", name === "booking");
 }
 
+/** يبدأ دائماً من خطوة المدينة، حتى لو اختار العميل بكجاً من الصفحة الرئيسية */
 function startBooking(preselectPackage) {
   if (preselectPackage) state.packageId = preselectPackage;
-  state.stepIndex = state.packageId ? FLOW.indexOf("package") : 0;
-  // If package preselected from marketing, still start from city for clarity
   state.stepIndex = 0;
-  if (preselectPackage) state.packageId = preselectPackage;
   showView("booking");
   renderWizard();
 }
@@ -486,11 +499,31 @@ function prevStep() {
 }
 
 async function confirmBooking() {
+  // ضغطتان سريعتان على الجوال ما تنشئان طلبين
+  if (state.submitting) return;
+
   if (!state.date || isDateUnavailable(state.date)) {
     state.dateFeedback = state.date && isBeyondBookingWindow(state.date) ? "beyond" : "bad";
     setStep(FLOW.indexOf("date"));
     return;
   }
+
+  const nextBtn = $("#btnNext");
+  state.submitting = true;
+  if (nextBtn) {
+    nextBtn.disabled = true;
+    nextBtn.textContent = "جاري الإرسال…";
+  }
+
+  // تأكد أن أحداً لم يحجز نفس اليوم أثناء تعبئة الطلب
+  await loadBookedDates();
+  if (isDateUnavailable(state.date)) {
+    state.submitting = false;
+    state.dateFeedback = isBeyondBookingWindow(state.date) ? "beyond" : "bad";
+    setStep(FLOW.indexOf("date"));
+    return;
+  }
+
   // احجز التاريخ فوراً بمجرد إرسال الطلب (حتى وهو بانتظار القبول/الرفض)
   persistBookedDate(state.date);
   localStorage.removeItem(STORAGE_DRAFT);
@@ -503,9 +536,10 @@ async function confirmBooking() {
     qty: a.qty,
   }));
 
+  state.orderSaved = true;
   try {
     if (window.BakrStore?.createOrder) {
-      await window.BakrStore.createOrder({
+      const saved = await window.BakrStore.createOrder({
         cityId: state.city,
         cityLabel: labelOf(CITIES, state.city),
         eventLabel: eventLabel(),
@@ -531,11 +565,14 @@ async function confirmBooking() {
           .filter(Boolean)
           .join(" | "),
       });
+      state.orderSaved = saved?.saved !== false;
     }
   } catch (err) {
     console.warn("تعذر حفظ الطلب في لوحة الإدارة:", err);
+    state.orderSaved = false;
   }
 
+  state.submitting = false;
   setStep(FLOW.indexOf("success"));
 }
 
@@ -723,7 +760,13 @@ function shiftCalendarMonth(delta) {
   if (delta < 0 && !canGoPrevMonth()) return;
   if (delta > 0 && !canGoNextMonth()) return;
   if (state.calendarMode === "hijri") {
-    state.calendar.setDate(state.calendar.getDate() + delta * 30);
+    // الشهر الهجري 29 أو 30 يوماً، فننتقل من حافة الشهر الحالي لا بعدد ثابت
+    const month = buildHijriMonthDays(state.calendar);
+    const edge = delta > 0 ? month.days[month.days.length - 1] : month.days[0];
+    const anchor = new Date(edge?.date || state.calendar);
+    anchor.setHours(12, 0, 0, 0);
+    anchor.setDate(anchor.getDate() + (delta > 0 ? 1 : -1));
+    state.calendar = anchor;
   } else {
     state.calendar.setMonth(state.calendar.getMonth() + delta);
   }
@@ -801,9 +844,9 @@ function renderCalendar() {
       <div class="cal-search">
         <label for="dateSearch">اكتب أو ابحث عن التاريخ</label>
         <div class="cal-search-row">
-          <input id="dateSearch" type="text" inputmode="numeric" placeholder="${searchPlaceholder}" value="${
-            state.dateSearch || ""
-          }" />
+          <input id="dateSearch" type="text" inputmode="numeric" placeholder="${searchPlaceholder}" value="${esc(
+            state.dateSearch
+          )}" />
           <button type="button" class="btn btn-primary" id="dateSearchBtn">بحث</button>
         </div>
         <p class="cal-search-hint">يمكنك الكتابة يدوياً أو الاختيار من التقويم بالأسفل.</p>
@@ -879,7 +922,7 @@ function renderPackagesStep() {
         const selected = state.packageId === p.id;
         return `
         <button type="button" class="pkg-card pkg-pick ${selected ? "is-selected" : ""}" data-pick-pkg="${p.id}">
-          <img src="${p.image}" alt="" />
+          <img src="${p.image}" alt="" width="860" height="1147" loading="lazy" decoding="async" />
           <div class="body">
             <h3>${p.name}</h3>
             <div class="pkg-meta-row">
@@ -937,10 +980,10 @@ function renderField(id, label, type, value, placeholder, extra = "", attrs = ""
       <label for="${id}">${label}</label>
       ${
         type === "textarea"
-          ? `<textarea id="${id}" placeholder="${placeholder}" ${attrs}>${value || ""}</textarea>`
-          : `<input id="${id}" type="${type}" inputmode="${extra}" placeholder="${placeholder}" value="${
-              value || ""
-            }" ${attrs} />`
+          ? `<textarea id="${id}" placeholder="${esc(placeholder)}" ${attrs}>${esc(value)}</textarea>`
+          : `<input id="${id}" type="${type}" inputmode="${extra}" placeholder="${esc(
+              placeholder
+            )}" value="${esc(value)}" ${attrs} />`
       }
       <div class="field-error" id="fieldError"></div>
     </div>`;
@@ -963,22 +1006,22 @@ function renderReview() {
   const chargedTotal = grandTotal();
   const addonsHtml = addons.length
     ? `<ul class="review-addons-list">${addons
-        .map((a) => `<li>${a.name} <span class="review-addon-qty">× ${a.qty}</span></li>`)
+        .map((a) => `<li>${esc(a.name)} <span class="review-addon-qty">× ${a.qty}</span></li>`)
         .join("")}</ul>`
     : "بدون";
 
   const rows = [
-    ["المدينة", labelOf(CITIES, state.city)],
-    ["نوع المناسبة", eventLabel()],
-    ["البكج", p ? p.name : "—"],
+    ["المدينة", esc(labelOf(CITIES, state.city))],
+    ["نوع المناسبة", esc(eventLabel())],
+    ["البكج", esc(p ? p.name : "—")],
     ["الإضافات", addonsHtml, addons.length ? "addons" : ""],
-    ["تاريخ المناسبة", formatDateLabel(state.date)],
-    ["اسم القاعة", state.hallName || "—"],
-    ["رابط الخريطة", state.locationLink || "—"],
-    ["الاسم", state.name || "—"],
-    ["الجوال", state.phone || "—"],
+    ["تاريخ المناسبة", esc(formatDateLabel(state.date))],
+    ["اسم القاعة", esc(state.hallName || "—")],
+    ["رابط الخريطة", esc(state.locationLink || "—")],
+    ["الاسم", esc(state.name || "—")],
+    ["الجوال", esc(state.phone || "—")],
   ];
-  if (state.notes.trim()) rows.push(["ملاحظات", state.notes.trim()]);
+  if (state.notes.trim()) rows.push(["ملاحظات", esc(state.notes.trim())]);
 
   const discountMsg = state.discountApplied
     ? `<p class="discount-feedback is-ok">تم تطبيق كود الخصم</p>`
@@ -1049,7 +1092,7 @@ function renderReview() {
             inputmode="text"
             autocomplete="off"
             placeholder="أدخل كود الخصم"
-            value="${String(state.discountCode || "").replace(/"/g, "&quot;")}"
+            value="${esc(state.discountCode)}"
           />
           <button type="button" class="btn btn-primary" id="btnApplyDiscount">تطبيق</button>
         </div>
@@ -1069,24 +1112,42 @@ function renderReview() {
 
 function renderSuccess() {
   const p = pkg();
-  return `
-    <div class="success-wrap">
-      <div class="success-card">
+  const failed = state.orderSaved === false;
+
+  const head = failed
+    ? `
+        <div class="success-mark is-warn">!</div>
+        <h2>ما قدرنا نرسل الطلب</h2>
+        <p class="success-lead">
+          صار خلل في الاتصال ولم يصل طلبك للإدارة.
+          اضغط الزر بالأسفل لإرسال تفاصيل طلبك عبر واتساب حتى لا يضيع.
+        </p>`
+    : `
         <div class="success-mark">✓</div>
         <h2>تم استلام طلبكم</h2>
         <p class="success-lead">
           وصل طلبك إلى إدارة شاي بكر.
           انتظر رسالة واتساب على رقمك
-          <strong>${String(state.phone || "").replace(/</g, "")}</strong>
+          <strong>${esc(state.phone)}</strong>
           لمعرفة قبول الطلب أو رفضه.
-        </p>
+        </p>`;
+
+  const actions = failed
+    ? `<button type="button" class="btn btn-primary" id="successWhatsApp" style="width:100%">إرسال الطلب عبر واتساب</button>
+        <button type="button" class="btn btn-ghost" id="backHome" style="width:100%">العودة للعروض</button>`
+    : `<button type="button" class="btn btn-ghost" id="backHome" style="width:100%">العودة للعروض</button>`;
+
+  return `
+    <div class="success-wrap">
+      <div class="success-card ${failed ? "is-failed" : ""}">
+        ${head}
         <div class="review-card success-summary">
-          <div class="review-row"><span>البكج</span><strong>${p?.name || "—"}</strong></div>
-          <div class="review-row"><span>التاريخ</span><strong>${formatDateLabel(state.date)}</strong></div>
+          <div class="review-row"><span>البكج</span><strong>${esc(p?.name || "—")}</strong></div>
+          <div class="review-row"><span>التاريخ</span><strong>${esc(formatDateLabel(state.date))}</strong></div>
           <div class="review-row"><span>مجموع الإضافات</span><strong>${money(addonsTotal())}</strong></div>
           <div class="review-row price"><span>الإجمالي</span><strong>${money(grandTotal())}</strong></div>
         </div>
-        <button type="button" class="btn btn-ghost" id="backHome" style="width:100%">العودة للعروض</button>
+        ${actions}
       </div>
     </div>`;
 }
@@ -1174,9 +1235,9 @@ function renderWizard() {
         ? `
       <div class="field-card other-event-field">
         <label for="inputEventOther">اكتب نوع المناسبة</label>
-        <input id="inputEventOther" type="text" placeholder="مثال: تخرج، عقيقة، افتتاح..." value="${
-          state.eventOther || ""
-        }" />
+        <input id="inputEventOther" type="text" placeholder="مثال: تخرج، عقيقة، افتتاح..." value="${esc(
+          state.eventOther
+        )}" />
         <div class="field-error" id="fieldError"></div>
       </div>`
         : "";
@@ -1311,11 +1372,6 @@ function renderWizard() {
       nextBtn.disabled = !canProceed();
     });
   } else if (step === "location") {
-    const esc = (s) =>
-      String(s || "")
-        .replace(/&/g, "&amp;")
-        .replace(/"/g, "&quot;")
-        .replace(/</g, "&lt;");
     body.innerHTML = `
       <div class="fields-stack">
         <div class="field-card">
@@ -1382,6 +1438,7 @@ function renderWizard() {
     });
   } else if (step === "success") {
     body.innerHTML = renderSuccess();
+    $("#successWhatsApp")?.addEventListener("click", openWhatsApp);
     $("#backHome").addEventListener("click", () => {
       resetBookingSoft();
       goHomeMarketing();
@@ -1410,6 +1467,8 @@ function resetBookingSoft() {
   state.calendarMode = "gregorian";
   state.discountCode = "";
   state.discountApplied = false;
+  state.submitting = false;
+  state.orderSaved = true;
 }
 
 function renderMarketingPackages() {
@@ -1419,7 +1478,15 @@ function renderMarketingPackages() {
     (p) => `
     <article class="pkg-card market-pkg receipt-pkg ${p.featured ? "is-featured" : ""}">
       <div class="pkg-thumb-wrap">
-        <img class="pkg-thumb" src="${p.image}" alt="" />
+        <img
+          class="pkg-thumb"
+          src="${p.image}"
+          alt="${esc(p.name)}"
+          width="860"
+          height="1147"
+          loading="lazy"
+          decoding="async"
+        />
       </div>
       <div class="body">
         <div class="pkg-head">

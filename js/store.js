@@ -153,7 +153,8 @@
           ({ data, error } = await sb.from("orders").insert(fallback).select().single());
         }
         if (error) throw error;
-        return data;
+        // saved: true يعني وصل الطلب فعلاً للوحة الإدارة
+        return { ...data, saved: true };
       }
     } catch (err) {
       console.warn("createOrder cloud → local:", err);
@@ -163,7 +164,8 @@
     const all = readLocal(KEYS.orders, []);
     all.unshift(localRow);
     writeLocal(KEYS.orders, all);
-    return localRow;
+    // بدون سحابة: الطلب محفوظ في جهاز العميل فقط، والإدارة لن تراه
+    return { ...localRow, saved: !hasCloud() };
   }
 
   /**

@@ -1230,6 +1230,16 @@ select {
   font-size: 1.1rem;
 }
 
+/* حالة تعذر وصول الطلب للإدارة */
+.success-mark.is-warn {
+  background: var(--err-bg);
+  color: var(--err);
+}
+
+.success-card.is-failed h2 {
+  color: var(--err);
+}
+
 /* Storefront — مطابق للصورة حرفياً */
 .storefront {
   background: #ead4bd;
@@ -2621,25 +2631,31 @@ select {
     grid-template-columns: 1fr;
   }
 
-  /* حجز الجوال: شاشة ثابتة مع تمرير داخلي للخطوات الطويلة */
+  /* حجز الجوال: شاشة ثابتة مع تمرير داخلي للخطوات الطويلة.
+     .booking-open يضيفه app.js ليعمل على المتصفحات التي لا تدعم :has() */
+  body.booking-open,
   body:has(.view[data-view="booking"].is-active) {
     overflow: hidden;
   }
 
+  body.booking-open .site-footer,
   body:has(.view[data-view="booking"].is-active) .site-footer {
     display: none;
   }
 
+  body.booking-open .btn-book-mobile,
   body:has(.view[data-view="booking"].is-active) .btn-book-mobile {
     visibility: hidden;
     pointer-events: none;
   }
 
+  body.booking-open .site-header .nav,
   body:has(.view[data-view="booking"].is-active) .site-header .nav {
     min-height: 3.15rem;
     padding-block: 0.3rem;
   }
 
+  body.booking-open .brand img,
   body:has(.view[data-view="booking"].is-active) .brand img {
     width: 40px;
     height: 40px;
