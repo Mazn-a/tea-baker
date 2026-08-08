@@ -787,9 +787,13 @@ function renderOrderDetail(o) {
           .join("")}</ul>`
       : `<p class="empty-hint">بدون إضافات</p>`;
 
-  const locationArea = o.location_area || extractLocationArea(o.notes) || "";
   const mapLink = o.location_link || "";
   const isMap = /^https?:\/\//i.test(mapLink);
+  const cleanNotes = String(o.notes || "")
+    .split("|")
+    .map((p) => p.trim())
+    .filter((p) => p && !/^الموقع\s*:/.test(p))
+    .join(" | ");
 
   root.innerHTML = `
     <div class="order-top">
@@ -817,7 +821,6 @@ function renderOrderDetail(o) {
       <h4 class="order-section-title">القاعة والموقع</h4>
       <div class="order-kv">
         <div class="item"><span class="lbl">اسم القاعة</span><span class="val">${escapeHtml(o.hall_name || "—")}</span></div>
-        <div class="item"><span class="lbl">الحي / الموقع</span><span class="val">${escapeHtml(locationArea || "—")}</span></div>
         <div class="item span-2"><span class="lbl">رابط الخريطة</span><span class="val">${
           mapLink
             ? isMap
@@ -835,10 +838,10 @@ function renderOrderDetail(o) {
     </section>
 
     ${
-      o.notes
+      cleanNotes
         ? `<section class="order-section">
             <h4 class="order-section-title">ملاحظات العميل</h4>
-            <p class="order-notes">${escapeHtml(o.notes)}</p>
+            <p class="order-notes">${escapeHtml(cleanNotes)}</p>
           </section>`
         : ""
     }

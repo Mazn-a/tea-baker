@@ -80,11 +80,6 @@
       .replace(/"/g, "&quot;");
   }
 
-  function extractAreaFromNotes(notes) {
-    const m = String(notes || "").match(/(?:^|\|\s*)الموقع:\s*([^|]+)/);
-    return m ? m[1].trim() : "";
-  }
-
   function fileName(order) {
     const status =
       order.status === "accepted"
@@ -118,7 +113,13 @@
         : `<tr><td colspan="3" class="muted">بدون إضافات</td></tr>`;
 
     const shortId = String(order.id || "").slice(0, 8).toUpperCase() || "——";
-    const notes = order.notes ? escapeHtml(String(order.notes)) : "";
+    const notesRaw = String(order.notes || "")
+      .split("|")
+      .map((p) => p.trim())
+      .filter((p) => p && !/^الموقع\s*:/.test(p))
+      .join(" | ");
+    const notes = notesRaw ? escapeHtml(notesRaw) : "";
+    const mapLink = String(order.location_link || "").trim();
 
     return `
       <div class="head">
@@ -126,7 +127,7 @@
           <img src="${logoSrc()}" alt="شاي بكر" />
           <div>
             <h1>شاي بكر</h1>
-            <p>ضيافة الضيافات · مكة · جدة · الطائف</p>
+            <p>للضيافة والمناسبات · مكة · جدة · الطائف</p>
           </div>
         </div>
         <div class="meta-side">
@@ -153,17 +154,13 @@
       <table class="info">
         ${row("المدينة", escapeHtml(order.city_label || "—"))}
         ${row("نوع المناسبة", escapeHtml(order.event_label || "—"))}
-        ${row("البكج", `${escapeHtml(order.package_name || "—")} (${money(order.package_price)})`)}
+        ${row("البكج", `${escapeHtml(order.package_name || "—")} — ${money(order.package_price)}`)}
         ${row("تاريخ المناسبة", formatDate(order.event_date))}
         ${row("القاعة", escapeHtml(order.hall_name || "—"))}
         ${row(
-          "الموقع / الحي",
-          escapeHtml(order.location_area || extractAreaFromNotes(order.notes) || "—")
-        )}
-        ${row(
           "رابط الخريطة",
-          order.location_link
-            ? `<span dir="ltr" style="font-size:12px">${escapeHtml(order.location_link)}</span>`
+          mapLink
+            ? `<a class="map-link" href="${escapeHtml(mapLink)}" target="_blank" rel="noopener" dir="ltr">${escapeHtml(mapLink)}</a>`
             : "—"
         )}
       </table>
@@ -230,19 +227,19 @@
       display: flex; align-items: center; justify-content: space-between;
       gap: 20px; padding-bottom: 22px; border-bottom: 3px solid #633a11;
     }
-    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand { display: flex; align-items: center; gap: 16px; min-width: 0; }
     .brand img {
-      width: 86px; height: 86px; object-fit: contain;
-      border-radius: 18px; background: #f3ebe0;
+      width: 110px; height: 110px; object-fit: contain;
+      border-radius: 20px; background: #f3ebe0; flex-shrink: 0;
     }
     .brand h1 {
       margin: 0; font-family: "Reem Kufi", "Tajawal", sans-serif;
-      font-size: 28px; color: #633a11; line-height: 1.2;
+      font-size: 30px; color: #633a11; line-height: 1.2;
     }
     .brand p { margin: 4px 0 0; color: #6b5344; font-size: 14px; }
     .meta-side {
       text-align: left; direction: ltr; font-size: 13px;
-      color: #6b5344; line-height: 1.7;
+      color: #6b5344; line-height: 1.7; flex-shrink: 0;
     }
     .banner {
       margin: 24px 0 20px; padding: 16px 20px; border-radius: 16px;
@@ -260,14 +257,22 @@
       margin: 22px 0 10px; font-size: 16px; color: #633a11;
       border-right: 4px solid #c4a35a; padding-right: 10px;
     }
-    table.info { width: 100%; border-collapse: collapse; font-size: 14px; }
+    table.info { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
     table.info td {
       padding: 10px 12px; border-bottom: 1px solid #ead4bd; vertical-align: top;
     }
     table.info .lbl {
-      width: 34%; color: #6b5344; font-weight: 600; background: #f7f1e8;
+      width: 30%; color: #6b5344; font-weight: 600; background: #f7f1e8;
     }
-    table.info .val { font-weight: 700; color: #1a120c; word-break: break-word; }
+    table.info .val {
+      width: 70%; font-weight: 700; color: #1a120c;
+      overflow-wrap: anywhere; word-break: break-word; white-space: normal;
+    }
+    table.info .val .map-link {
+      color: #633a11; text-decoration: underline;
+      font-size: 12px; font-weight: 700;
+      overflow-wrap: anywhere; word-break: break-all;
+    }
     table.addons { width: 100%; border-collapse: collapse; font-size: 14px; }
     table.addons th {
       background: #633a11; color: #fffdf9; padding: 10px 12px;
