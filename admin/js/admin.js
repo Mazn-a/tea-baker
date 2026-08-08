@@ -188,7 +188,7 @@ function showShareModal({ order, file, text }) {
   modal.className = "share-modal";
   modal.innerHTML = `
     <div class="share-card" role="dialog" aria-modal="true">
-      <img src="../assets/logo.png?v=9" alt="" class="share-logo" />
+      <img src="../assets/logo-brand.png?v=11" alt="" class="share-logo" />
       <h3>إرسال القرار مع ملف PDF</h3>
       <p>الملف جاهز بشعار شاي بكر. اختر طريقة الإرسال:</p>
       <ol class="share-steps">

@@ -1175,7 +1175,8 @@ select {
 
 .storefront-hero {
   position: relative;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   width: 100%;
   max-width: 100%;
   background: #ead4bd;
@@ -1190,7 +1191,8 @@ select {
   justify-content: center;
   align-items: stretch;
   background: #ead4bd;
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   max-width: 100%;
 }
 
@@ -1371,9 +1373,11 @@ select {
 
 .storefront-logo {
   display: block;
-  width: min(300px, 36vw);
+  width: min(220px, 28vw);
+  max-height: min(340px, 48svh);
   height: auto;
   object-fit: contain;
+  object-position: center;
 }
 
 .store-name {
@@ -1447,7 +1451,8 @@ select {
     min-height: 0;
     justify-content: flex-start;
     padding: 0.75rem 0 1.15rem;
-    overflow: hidden;
+    overflow-x: clip;
+    overflow-y: visible;
   }
 
   .storefront-landing::before {
@@ -1524,8 +1529,8 @@ select {
   }
 
   .storefront-logo {
-    width: min(120px, 32vw);
-    max-height: none;
+    width: min(140px, 36vw);
+    max-height: 200px;
   }
 
   .store-name {
