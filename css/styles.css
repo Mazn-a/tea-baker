@@ -1695,6 +1695,19 @@ select {
   min-height: 1.5rem;
 }
 
+.pkg-price-from {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.pkg-price-from-label {
+  font-size: 0.82em;
+  font-weight: 700;
+  color: var(--tea-mid);
+}
+
 .pkg-details {
   border-top: 1px dashed rgba(99, 58, 17, 0.18);
   padding-top: 0.45rem;

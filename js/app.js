@@ -109,9 +109,13 @@ function grandTotal() {
   return packageTotal() + addonsTotal();
 }
 
-function formatPkgPriceHtml(p, { compact = false } = {}) {
+function formatPkgPriceHtml(p, { startsFrom = false } = {}) {
   // اعرض سعر القائمة فقط — لا تكشف سعر الخصم على البكج
-  return `<span class="pkg-price-now">${money(packageListPrice(p))}</span>`;
+  const amount = `<span class="pkg-price-now">${money(packageListPrice(p))}</span>`;
+  if (startsFrom) {
+    return `<span class="pkg-price-from"><span class="pkg-price-from-label">يبدأ من</span> ${amount}</span>`;
+  }
+  return amount;
 }
 
 function orderListSubtotal() {
@@ -1410,7 +1414,7 @@ function renderMarketingPackages() {
             <h3>${p.name}</h3>
             <span class="pkg-guests">${p.guests}</span>
           </div>
-          <div class="pkg-price">${formatPkgPriceHtml(p)}</div>
+          <div class="pkg-price">${formatPkgPriceHtml(p, { startsFrom: true })}</div>
         </div>
         <ul class="pkg-features pkg-features-desk">
           ${p.features.map((f) => `<li>${f}</li>`).join("")}
