@@ -543,6 +543,90 @@ select {
   color: var(--tea);
 }
 
+.pkg-price-stack {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem 0.65rem;
+}
+
+.pkg-price-old {
+  font-size: 0.95em;
+  font-weight: 700;
+  color: rgba(26, 18, 12, 0.45);
+  text-decoration: line-through;
+}
+
+.pkg-price-now {
+  font-weight: 800;
+  color: var(--tea);
+}
+
+.discount-box {
+  margin: 0.85rem 0 0.35rem;
+  padding: 0.9rem 0.95rem;
+  border-radius: 1rem;
+  background: rgba(99, 58, 17, 0.06);
+  border: 1px solid rgba(99, 58, 17, 0.12);
+  display: grid;
+  gap: 0.45rem;
+}
+
+.discount-box label {
+  font-weight: 800;
+  color: var(--tea-deep);
+  font-size: 1rem;
+}
+
+.discount-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.45rem;
+}
+
+.discount-row input {
+  width: 100%;
+  min-height: 2.85rem;
+  border: 2px solid rgba(99, 58, 17, 0.15);
+  border-radius: 0.9rem;
+  padding: 0.55rem 0.85rem;
+  background: #fffaf3;
+  color: var(--ink);
+  outline: none;
+  font: inherit;
+  font-size: 16px;
+}
+
+.discount-row input:focus {
+  border-color: var(--tea-mid);
+  box-shadow: 0 0 0 3px rgba(99, 58, 17, 0.1);
+}
+
+.discount-row .btn {
+  min-height: 2.85rem;
+  padding-inline: 1.1rem;
+  white-space: nowrap;
+}
+
+.discount-feedback {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--tea-mid);
+  font-weight: 700;
+}
+
+.discount-feedback.is-ok {
+  color: var(--ok);
+}
+
+.discount-feedback.is-err {
+  color: var(--err);
+}
+
+.review-row.discount-save strong {
+  color: var(--ok);
+}
+
 .pkg-guests {
   color: var(--tea-mid);
   font-weight: 700;

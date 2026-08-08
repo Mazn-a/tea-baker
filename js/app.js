@@ -24,6 +24,8 @@ const state = {
   dateSearch: "",
   bookedDates: new Set(),
   dateFeedback: "idle",
+  discountCode: "",
+  discountApplied: false,
 };
 
 const money = (n) => `${Number(n).toLocaleString("ar-SA")} ر.س`;
@@ -46,6 +48,34 @@ function pkg() {
   return PACKAGES.find((p) => p.id === state.packageId);
 }
 
+/** السعر الظاهر للبكج (حركة تسويقية) */
+function packageListPrice(p = pkg()) {
+  if (!p) return 0;
+  return Number(p.listPrice != null ? p.listPrice : p.price) || 0;
+}
+
+/** السعر الحقيقي للبكج بعد الخصم */
+function packageSalePrice(p = pkg()) {
+  if (!p) return 0;
+  return Number(p.price) || 0;
+}
+
+function expectedDiscountCode() {
+  return String(window.DISCOUNT_CODE || window.BAKR_CATALOG?.discountCode || "")
+    .trim()
+    .toLowerCase();
+}
+
+function tryApplyDiscount(raw) {
+  const got = String(raw || "")
+    .trim()
+    .toLowerCase();
+  const expected = expectedDiscountCode();
+  state.discountCode = String(raw || "").trim();
+  state.discountApplied = Boolean(expected && got === expected);
+  return state.discountApplied;
+}
+
 function selectedAddons() {
   const qtyMap = state.addonQty || {};
   return ADDONS.map((a) => ({
@@ -63,11 +93,29 @@ function addonsCount() {
 }
 
 function packageTotal() {
-  return Number(pkg()?.price || 0);
+  if (!pkg()) return 0;
+  return state.discountApplied ? packageSalePrice() : packageListPrice();
+}
+
+function packageSavings() {
+  if (!state.discountApplied || !pkg()) return 0;
+  return Math.max(0, packageListPrice() - packageSalePrice());
 }
 
 function grandTotal() {
   return packageTotal() + addonsTotal();
+}
+
+function formatPkgPriceHtml(p, { compact = false } = {}) {
+  const list = packageListPrice(p);
+  const sale = packageSalePrice(p);
+  if (state.discountApplied && sale < list) {
+    return `<span class="pkg-price-stack">
+      <span class="pkg-price-old">${money(list)}</span>
+      <span class="pkg-price-now">${money(sale)}</span>
+    </span>`;
+  }
+  return `<span class="pkg-price-now">${money(list)}</span>`;
 }
 
 function getAddonQty(id) {
@@ -123,6 +171,8 @@ function saveDraft() {
     hallName: state.hallName,
     locationLink: state.locationLink,
     notes: state.notes,
+    discountCode: state.discountCode,
+    discountApplied: state.discountApplied,
   };
   localStorage.setItem(STORAGE_DRAFT, JSON.stringify(draft));
 }
@@ -144,6 +194,7 @@ function loadDraft() {
     // توافق مع المسودات القديمة
     if (!state.hallName && d.location) state.hallName = d.location;
     state.phone = sanitizePhoneInput(state.phone || "");
+    if (d.discountCode) tryApplyDiscount(d.discountCode);
     if (state.date) {
       const dt = new Date(`${state.date}T12:00:00`);
       state.calendar = new Date(dt.getFullYear(), dt.getMonth(), 1);
@@ -383,7 +434,10 @@ async function confirmBooking() {
         eventLabel: eventLabel(),
         packageId: state.packageId,
         packageName: p?.name || "",
-        packagePrice: p?.price || 0,
+        packagePrice: packageTotal(),
+        packageListPrice: packageListPrice(),
+        discountCode: state.discountApplied ? state.discountCode : "",
+        discountApplied: state.discountApplied,
         addons,
         addonsTotal: addonsTotal(),
         grandTotal: grandTotal(),
@@ -392,7 +446,14 @@ async function confirmBooking() {
         customerPhone: state.phone.replace(/\s+/g, ""),
         hallName: state.hallName.trim(),
         locationLink: state.locationLink.trim(),
-        notes: state.notes.trim(),
+        notes: [
+          state.notes.trim(),
+          state.discountApplied
+            ? `كود خصم مطبّق: ${state.discountCode} (سعر البكج ${packageTotal()} بدل ${packageListPrice()})`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" | "),
       });
     }
   } catch (err) {
@@ -417,7 +478,10 @@ function buildWhatsAppMessage() {
     "مرحباً، أرغب بتأكيد طلب حجز من شاي بكر:",
     `• المدينة: ${labelOf(CITIES, state.city)}`,
     `• نوع المناسبة: ${eventLabel()}`,
-    `• البكج: ${p?.name || "—"} (${p ? money(p.price) : "—"})`,
+    `• البكج: ${p?.name || "—"} (${money(packageTotal())}${
+      state.discountApplied ? ` بعد الخصم من ${money(packageListPrice())}` : ""
+    })`,
+    state.discountApplied ? `• كود الخصم: ${state.discountCode}` : null,
     ...addonLines,
     `• التاريخ: ${formatDateLabel(state.date)}`,
     `• اسم القاعة: ${state.hallName}`,
@@ -700,7 +764,7 @@ function renderPackagesStep() {
           <div class="body">
             <h3>${p.name}</h3>
             <div class="pkg-meta-row">
-              <span class="pkg-price">${money(p.price)}</span>
+              <span class="pkg-price">${formatPkgPriceHtml(p)}</span>
               <span class="pkg-guests">${p.guests}</span>
             </div>
             <ul class="pkg-features">
@@ -774,10 +838,13 @@ function sanitizePhoneInput(value) {
 function renderReview() {
   const p = pkg();
   const addons = selectedAddons();
+  const list = packageListPrice();
+  const charged = packageTotal();
+  const savings = packageSavings();
   const rows = [
     ["المدينة", labelOf(CITIES, state.city)],
     ["نوع المناسبة", eventLabel()],
-    ["البكج", p ? `${p.name} — ${money(p.price)}` : "—"],
+    ["البكج", p ? p.name : "—"],
     [
       "الإضافات",
       addons.length
@@ -791,6 +858,13 @@ function renderReview() {
     ["الجوال", state.phone || "—"],
   ];
   if (state.notes.trim()) rows.push(["ملاحظات", state.notes.trim()]);
+
+  const discountMsg = state.discountApplied
+    ? `<p class="discount-feedback is-ok">تم تطبيق كود الخصم — السعر الحقيقي للبكج ${money(packageSalePrice())}</p>`
+    : state.discountCode
+      ? `<p class="discount-feedback is-err">كود الخصم غير صحيح</p>`
+      : `<p class="discount-feedback">أدخل كود الخصم لإظهار السعر الحقيقي للبكج فقط.</p>`;
+
   return `
     <div class="review-card">
       <div class="review-banner">ملخص طلبك الكامل</div>
@@ -803,10 +877,38 @@ function renderReview() {
         </div>`
         )
         .join("")}
+
+      <div class="discount-box">
+        <label for="inputDiscount">كود الخصم</label>
+        <div class="discount-row">
+          <input
+            id="inputDiscount"
+            type="text"
+            inputmode="text"
+            autocomplete="off"
+            placeholder="أدخل كود الخصم"
+            value="${String(state.discountCode || "").replace(/"/g, "&quot;")}"
+          />
+          <button type="button" class="btn btn-primary" id="btnApplyDiscount">تطبيق</button>
+        </div>
+        ${discountMsg}
+      </div>
+
       <div class="review-row">
         <span>سعر البكج</span>
-        <strong>${money(packageTotal())}</strong>
+        <strong class="pkg-price-stack">
+          ${
+            state.discountApplied && savings > 0
+              ? `<span class="pkg-price-old">${money(list)}</span><span class="pkg-price-now">${money(charged)}</span>`
+              : `<span class="pkg-price-now">${money(charged)}</span>`
+          }
+        </strong>
       </div>
+      ${
+        state.discountApplied && savings > 0
+          ? `<div class="review-row discount-save"><span>وفّرت على البكج</span><strong>${money(savings)}</strong></div>`
+          : ""
+      }
       <div class="review-row">
         <span>مجموع الإضافات</span>
         <strong>${money(addonsTotal())}</strong>
@@ -1142,6 +1244,17 @@ function renderWizard() {
   } else if (step === "review") {
     body.innerHTML = renderReview();
     nextBtn.disabled = false;
+    const apply = () => {
+      tryApplyDiscount($("#inputDiscount")?.value || "");
+      renderWizard();
+    };
+    $("#btnApplyDiscount")?.addEventListener("click", apply);
+    $("#inputDiscount")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        apply();
+      }
+    });
   } else if (step === "success") {
     body.innerHTML = renderSuccess();
     $("#backHome").addEventListener("click", () => {
@@ -1169,6 +1282,8 @@ function resetBookingSoft() {
   state.dateFeedback = "idle";
   state.dateSearch = "";
   state.calendarMode = "gregorian";
+  state.discountCode = "";
+  state.discountApplied = false;
 }
 
 function renderMarketingPackages() {
@@ -1187,7 +1302,7 @@ function renderMarketingPackages() {
             <h3>${p.name}</h3>
             <span class="pkg-guests">${p.guests}</span>
           </div>
-          <div class="pkg-price">${money(p.price)}</div>
+          <div class="pkg-price">${formatPkgPriceHtml(p)}</div>
         </div>
         <ul class="pkg-features pkg-features-desk">
           ${p.features.map((f) => `<li>${f}</li>`).join("")}

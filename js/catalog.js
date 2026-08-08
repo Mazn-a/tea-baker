@@ -11,6 +11,12 @@
     /** رقم واتساب بصيغة دولية بدون + */
     waNumber: "966533508361",
 
+    /**
+     * كود الخصم — يفعّل السعر الحيقي للبكج فقط (ليس الإضافات).
+     * غيّره من هنا وقت ما تبي.
+     */
+    discountCode: "BAKR",
+
     cities: [
       { id: "makkah", label: "مكة المكرمة" },
       { id: "jeddah", label: "جدة" },
@@ -26,15 +32,15 @@
 
     /**
      * البكجات
-     * id: معرّف ثابت (لا تغيّره بعد الإطلاق إن أمكن)
-     * price: بالريال
-     * featured: يظهر كمميز في الواجهة
+     * listPrice: السعر الظاهر (حركة تسويقية)
+     * price: السعر الحقيقي بعد إدخال كود الخصم
      */
     packages: [
       {
         id: "silver",
         name: "البكج الفضي",
-        price: 2800,
+        listPrice: 5200,
+        price: 3900,
         guests: "حتى 150 ضيف",
         badge: "خيار عملي",
         image: "./assets/corner.jpg",
@@ -48,7 +54,8 @@
       {
         id: "gold",
         name: "البكج الذهبي",
-        price: 3800,
+        listPrice: 6200,
+        price: 4800,
         guests: "حتى 200 ضيف",
         badge: "الأكثر طلباً",
         featured: true,
@@ -64,7 +71,8 @@
       {
         id: "royal",
         name: "البكج الملكي",
-        price: 4800,
+        listPrice: 7200,
+        price: 5300,
         guests: "حتى 250 ضيف",
         badge: "الأكثر اكتمالاً",
         image: "./assets/corner.jpg",
@@ -86,7 +94,7 @@
       { id: "arika", name: "سخان عريكة بالتمر 6 لتر", price: 200 },
       { id: "fatta", name: "سخان فتة بالسمن 6 لتر", price: 200 },
       { id: "aish", name: "سخان عيش جنوبي 6 لتر", price: 200 },
-      { id: "sababeeb", name: "صبابيب حجم كبير (سمن + عسل)", price: 180 },
+      { id: "sababeeb", name: "مصابيب حجم كبير (سمن + عسل)", price: 180 },
       { id: "milla", name: "ملة حجم كبير مع الجبن والتمر", price: 150 },
       { id: "dates", name: "أهرامات التمر 200 حبة", price: 150 },
       { id: "sweets", name: "واحد كيلو حلويات شرقية", price: 95 },
@@ -121,4 +129,5 @@
   global.ADDONS = catalog.addons;
   global.FLOW = catalog.flow;
   global.WA_NUMBER = catalog.waNumber;
+  global.DISCOUNT_CODE = catalog.discountCode;
 })(window);

@@ -4,7 +4,7 @@
  */
 (function () {
   function logoSrc() {
-    return window.BAKR_LOGO_DATA_URL || "../assets/logo.png?v=7";
+    return window.BAKR_LOGO_DATA_URL || "../assets/logo.png?v=8";
   }
 
   function money(n) {
