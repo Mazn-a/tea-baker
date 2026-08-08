@@ -963,10 +963,10 @@ function renderReview() {
   if (state.notes.trim()) rows.push(["ملاحظات", state.notes.trim()]);
 
   const discountMsg = state.discountApplied
-    ? `<p class="discount-feedback is-ok">تم تطبيق كود الخصم — السعر الحقيقي للبكج ${money(packageSalePrice())}</p>`
+    ? `<p class="discount-feedback is-ok">تم تطبيق كود الخصم</p>`
     : state.discountCode
       ? `<p class="discount-feedback is-err">كود الخصم غير صحيح</p>`
-      : `<p class="discount-feedback">أدخل كود الخصم لإظهار السعر الحقيقي للبكج فقط.</p>`;
+      : "";
 
   return `
     <div class="review-card">
