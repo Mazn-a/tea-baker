@@ -1015,7 +1015,7 @@ function renderReview() {
         .map(([k, v, kind]) =>
           kind === "addons"
             ? `<div class="review-row review-row-addons">
-          <span>${k}</span>
+          <span class="review-addons-label">${k}</span>
           <div class="review-addons">${v}</div>
         </div>`
             : `<div class="review-row">
