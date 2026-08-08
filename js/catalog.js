@@ -11,11 +11,8 @@
     /** رقم واتساب بصيغة دولية بدون + */
     waNumber: "966533508361",
 
-    /**
-     * كود الخصم — يفعّل السعر الحقيقي للبكج فقط (ليس الإضافات).
-     * يقبل أحرف كبيرة أو صغيرة (Bakr10 / bakr10 / BAKR10).
-     */
-    discountCode: "Bakr10",
+    /** نص شارة العرض التسويقي — يظهر تلقائياً على كل بكج بدون أي كود */
+    offerBadge: "عرض لفترة محدودة",
 
     cities: [
       { id: "makkah", label: "مكة المكرمة" },
@@ -32,8 +29,8 @@
 
     /**
      * البكجات
-     * listPrice: السعر الظاهر (حركة تسويقية)
-     * price: السعر الحقيقي بعد إدخال كود الخصم
+     * listPrice: السعر الأصلي (يظهر مشطوباً)
+     * price: سعر العرض الحالي (يظهر دائماً بدون أي كود)
      */
     packages: [
       {
@@ -129,5 +126,5 @@
   global.ADDONS = catalog.addons;
   global.FLOW = catalog.flow;
   global.WA_NUMBER = catalog.waNumber;
-  global.DISCOUNT_CODE = catalog.discountCode;
+  global.OFFER_BADGE = catalog.offerBadge;
 })(window);

@@ -577,65 +577,29 @@ select {
   color: var(--tea);
 }
 
-.discount-box {
+.offer-note {
   margin: 0.85rem 0 0.35rem;
-  padding: 0.9rem 0.95rem;
+  padding: 0.7rem 0.95rem;
   border-radius: 1rem;
-  background: rgba(99, 58, 17, 0.06);
-  border: 1px solid rgba(99, 58, 17, 0.12);
-  display: grid;
-  gap: 0.45rem;
-}
-
-.discount-box label {
-  font-weight: 800;
+  background: rgba(196, 163, 90, 0.16);
+  border: 1px solid rgba(196, 163, 90, 0.4);
   color: var(--tea-deep);
-  font-size: 1rem;
+  font-weight: 800;
+  font-size: 0.96rem;
+  text-align: center;
 }
 
-.discount-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.45rem;
-}
-
-.discount-row input {
-  width: 100%;
-  min-height: 2.85rem;
-  border: 2px solid rgba(99, 58, 17, 0.15);
-  border-radius: 0.9rem;
-  padding: 0.55rem 0.85rem;
-  background: #fffaf3;
-  color: var(--ink);
-  outline: none;
-  font: inherit;
-  font-size: 16px;
-}
-
-.discount-row input:focus {
-  border-color: var(--tea-mid);
-  box-shadow: 0 0 0 3px rgba(99, 58, 17, 0.1);
-}
-
-.discount-row .btn {
-  min-height: 2.85rem;
-  padding-inline: 1.1rem;
-  white-space: nowrap;
-}
-
-.discount-feedback {
-  margin: 0;
-  font-size: 0.92rem;
-  color: var(--tea-mid);
-  font-weight: 700;
-}
-
-.discount-feedback.is-ok {
-  color: var(--ok);
-}
-
-.discount-feedback.is-err {
-  color: var(--err);
+.pkg-offer-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: start;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--gold), #a8843d);
+  color: var(--tea-deep);
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .review-row.discount-save strong {
@@ -1839,11 +1803,20 @@ select {
   box-shadow: 0 16px 40px rgba(99, 58, 17, 0.18);
 }
 
+.pkg-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  height: 2.2rem;
+}
+
 .pkg-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   height: 2.2rem;
   min-height: 2.2rem;
   max-height: 2.2rem;
@@ -1859,6 +1832,13 @@ select {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+.pkg-badges-row .pkg-offer-badge {
+  flex: 0 0 auto;
+  height: 2.2rem;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .pkg-meta-row {
@@ -2136,13 +2116,23 @@ select {
     height: 96px;
   }
 
+  .receipt-pkg .pkg-badges-row,
+  .receipt-pkg .pkg-badge,
+  .receipt-pkg .pkg-offer-badge {
+    height: 2rem;
+  }
+
   .receipt-pkg .pkg-badge {
     font-size: 0.84rem;
-    height: 2rem;
     min-height: 2rem;
     max-height: 2rem;
     padding: 0 0.7rem;
     line-height: 1;
+  }
+
+  .receipt-pkg .pkg-offer-badge {
+    font-size: 0.72rem;
+    padding: 0 0.55rem;
   }
 
   .market-pkg .pkg-head {
