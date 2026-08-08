@@ -1096,6 +1096,13 @@ body.admin-detail-open #orderDetailView {
 .detail-toolbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.detail-toolbar .btn-delete {
+  margin-inline-start: auto;
 }
 
 .detail-panel {

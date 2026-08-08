@@ -139,13 +139,13 @@
 
   /**
    * تواريخ محجوزة: أي طلب بانتظار القرار أو مقبول.
-   * مجرد إرسال الطلب يحجز التاريخ حتى يُرفض.
+   * مجرد إرسال الطلب يحجز التاريخ حتى يُرفض أو يُحذف.
    */
   async function listBookedDates() {
     const orders = await listOrders();
     const dates = new Set();
     (orders || []).forEach((o) => {
-      if (o.status === "rejected") return;
+      if (o.status === "rejected" || o.status === "deleted") return;
       const d = String(o.event_date || "").slice(0, 10);
       if (d) dates.add(d);
     });
@@ -194,26 +194,41 @@
     return all[idx];
   }
 
-  /** حذف طلب (مثلاً تجارب) — يحرّر التاريخ من الحجز بعد إعادة التحميل */
+  /**
+   * حذف طلب (تجارب/تنظيف): نعلّمه deleted عبر التحديث
+   * ليعمل مع صلاحيات السحابة الحالية، ويختفي من القائمة ويتحرر التاريخ.
+   */
   async function deleteOrder(id) {
-    let cloudDeleted = false;
+    let cloudOk = false;
     try {
       const sb = await getClient();
       if (sb) {
-        const { error } = await sb.from("orders").delete().eq("id", id);
+        const { data, error } = await sb
+          .from("orders")
+          .update({ status: "deleted" })
+          .eq("id", id)
+          .select()
+          .single();
         if (error) throw error;
-        cloudDeleted = true;
+        cloudOk = Boolean(data);
       }
     } catch (err) {
       console.warn("deleteOrder cloud → local:", err);
     }
 
     const all = readLocal(KEYS.orders, []);
-    writeLocal(
-      KEYS.orders,
-      all.filter((o) => String(o.id) !== String(id))
-    );
-    return { ok: true, cloud: cloudDeleted };
+    const idx = all.findIndex((o) => String(o.id) === String(id));
+    if (idx >= 0) {
+      all[idx] = { ...all[idx], status: "deleted" };
+      writeLocal(KEYS.orders, all);
+    } else if (!cloudOk) {
+      // إن لم يوجد محلياً وما نجح السحاب، احذفه من القائمة المحلية فقط
+      writeLocal(
+        KEYS.orders,
+        all.filter((o) => String(o.id) !== String(id))
+      );
+    }
+    return { ok: true, cloud: cloudOk };
   }
 
   async function trackVisit(path) {

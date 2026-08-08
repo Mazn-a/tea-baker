@@ -64,7 +64,12 @@ function formatDateTime(iso) {
 function statusLabel(s) {
   if (s === "accepted") return "مقبول";
   if (s === "rejected") return "مرفوض";
+  if (s === "deleted") return "محذوف";
   return "جديد";
+}
+
+function activeOrders(list = state.orders) {
+  return (list || []).filter((o) => o.status !== "deleted");
 }
 
 function periodBounds() {
@@ -639,7 +644,7 @@ function renderStats() {
 
 function updateOrdersChoiceHint() {
   const el = $("#ordersChoiceHint");
-  const pending = state.orders.filter((o) => o.status === "pending").length;
+  const pending = activeOrders().filter((o) => o.status === "pending").length;
   if (el) {
     if (pending > 0) {
       el.textContent = `${pending} طلب بانتظار القرار — اضغط للعرض`;
@@ -654,7 +659,7 @@ function updatePendingBadge(count) {
   const pending =
     typeof count === "number"
       ? count
-      : state.orders.filter((o) => o.status === "pending").length;
+      : activeOrders().filter((o) => o.status === "pending").length;
   const badge = $("#pendingBadge");
   const tab = $("#pendingFilterTab") || document.querySelector('#statusTabs [data-status="pending"]');
   if (!badge) return;
@@ -780,7 +785,7 @@ function bookingWindowBounds() {
 function renderOrders() {
   const list = $("#ordersList");
   if (!list) return;
-  let orders = state.orders.slice();
+  let orders = activeOrders().slice();
   if (state.status !== "all") {
     orders = orders.filter((o) => o.status === state.status);
   }
@@ -825,7 +830,6 @@ function renderOrders() {
           <span class="order-row-hint">${addons.length ? `${addons.length} إضافة` : "بدون إضافات"}</span>
           ${pendingHint}
           <button type="button" class="${ctaClass}" data-open-order="1">فتح الطلب</button>
-          <button type="button" class="btn btn-delete btn-sm" data-action="delete">حذف</button>
         </div>
       </article>`;
     })
@@ -929,7 +933,6 @@ function renderOrderDetail(o) {
       }>رفض + إرسال PDF</button>
       <button type="button" class="btn btn-ghost" data-action="pdf">معاينة / تحميل PDF</button>
       <button type="button" class="btn btn-wa" data-action="whatsapp">واتساب نص فقط</button>
-      <button type="button" class="btn btn-delete" data-action="delete">حذف الطلب وتحرير التاريخ</button>
     </div>
   `;
 }
@@ -956,19 +959,23 @@ async function loadData() {
     window.BakrStore.listOrders(),
     window.BakrStore.listVisits(),
   ]);
-  state.orders = orders || [];
+  state.orders = (orders || []).filter((o) => o.status !== "deleted");
   state.visits = visits || [];
   renderStats();
   renderOrders();
   updateOrdersChoiceHint();
   if (state.selectedOrderId) {
-    const still = state.orders.find((o) => o.id === state.selectedOrderId);
+    const still = state.orders.find((o) => String(o.id) === String(state.selectedOrderId));
     if (still) renderOrderDetail(still);
-    else showDashboard();
+    else {
+      state.selectedOrderId = null;
+      document.body.classList.remove("admin-detail-open");
+      showPage("orders");
+    }
   } else if (state.pendingOpenId) {
     const id = state.pendingOpenId;
     state.pendingOpenId = null;
-    if (state.orders.some((o) => o.id === id)) showOrderDetail(id);
+    if (state.orders.some((o) => String(o.id) === String(id))) showOrderDetail(id);
     else showPage("orders");
   }
 }
@@ -1021,6 +1028,7 @@ function isDateStillBooked(iso, exceptId) {
     (o) =>
       String(o.id) !== String(exceptId) &&
       o.status !== "rejected" &&
+      o.status !== "deleted" &&
       String(o.event_date || "").slice(0, 10) === day
   );
 }
@@ -1029,30 +1037,34 @@ async function deleteOrderById(order, btn) {
   const name = order.customer_name || "هذا الطلب";
   const dateLabel = formatDate(order.event_date);
   const ok = window.confirm(
-    `حذف طلب «${name}» بتاريخ ${dateLabel}؟\n\nسيُحذف نهائياً ويتحرر التاريخ إن لم يكن عليه طلب آخر.`
+    `حذف طلب «${name}» بتاريخ ${dateLabel}؟\n\nسيختفي من القائمة ويتحرر التاريخ إن لم يكن عليه طلب آخر.`
   );
   if (!ok) return false;
 
   if (btn) btn.disabled = true;
+  const eventDate = order.event_date;
+  const orderId = order.id;
+
+  // أخفِ الطلب فوراً من الواجهة
+  state.orders = state.orders.filter((o) => String(o.id) !== String(orderId));
+  state.selectedOrderId = null;
+  document.body.classList.remove("admin-detail-open");
+  renderOrders();
+  updateOrdersChoiceHint();
+  showPage("orders");
+
   try {
-    const eventDate = order.event_date;
-    const result = await window.BakrStore.deleteOrder(order.id);
-    if (!isDateStillBooked(eventDate, order.id)) {
+    await window.BakrStore.deleteOrder(orderId);
+    if (!isDateStillBooked(eventDate, orderId)) {
       releaseLocalBookedDate(eventDate);
     }
-    state.selectedOrderId = null;
-    document.body.classList.remove("admin-detail-open");
     await loadData();
-    showPage("orders");
-    if (result?.cloud === false && window.BakrStore.hasCloud?.()) {
-      showToast("حُذف محلياً — نفّذ sql/patch-delete-orders.sql في Supabase للحذف من السحابة", "warn");
-    } else {
-      showToast("تم حذف الطلب وتحرير التاريخ");
-    }
+    showToast("تم حذف الطلب — التاريخ صار متاحاً");
     return true;
   } catch (err) {
     console.warn(err);
-    showToast("تعذر حذف الطلب", "warn");
+    showToast("تعذر حفظ الحذف — حدّث الصفحة وحاول مرة ثانية", "warn");
+    await loadData();
     if (btn) btn.disabled = false;
     return false;
   }
@@ -1170,22 +1182,11 @@ function setup() {
     }
   });
 
-  $("#ordersList")?.addEventListener("click", async (e) => {
+  $("#ordersList")?.addEventListener("click", (e) => {
     const row = e.target.closest(".order-row[data-id]");
     if (!row) return;
     const id = row.dataset.id;
     if (!id) return;
-
-    const delBtn = e.target.closest("[data-action='delete']");
-    if (delBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      const order = state.orders.find((o) => String(o.id) === String(id));
-      if (!order) return;
-      await deleteOrderById(order, delBtn);
-      return;
-    }
-
     e.preventDefault();
     e.stopPropagation();
     showOrderDetail(id);
@@ -1194,6 +1195,14 @@ function setup() {
   $("#backToListBtn")?.addEventListener("click", (e) => {
     e.preventDefault();
     showPage("orders");
+  });
+
+  $("#deleteOrderBtn")?.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const id = state.selectedOrderId;
+    const order = state.orders.find((o) => String(o.id) === String(id));
+    if (!order) return;
+    await deleteOrderById(order, e.currentTarget);
   });
 
   $("#orderDetail")?.addEventListener("click", async (e) => {
