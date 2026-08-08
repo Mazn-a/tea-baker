@@ -1,7 +1,18 @@
 /**
+ * =========================================================
  * شاي بكر — تطبيق العملاء
- * البيانات (أسعار/بكجات) من js/catalog.js
- * التخزين من js/store.js
+ * =========================================================
+ * البيانات (أسعار/بكجات/مدن) في js/catalog.js
+ * الحفظ (سحابة أو محلي) في js/store.js
+ *
+ * ترتيب الملف:
+ *   1) الحالة والمساعدات        state / esc / money
+ *   2) الأسعار والخصم           packageTotal / tryApplyDiscount
+ *   3) التواريخ والحجز          bookedDates / التقويم الهجري والميلادي
+ *   4) التنقل بين الخطوات       showView / nextStep / confirmBooking
+ *   5) بناء واجهات الخطوات      renderCalendar / renderReview / renderSuccess
+ *   6) الصفحة التسويقية والقائمة renderMarketing* / setupNav / init
+ * =========================================================
  */
 const STORAGE_BOOKED = "bakr-booked-dates";
 const STORAGE_DRAFT = "bakr-booking-draft";
@@ -798,7 +809,7 @@ function shiftCalendarMonth(delta) {
   if (view > maxMonth) state.calendar = new Date(maxMonth);
 }
 
-function renderChoices(list, selectedId, onPick, colsClass = "cols-3") {
+function renderChoices(list, selectedId, colsClass = "cols-3") {
   return `
     <div class="choice-grid ${colsClass}">
       ${list
@@ -1252,7 +1263,7 @@ function renderWizard() {
   if (wizardBodyEl) wizardBodyEl.scrollTop = 0;
 
   if (step === "city") {
-    body.innerHTML = renderChoices(CITIES, state.city, null, "cols-3");
+    body.innerHTML = renderChoices(CITIES, state.city, "cols-3");
     bindChoices((id) => {
       state.city = id;
       nextBtn.disabled = false;
@@ -1269,7 +1280,7 @@ function renderWizard() {
         <div class="field-error" id="fieldError"></div>
       </div>`
         : "";
-    body.innerHTML = `${renderChoices(EVENTS, state.event, null, "cols-2")}${otherField}`;
+    body.innerHTML = `${renderChoices(EVENTS, state.event, "cols-2")}${otherField}`;
     bindChoices((id) => {
       state.event = id;
       if (id !== "other") state.eventOther = "";

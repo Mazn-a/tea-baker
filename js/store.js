@@ -82,11 +82,18 @@
     }
   }
 
-  function isDeletedOrder(order) {
+  function isDeletedOrder(order, hiddenIds) {
     if (!order) return false;
     if (order.status === "deleted") return true;
     if (String(order.notes || "").startsWith(DELETED_MARK)) return true;
-    return deletedIds().includes(String(order.id));
+    const ids = hiddenIds || deletedIds();
+    return ids.includes(String(order.id));
+  }
+
+  /** يستبعد المحذوفات مرة واحدة بدل قراءة التخزين لكل طلب */
+  function withoutDeleted(rows) {
+    const ids = deletedIds();
+    return (rows || []).filter((o) => !isDeletedOrder(o, ids));
   }
 
   function sessionId() {
@@ -192,12 +199,12 @@
           .select("*")
           .order("created_at", { ascending: false });
         if (error) throw error;
-        return (data || []).filter((o) => !isDeletedOrder(o));
+        return withoutDeleted(data);
       }
     } catch (err) {
       console.warn("listOrders cloud → local:", err);
     }
-    return readLocal(KEYS.orders, []).filter((o) => !isDeletedOrder(o));
+    return withoutDeleted(readLocal(KEYS.orders, []));
   }
 
   async function updateOrderStatus(id, status) {

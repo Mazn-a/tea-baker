@@ -1,3 +1,18 @@
+/* =========================================================
+ * شاي بكر — ستايل موقع العملاء
+ * الترتيب:
+ *   1) المتغيرات والأساسيات      (:root, html, body)
+ *   2) الترويسة والقائمة          Header
+ *   3) الواجهات                   Views / Landing
+ *   4) خطوات الحجز                Wizard / Choice cards
+ *   5) البكجات والإضافات          Package cards
+ *   6) التقويم                    Calendar
+ *   7) الحقول والمراجعة والنجاح   Fields / Review / Success
+ *   8) الواجهة التسويقية والفوتر  Storefront / Marketing / Footer
+ *   9) الجوال                     @media في آخر الملف
+ * ملاحظة: قواعد الجوال مجمّعة في نهاية الملف حتى تكون آخر ما يُطبَّق.
+ * ========================================================= */
+
 :root {
   --tea: #633a11;
   --tea-deep: #2a1810;
@@ -2485,13 +2500,13 @@ select {
 }
 
 .footer-contact .contact-label,
-.footer-contact .contact-value,
-.footer-contact .contact-line a {
+.footer-contact .contact-value {
   font-size: inherit;
 }
 
 /* روابط الاتصال: مساحة لمس مريحة على الجوال */
 .footer-contact .contact-line a {
+  font-size: inherit;
   display: inline-flex;
   align-items: center;
   min-height: 2.4rem;
