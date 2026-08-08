@@ -2295,6 +2295,10 @@ select {
 }
 
 .about-map .map-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding-inline: 0.75rem;
   font-weight: 800;
   color: var(--tea);
   text-decoration: underline;

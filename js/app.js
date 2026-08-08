@@ -328,6 +328,41 @@ async function loadBookedDates() {
   }
 }
 
+function currentHash() {
+  return (location.hash || "").replace("#", "");
+}
+
+/** تغيير العنوان يشغّل applyRoute — وإن كان نفس العنوان ننفّذه يدوياً */
+function goToHash(target) {
+  if (currentHash() === target) applyRoute();
+  else location.hash = target;
+}
+
+/**
+ * يعرض الواجهة المناسبة للعنوان الحالي.
+ * تُستدعى عند فتح الموقع وعند تغيّر العنوان، فيشتغل زر الرجوع في الجوال.
+ */
+function applyRoute() {
+  const hash = currentHash();
+
+  if (hash === "book") {
+    if (!isBookingOpen()) startBooking();
+    return;
+  }
+  if (hash === "about") {
+    showView("about");
+    return;
+  }
+  if (["packages", "addons", "contact", "faq"].includes(hash)) {
+    showView("home", { scroll: false });
+    requestAnimationFrame(() => {
+      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return;
+  }
+  showView("home");
+}
+
 function showView(name, opts = {}) {
   const { scroll = true } = opts;
   $$(".view").forEach((v) => v.classList.toggle("is-active", v.dataset.view === name));
@@ -348,10 +383,16 @@ function showView(name, opts = {}) {
   document.body.classList.toggle("booking-open", name === "booking");
 }
 
+function isBookingOpen() {
+  return Boolean(document.querySelector('.view[data-view="booking"].is-active'));
+}
+
 /** يبدأ دائماً من خطوة المدينة، حتى لو اختار العميل بكجاً من الصفحة الرئيسية */
 function startBooking(preselectPackage) {
   if (preselectPackage) state.packageId = preselectPackage;
   state.stepIndex = 0;
+  // #book يخلي زر الرجوع في الجوال يخرج من الحجز بدل ما يخرج من الموقع
+  if (currentHash() !== "book") location.hash = "book";
   showView("booking");
   renderWizard();
 }
@@ -1627,39 +1668,22 @@ function setupNav() {
     location.reload();
   });
 
+  // كل روابط القائمة تغيّر العنوان فقط، و applyRoute يتكفّل بالعرض والتمرير
   $$("[data-nav]").forEach((el) => {
     el.addEventListener("click", (e) => {
       e.preventDefault();
       links?.classList.remove("open");
       const view = el.dataset.nav;
-      const href = el.getAttribute("href") || "";
       if (view === "booking") {
         startBooking();
         return;
       }
-      if (view === "about") {
-        location.hash = "about";
-        showView("about");
-        return;
-      }
-      if (view === "contact") {
-        location.hash = "contact";
-        showView("home", { scroll: false });
-        requestAnimationFrame(() => {
-          document.getElementById("contact")?.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-        return;
-      }
-      if (href.startsWith("#") && href !== "#home") {
-        location.hash = href.slice(1);
-        showView("home", { scroll: false });
-        requestAnimationFrame(() => {
-          document.querySelector(href)?.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-        return;
-      }
-      location.hash = "home";
-      showView("home");
+      const href = el.getAttribute("href") || "";
+      let target = "home";
+      if (view === "about") target = "about";
+      else if (view === "contact") target = "contact";
+      else if (href.startsWith("#")) target = href.slice(1) || "home";
+      goToHash(target);
     });
   });
 
@@ -1668,11 +1692,7 @@ function setupNav() {
   $("#heroOrderBtn")?.addEventListener("click", () => startBooking());
   $("#heroPackagesBtn")?.addEventListener("click", (e) => {
     e.preventDefault();
-    location.hash = "packages";
-    showView("home", { scroll: false });
-    requestAnimationFrame(() => {
-      document.getElementById("packages")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    goToHash("packages");
   });
   $("#btnBack").addEventListener("click", prevStep);
   $("#btnNext").addEventListener("click", nextStep);
@@ -1695,19 +1715,8 @@ async function init() {
     console.warn("تعذر تسجيل الزيارة:", err);
   }
 
-  const hash = (location.hash || "").replace("#", "");
-  if (hash === "book") {
-    startBooking();
-  } else if (hash === "about") {
-    showView("about");
-  } else if (["packages", "addons", "contact", "faq"].includes(hash)) {
-    showView("home", { scroll: false });
-    requestAnimationFrame(() => {
-      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  } else {
-    showView("home");
-  }
+  applyRoute();
+  window.addEventListener("hashchange", applyRoute);
 }
 
 document.addEventListener("DOMContentLoaded", init);
