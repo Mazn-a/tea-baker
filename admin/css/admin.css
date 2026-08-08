@@ -642,6 +642,22 @@ code {
 .stat-card.is-money::before {
   background: #1f7a3f;
 }
+.stat-card.is-total::before {
+  background: #c4a35a;
+}
+
+/* صفحة الزوار */
+.visitors-lead {
+  margin: 0 0 0.85rem;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.visitors-grid {
+  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  margin-bottom: 1rem;
+}
 
 .stat-card span {
   font-size: 0.84rem;
@@ -1392,6 +1408,14 @@ body.admin-detail-open #orderDetailView {
 }
 
 .welcome-choice.is-secondary > span:last-child { color: #6a5240; }
+
+.welcome-choice.is-visitors {
+  background: #f1e2c6;
+  color: #4a2b19;
+  border: 1.5px solid rgba(196, 163, 90, 0.75);
+}
+
+.welcome-choice.is-visitors > span:last-child { color: #6a5240; }
 
 .welcome-end-line {
   position: relative;

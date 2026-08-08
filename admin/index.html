@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>إدارة شاي بكر</title>
     <meta name="robots" content="noindex,nofollow" />
-    <link rel="icon" href="../assets/logo-brand.png?v=11" type="image/png" />
+    <link rel="icon" href="../assets/logo-brand.png?v=12" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -13,12 +13,12 @@
       rel="stylesheet"
     />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <link rel="stylesheet" href="./css/admin.css?v=42" />
+    <link rel="stylesheet" href="./css/admin.css?v=43" />
   </head>
   <body>
     <div id="loginView" class="login-view">
       <div class="login-card">
-        <img class="login-logo" src="../assets/logo-brand.png?v=11" alt="شاي بكر" />
+        <img class="login-logo" src="../assets/logo-brand.png?v=12" alt="شاي بكر" />
         <h1>لوحة إدارة شاي بكر</h1>
         <p>أدخل رمز الدخول للمتابعة</p>
         <label class="field">
@@ -82,7 +82,7 @@
       <header class="admin-header">
         <button type="button" class="admin-brand" id="brandHomeBtn" aria-label="الرجوع للرئيسية">
           <span class="brand-mark">
-            <img src="../assets/logo-brand.png?v=11" alt="شاي بكر" />
+            <img src="../assets/logo-brand.png?v=12" alt="شاي بكر" />
             <span id="storageBadge" class="status-dot" title="حالة الاتصال" aria-label="حالة الاتصال"></span>
           </span>
           <span class="admin-brand-text">
@@ -110,7 +110,7 @@
               <div class="welcome-intro">
                 <div class="welcome-brand-block">
                   <div class="welcome-logo-wrap">
-                    <img class="welcome-logo" src="../assets/logo-brand.png?v=11" alt="شاي بكر" />
+                    <img class="welcome-logo" src="../assets/logo-brand.png?v=12" alt="شاي بكر" />
                   </div>
                   <div class="welcome-copy">
                     <p class="welcome-name">شاي بكر</p>
@@ -122,7 +122,7 @@
 
                 <div class="welcome-side">
                   <div class="welcome-art-wrap" aria-hidden="true">
-                    <img class="welcome-art" src="../assets/hero-art.png?v=9" alt="" />
+                    <img class="welcome-art" src="../assets/hero-art.png?v=10" alt="" />
                   </div>
                   <div class="welcome-choices" aria-label="أقسام اللوحة">
                     <button type="button" class="welcome-choice is-primary" data-page="orders">
@@ -131,7 +131,11 @@
                     </button>
                     <button type="button" class="welcome-choice is-secondary" data-page="stats">
                       <strong>الإحصائيات</strong>
-                      <span>الزيارات والدخل وأوقات الذروة</span>
+                      <span>الدخل وأوقات الذروة وأكثر البكجات</span>
+                    </button>
+                    <button type="button" class="welcome-choice is-visitors" data-page="visitors">
+                      <strong>زوار الموقع</strong>
+                      <span id="visitorsChoiceHint">كم شخص دخل الموقع</span>
                     </button>
                   </div>
                 </div>
@@ -161,6 +165,26 @@
             </div>
             <p class="orders-lead">افتح الطلب بزر «فتح الطلب» — داخل الصفحة تلقى زر <strong>حذف الطلب</strong> في الأسفل. كل طلب بلون مختلف حسب حالته.</p>
             <div id="ordersList" class="orders-list"></div>
+          </section>
+
+          <section class="panel visitors-panel admin-page" id="visitorsPanel" data-page="visitors" hidden>
+            <div class="panel-head">
+              <div class="page-nav">
+                <button type="button" class="btn btn-ghost" data-page="home">← الرئيسية</button>
+                <h2>زوار الموقع</h2>
+              </div>
+            </div>
+            <p class="visitors-lead">
+              كل رقم هنا يعني شخصاً فتح الموقع — سواء أرسل طلباً أو تصفّح وخرج.
+            </p>
+            <div class="stat-grid visitors-grid" id="visitorsGrid"></div>
+            <article class="chart-card chart-wide">
+              <h3>الزيارات في آخر ١٤ يوم</h3>
+              <p class="chart-hint">كم شخص فتح الموقع كل يوم</p>
+              <div class="chart-canvas-wrap chart-canvas-wide">
+                <canvas id="visitsChart"></canvas>
+              </div>
+            </article>
           </section>
 
           <section class="panel stats-panel admin-page" id="statsPanel" data-page="stats" hidden>
@@ -266,10 +290,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./vendor/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="../js/store.js?v=15"></script>
+    <script src="../js/store.js?v=16"></script>
     <script src="./js/logo-data.js?v=11"></script>
     <script src="./js/order-pdf.js?v=11"></script>
     <script src="./js/wa-send.js?v=8"></script>
-    <script src="./js/admin.js?v=44"></script>
+    <script src="./js/admin.js?v=45"></script>
   </body>
 </html>

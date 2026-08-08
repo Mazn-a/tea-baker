@@ -193,7 +193,7 @@ function showShareModal({ order, file, text }) {
   modal.className = "share-modal";
   modal.innerHTML = `
     <div class="share-card" role="dialog" aria-modal="true">
-      <img src="../assets/logo-brand.png?v=11" alt="" class="share-logo" />
+      <img src="../assets/logo-brand.png?v=12" alt="" class="share-logo" />
       <h3>إرسال القرار مع ملف PDF</h3>
       <p>الملف جاهز بشعار شاي بكر. اختر طريقة الإرسال:</p>
       <ol class="share-steps">
@@ -505,7 +505,7 @@ function makeDoughnut(canvasId, key, rows, emptyText) {
   });
 }
 
-function makeBar(canvasId, key, rows, emptyText) {
+function makeBar(canvasId, key, rows, emptyText, barLabel = "الطلبات") {
   const canvas = document.getElementById(canvasId);
   if (!canvas || typeof Chart === "undefined") return;
   destroyChart(key);
@@ -531,7 +531,7 @@ function makeBar(canvasId, key, rows, emptyText) {
       labels: rows.map(([l]) => l),
       datasets: [
         {
-          label: "الطلبات",
+          label: barLabel,
           data: rows.map(([, n]) => n),
           backgroundColor: "rgba(99, 58, 17, 0.85)",
           borderRadius: 10,
@@ -590,7 +590,7 @@ function renderStats() {
     <article class="stat-card is-money is-hero">
       <span>الدخل الكامل</span>
       <strong>${money(revenue)}</strong>
-      <em>من الطلبات المقبولة · ${when}</em>
+      <em>من الطلبات المقبولة · متوسط الطلب ${money(avg)}</em>
     </article>
     <article class="stat-card is-orders">
       <span>عدد الطلبات</span>
@@ -605,7 +605,7 @@ function renderStats() {
     <article class="stat-card is-visit">
       <span>زيارات الموقع</span>
       <strong>${visits.length}</strong>
-      <em>متوسط الطلب المقبول: ${money(avg)}</em>
+      <em>شخص فتح الموقع · ${when}</em>
     </article>
   `;
 
@@ -640,6 +640,98 @@ function renderStats() {
     .filter(([, n]) => n > 0)
     .map(([h, n]) => [`${String(h).padStart(2, "0")}:00`, n]);
   makeBar("peakChart", "peak", peakRows, "ما فيه أوقات ذروة بعد");
+}
+
+/* =========================================================
+ * زوار الموقع — كم شخص فتح الموقع مقابل من أرسل طلباً
+ * الزيارة = جلسة تصفح واحدة (تُسجَّل مرة لكل زائر في الجلسة)
+ * ========================================================= */
+
+/** مفتاح اليوم بالتوقيت المحلي: YYYY-MM-DD */
+function dayKey(value) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate()
+  ).padStart(2, "0")}`;
+}
+
+function daysAgoStart(days) {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - days);
+  return d;
+}
+
+function countSince(list, days, field = "created_at") {
+  const from = daysAgoStart(days);
+  return (list || []).filter((row) => new Date(row[field]) >= from).length;
+}
+
+function renderVisitors() {
+  const visits = state.visits || [];
+  const orders = activeOrders();
+
+  const today = countSince(visits, 0);
+  const week = countSince(visits, 6);
+  const month = countSince(visits, 29);
+  const ordersMonth = countSince(orders, 29);
+  const rate = month > 0 ? Math.round((ordersMonth / month) * 100) : 0;
+
+  const grid = $("#visitorsGrid");
+  if (grid) {
+    grid.innerHTML = `
+      <article class="stat-card is-visit is-hero">
+        <span>زيارات اليوم</span>
+        <strong>${today}</strong>
+        <em>منذ منتصف الليل</em>
+      </article>
+      <article class="stat-card is-orders">
+        <span>آخر ٧ أيام</span>
+        <strong>${week}</strong>
+        <em>مجموع الزيارات في الأسبوع</em>
+      </article>
+      <article class="stat-card is-money">
+        <span>آخر ٣٠ يوم</span>
+        <strong>${month}</strong>
+        <em>${ordersMonth} منهم أرسلوا طلباً</em>
+      </article>
+      <article class="stat-card is-pending">
+        <span>من كل ١٠٠ زائر</span>
+        <strong>${rate}</strong>
+        <em>يرسلون طلب حجز</em>
+      </article>
+      <article class="stat-card is-total">
+        <span>إجمالي الزيارات</span>
+        <strong>${visits.length}</strong>
+        <em>منذ إطلاق الموقع</em>
+      </article>`;
+  }
+
+  // آخر ١٤ يوماً بالترتيب من الأقدم للأحدث
+  const counts = new Map();
+  for (let i = 13; i >= 0; i -= 1) {
+    const d = daysAgoStart(i);
+    counts.set(dayKey(d), 0);
+  }
+  visits.forEach((v) => {
+    const key = dayKey(v.created_at);
+    if (counts.has(key)) counts.set(key, counts.get(key) + 1);
+  });
+  const rows = [...counts.entries()].map(([key, n]) => {
+    const d = new Date(`${key}T12:00:00`);
+    return [d.toLocaleDateString("ar-SA", { day: "numeric", month: "numeric" }), n];
+  });
+
+  makeBar("visitsChart", "visits", rows, "ما فيه زيارات بعد", "الزيارات");
+  updateVisitorsChoiceHint(today);
+}
+
+function updateVisitorsChoiceHint(todayCount) {
+  const el = $("#visitorsChoiceHint");
+  if (!el) return;
+  const today = typeof todayCount === "number" ? todayCount : countSince(state.visits, 0);
+  el.textContent = today > 0 ? `${today} زيارة اليوم — اضغط للتفاصيل` : "كم شخص دخل الموقع";
 }
 
 function updateOrdersChoiceHint() {
@@ -706,12 +798,14 @@ function showPage(page) {
   if (state.page === "stats") {
     requestAnimationFrame(() => renderStats());
   }
+  if (state.page === "visitors") {
+    requestAnimationFrame(() => renderVisitors());
+  }
   if (state.page === "orders") {
     renderOrders();
   }
 
-  const hash =
-    state.page === "home" ? "" : state.page === "orders" ? "#orders" : "#stats";
+  const hash = state.page === "home" ? "" : `#${state.page}`;
   history.replaceState(null, "", location.pathname + location.search + hash);
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -969,6 +1063,8 @@ async function loadData() {
   renderStats();
   renderOrders();
   updateOrdersChoiceHint();
+  updateVisitorsChoiceHint();
+  if (state.page === "visitors") renderVisitors();
   if (state.selectedOrderId) {
     const still = state.orders.find((o) => String(o.id) === String(state.selectedOrderId));
     if (still) renderOrderDetail(still);
@@ -1337,6 +1433,7 @@ function setup() {
   const orderMatch = hash.match(/^#order=(.+)$/);
   if (orderMatch?.[1]) state.pendingOpenId = decodeURIComponent(orderMatch[1]);
   else if (hash === "#orders") state.page = "orders";
+  else if (hash === "#visitors") state.page = "visitors";
   else if (hash === "#stats") state.page = "stats";
 
   if (isAuthed()) {
