@@ -906,6 +906,20 @@ select {
   cursor: pointer;
 }
 
+.cal-nav button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.cal-window-hint {
+  margin: 0.35rem 0 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--tea-mid);
+  line-height: 1.4;
+  text-align: center;
+}
+
 .cal-week,
 .cal-days {
   display: grid;

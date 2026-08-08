@@ -5,6 +5,8 @@
  */
 const STORAGE_BOOKED = "bakr-booked-dates";
 const STORAGE_DRAFT = "bakr-booking-draft";
+/** أقصى مدى للحجز من اليوم: 12 شهراً فقط */
+const BOOKING_MONTHS_AHEAD = 12;
 
 const state = {
   stepIndex: 0,
@@ -140,20 +142,59 @@ function currentStep() {
 }
 
 function isBooked(iso) {
-  return state.bookedDates.has(iso);
+  return state.bookedDates.has(String(iso || "").slice(0, 10));
+}
+
+function startOfToday() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function maxBookingDate() {
+  const d = startOfToday();
+  d.setMonth(d.getMonth() + BOOKING_MONTHS_AHEAD);
+  return d;
+}
+
+function maxBookingIso() {
+  const d = maxBookingDate();
+  return toISO(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function isPastDate(iso) {
+  const dateObj = new Date(`${iso}T12:00:00`);
+  return Number.isNaN(dateObj.getTime()) || dateObj < startOfToday();
+}
+
+function isBeyondBookingWindow(iso) {
+  const dateObj = new Date(`${iso}T12:00:00`);
+  return Number.isNaN(dateObj.getTime()) || dateObj > maxBookingDate();
+}
+
+function isDateUnavailable(iso) {
+  return isPastDate(iso) || isBeyondBookingWindow(iso) || isBooked(iso);
 }
 
 function loadLocalBooked() {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_BOOKED) || "[]");
-    raw.forEach((d) => state.bookedDates.add(d));
+    raw.forEach((d) => {
+      const iso = String(d || "").slice(0, 10);
+      if (iso) state.bookedDates.add(iso);
+    });
   } catch (_) {}
 }
 
 function persistBookedDate(iso) {
-  state.bookedDates.add(iso);
-  const all = [...state.bookedDates];
-  localStorage.setItem(STORAGE_BOOKED, JSON.stringify(all));
+  const day = String(iso || "").slice(0, 10);
+  if (!day) return;
+  state.bookedDates.add(day);
+  localStorage.setItem(STORAGE_BOOKED, JSON.stringify([...state.bookedDates]));
+}
+
+function syncBookedLocalStorage() {
+  localStorage.setItem(STORAGE_BOOKED, JSON.stringify([...state.bookedDates]));
 }
 
 function saveDraft() {
@@ -199,28 +240,53 @@ function loadDraft() {
     state.phone = sanitizePhoneInput(state.phone || "");
     if (d.discountCode) tryApplyDiscount(d.discountCode);
     if (state.date) {
-      const dt = new Date(`${state.date}T12:00:00`);
-      state.calendar = new Date(dt.getFullYear(), dt.getMonth(), 1);
+      if (isDateUnavailable(state.date)) {
+        state.date = "";
+        state.dateFeedback = "idle";
+      } else {
+        const dt = new Date(`${state.date}T12:00:00`);
+        state.calendar = new Date(dt.getFullYear(), dt.getMonth(), 1);
+      }
     }
   } catch (_) {}
 }
 
 async function loadBookedDates() {
-  loadLocalBooked();
+  const fromJson = new Set();
+  const fromStore = new Set();
+  let storeOk = false;
+
   try {
     const res = await fetch("./data/booked-dates.json", { cache: "no-store" });
     if (res.ok) {
       const data = await res.json();
-      (data.booked || []).forEach((d) => state.bookedDates.add(d));
+      (data.booked || []).forEach((d) => {
+        const iso = String(d || "").slice(0, 10);
+        if (iso) fromJson.add(iso);
+      });
     }
   } catch (_) {}
 
   try {
     if (window.BakrStore?.listBookedDates) {
       const cloudDates = await window.BakrStore.listBookedDates();
-      (cloudDates || []).forEach((d) => state.bookedDates.add(String(d).slice(0, 10)));
+      storeOk = true;
+      (cloudDates || []).forEach((d) => {
+        const iso = String(d || "").slice(0, 10);
+        if (iso) fromStore.add(iso);
+      });
     }
   } catch (_) {}
+
+  if (storeOk) {
+    // المصدر الرسمي: طلبات بانتظار/مقبولة (+ ملف ثابت إن وُجد)
+    // حتى يتحرر التاريخ فور رفض الطلب
+    state.bookedDates = new Set([...fromJson, ...fromStore]);
+    syncBookedLocalStorage();
+  } else {
+    loadLocalBooked();
+    fromJson.forEach((d) => state.bookedDates.add(d));
+  }
 }
 
 function showView(name, opts = {}) {
@@ -275,7 +341,7 @@ function canProceed() {
     case "addons":
       return true;
     case "date":
-      return Boolean(state.date) && !isBooked(state.date);
+      return Boolean(state.date) && !isDateUnavailable(state.date);
     case "name":
       return state.name.trim().length >= 2;
     case "phone":
@@ -415,11 +481,12 @@ function prevStep() {
 }
 
 async function confirmBooking() {
-  if (isBooked(state.date)) {
-    state.dateFeedback = "bad";
+  if (!state.date || isDateUnavailable(state.date)) {
+    state.dateFeedback = state.date && isBeyondBookingWindow(state.date) ? "beyond" : "bad";
     setStep(FLOW.indexOf("date"));
     return;
   }
+  // احجز التاريخ فوراً بمجرد إرسال الطلب (حتى وهو بانتظار القبول/الرفض)
   persistBookedDate(state.date);
   localStorage.removeItem(STORAGE_DRAFT);
 
@@ -623,18 +690,47 @@ function parseDateSearch(raw, mode) {
 }
 
 function applyPickedDate(iso) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
   const dateObj = new Date(`${iso}T12:00:00`);
-  if (dateObj < today || isBooked(iso)) {
+  if (Number.isNaN(dateObj.getTime()) || isDateUnavailable(iso)) {
     state.date = "";
-    state.dateFeedback = "bad";
+    state.dateFeedback = isBeyondBookingWindow(iso) ? "beyond" : "bad";
     return false;
   }
   state.date = iso;
   state.dateFeedback = "ok";
   state.calendar = new Date(dateObj);
   return true;
+}
+
+function calendarMonthStart(dateObj = state.calendar) {
+  return new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
+}
+
+function canGoPrevMonth() {
+  const view = calendarMonthStart();
+  const todayMonth = calendarMonthStart(startOfToday());
+  return view > todayMonth;
+}
+
+function canGoNextMonth() {
+  const view = calendarMonthStart();
+  const maxMonth = calendarMonthStart(maxBookingDate());
+  return view < maxMonth;
+}
+
+function shiftCalendarMonth(delta) {
+  if (delta < 0 && !canGoPrevMonth()) return;
+  if (delta > 0 && !canGoNextMonth()) return;
+  if (state.calendarMode === "hijri") {
+    state.calendar.setDate(state.calendar.getDate() + delta * 30);
+  } else {
+    state.calendar.setMonth(state.calendar.getMonth() + delta);
+  }
+  const view = calendarMonthStart();
+  const minMonth = calendarMonthStart(startOfToday());
+  const maxMonth = calendarMonthStart(maxBookingDate());
+  if (view < minMonth) state.calendar = new Date(minMonth);
+  if (view > maxMonth) state.calendar = new Date(maxMonth);
 }
 
 function renderChoices(list, selectedId, onPick, colsClass = "cols-3") {
@@ -661,8 +757,6 @@ function bindChoices(onPick) {
 }
 
 function renderCalendar() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
   const isHijri = state.calendarMode === "hijri";
 
   let label = "";
@@ -676,18 +770,7 @@ function renderCalendar() {
       cells += `<button class="day-btn muted" type="button" disabled></button>`;
     }
     for (const item of monthData.days) {
-      const dateObj = new Date(`${item.iso}T12:00:00`);
-      const past = dateObj < today;
-      const booked = isBooked(item.iso);
-      const selected = state.date === item.iso;
-      let cls = "day-btn";
-      if (past) cls += " muted";
-      else if (booked) cls += " booked";
-      else cls += " available";
-      if (selected) cls += " selected";
-      cells += `<button class="${cls}" type="button" data-date="${item.iso}" ${
-        past ? "disabled" : ""
-      }>${item.day}${booked ? "<small>محجوز</small>" : ""}</button>`;
+      cells += renderDayCell(item.iso, item.day);
     }
   } else {
     const year = state.calendar.getFullYear();
@@ -699,19 +782,7 @@ function renderCalendar() {
       cells += `<button class="day-btn muted" type="button" disabled></button>`;
     }
     for (let day = 1; day <= daysInMonth; day++) {
-      const iso = toISO(year, month, day);
-      const dateObj = new Date(`${iso}T12:00:00`);
-      const past = dateObj < today;
-      const booked = isBooked(iso);
-      const selected = state.date === iso;
-      let cls = "day-btn";
-      if (past) cls += " muted";
-      else if (booked) cls += " booked";
-      else cls += " available";
-      if (selected) cls += " selected";
-      cells += `<button class="${cls}" type="button" data-date="${iso}" ${
-        past ? "disabled" : ""
-      }>${day}${booked ? "<small>محجوز</small>" : ""}</button>`;
+      cells += renderDayCell(toISO(year, month, day), day);
     }
   }
 
@@ -738,24 +809,51 @@ function renderCalendar() {
       </div>
 
       <div class="cal-nav">
-        <button type="button" id="nextMonth" aria-label="الشهر التالي">‹</button>
+        <button type="button" id="nextMonth" aria-label="الشهر التالي" ${
+          canGoNextMonth() ? "" : "disabled"
+        }>‹</button>
         <strong>${label}</strong>
-        <button type="button" id="prevMonth" aria-label="الشهر السابق">›</button>
+        <button type="button" id="prevMonth" aria-label="الشهر السابق" ${
+          canGoPrevMonth() ? "" : "disabled"
+        }>›</button>
       </div>
+      <p class="cal-window-hint">الحجز متاح حتى ${formatDateLabel(maxBookingIso())} (١٢ شهراً قادمة فقط).</p>
       <div class="cal-week">
         <span>أحد</span><span>إثن</span><span>ثلا</span><span>أرب</span>
         <span>خمي</span><span>جمع</span><span>سبت</span>
       </div>
       <div class="cal-days">${cells}</div>
-      <div class="date-status ${state.dateFeedback}" id="dateStatus">${dateStatusText()}</div>
+      <div class="date-status ${state.dateFeedback === "beyond" ? "bad" : state.dateFeedback}" id="dateStatus">${dateStatusText()}</div>
     </div>`;
+}
+
+function renderDayCell(iso, dayLabel) {
+  const past = isPastDate(iso);
+  const beyond = isBeyondBookingWindow(iso);
+  const booked = isBooked(iso);
+  const selected = state.date === iso;
+  const locked = past || beyond || booked;
+  let cls = "day-btn";
+  if (past || beyond) cls += " muted";
+  else if (booked) cls += " booked";
+  else cls += " available";
+  if (selected) cls += " selected";
+  let mark = "";
+  if (booked) mark = "<small>محجوز</small>";
+  else if (beyond) mark = "<small>خارج المدى</small>";
+  return `<button class="${cls}" type="button" data-date="${iso}" ${
+    locked ? "disabled" : ""
+  }>${dayLabel}${mark}</button>`;
 }
 
 function dateStatusText() {
   if (state.dateFeedback === "ok") {
     return state.date ? `التاريخ متاح: ${formatDateLabel(state.date)}` : "هذا التاريخ متاح.";
   }
-  if (state.dateFeedback === "bad") return "هذا اليوم غير متاح، اختر تاريخاً آخر.";
+  if (state.dateFeedback === "beyond") {
+    return "لا يمكن الحجز لأكثر من ١٢ شهراً قادمة. اختر تاريخاً أقرب.";
+  }
+  if (state.dateFeedback === "bad") return "هذا اليوم غير متاح (محجوز أو بانتظار قرار)، اختر تاريخاً آخر.";
   return "اختر يوماً من التقويم أو ابحث بالأعلى.";
 }
 
@@ -1141,18 +1239,17 @@ function renderWizard() {
     });
     $("#dateSearchBtn")?.addEventListener("click", runSearch);
 
-    $("#prevMonth").addEventListener("click", () => {
-      if (state.calendarMode === "hijri") state.calendar.setDate(state.calendar.getDate() - 30);
-      else state.calendar.setMonth(state.calendar.getMonth() - 1);
+    $("#prevMonth")?.addEventListener("click", () => {
+      shiftCalendarMonth(-1);
       renderWizard();
     });
-    $("#nextMonth").addEventListener("click", () => {
-      if (state.calendarMode === "hijri") state.calendar.setDate(state.calendar.getDate() + 30);
-      else state.calendar.setMonth(state.calendar.getMonth() + 1);
+    $("#nextMonth")?.addEventListener("click", () => {
+      shiftCalendarMonth(1);
       renderWizard();
     });
     $$("[data-date]").forEach((btn) => {
       btn.addEventListener("click", () => {
+        if (btn.disabled) return;
         applyPickedDate(btn.dataset.date);
         nextBtn.disabled = !state.date;
         renderWizard();
@@ -1453,6 +1550,10 @@ function setupNav() {
 async function init() {
   loadDraft();
   await loadBookedDates();
+  if (state.date && isDateUnavailable(state.date)) {
+    state.date = "";
+    state.dateFeedback = "idle";
+  }
   renderMarketingPackages();
   renderMarketingAddons();
   setupNav();

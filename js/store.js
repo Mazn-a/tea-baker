@@ -137,7 +137,10 @@
     return localRow;
   }
 
-  /** تواريخ محجوزة: طلبات جديدة أو مقبولة (تمنع الحجز المكرر من الموقع) */
+  /**
+   * تواريخ محجوزة: أي طلب بانتظار القرار أو مقبول.
+   * مجرد إرسال الطلب يحجز التاريخ حتى يُرفض.
+   */
   async function listBookedDates() {
     const orders = await listOrders();
     const dates = new Set();

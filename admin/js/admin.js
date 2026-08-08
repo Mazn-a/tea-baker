@@ -702,10 +702,11 @@ function showOrderDetail(id) {
     el.classList.remove("is-page-on");
   });
 
+  // أخفِ قائمة اللوحة بالكامل حتى تظهر صفحة التفاصيل فقط
   const dash = $("#dashboardView");
   if (dash) {
-    dash.hidden = false;
-    dash.classList.remove("is-hidden");
+    dash.hidden = true;
+    dash.classList.add("is-hidden");
   }
 
   const detail = $("#orderDetailView");
@@ -716,6 +717,32 @@ function showOrderDetail(id) {
   renderOrderDetail(order);
   history.replaceState(null, "", `#order=${encodeURIComponent(id)}`);
   window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function releaseLocalBookedDate(iso) {
+  const day = String(iso || "").slice(0, 10);
+  if (!day) return;
+  try {
+    const key = "bakr-booked-dates";
+    const all = JSON.parse(localStorage.getItem(key) || "[]").filter(
+      (d) => String(d).slice(0, 10) !== day
+    );
+    localStorage.setItem(key, JSON.stringify(all));
+  } catch (_) {}
+}
+
+function bookingWindowBounds() {
+  const min = new Date();
+  min.setHours(0, 0, 0, 0);
+  const max = new Date(min);
+  max.setMonth(max.getMonth() + 12);
+  const toIso = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+  return { minIso: toIso(min), maxIso: toIso(max), min, max };
 }
 
 function renderOrders() {
@@ -735,38 +762,33 @@ function renderOrders() {
     .map((o) => {
       const addons = Array.isArray(o.addons) ? o.addons : [];
       const isExternal = o.package_id === "external";
-      const canDecide = o.status === "pending";
+      const pendingHint =
+        o.status === "pending" ? `<span class="order-row-hint pending-hint">بانتظار قرارك</span>` : "";
       return `
       <article class="order-row" data-id="${o.id}">
         <button type="button" class="order-row-main" data-open="1">
           <div class="order-row-title">
-            <strong>${o.customer_name}</strong>
+            <strong>${escapeHtml(o.customer_name)}</strong>
             <span class="status-pill ${o.status}">${statusLabel(o.status)}</span>
             ${isExternal ? `<span class="ext-pill">خارج الموقع</span>` : ""}
           </div>
           <div class="order-row-meta">
-            <span>${o.city_label}</span>
+            <span>${escapeHtml(o.city_label)}</span>
             <span>·</span>
-            <span>${o.event_label}</span>
+            <span>${escapeHtml(o.event_label)}</span>
             <span>·</span>
             <span>${formatDate(o.event_date)}</span>
           </div>
           <div class="order-row-sub">
-            <span class="order-phone">${o.customer_phone}</span>
+            <span class="order-phone">${escapeHtml(o.customer_phone)}</span>
             <span>${formatDateTime(o.created_at)}</span>
           </div>
         </button>
         <div class="order-row-side">
           <strong class="order-row-total">${money(o.grand_total)}</strong>
           <span class="order-row-hint">${addons.length ? `${addons.length} إضافة` : "بدون إضافات"}</span>
-          ${
-            canDecide
-              ? `<div class="order-row-actions">
-                  <button type="button" class="btn btn-ok btn-sm" data-action="accept">قبول</button>
-                  <button type="button" class="btn btn-err btn-sm" data-action="reject">رفض</button>
-                </div>`
-              : `<button type="button" class="btn btn-ghost btn-sm" data-open="1">التفاصيل</button>`
-          }
+          ${pendingHint}
+          <button type="button" class="btn btn-ghost btn-sm" data-open="1">عرض التفاصيل والقرار</button>
         </div>
       </article>`;
     })
@@ -795,21 +817,36 @@ function renderOrderDetail(o) {
     .filter((p) => p && !/^الموقع\s*:/.test(p))
     .join(" | ");
 
+  const shortId = String(o.id || "").slice(0, 8).toUpperCase() || "——";
+  const decideHint =
+    o.status === "pending"
+      ? `<p class="order-decide-hint">راجع كل التفاصيل بالأسفل ثم اضغط قبول أو رفض.</p>`
+      : "";
+
   root.innerHTML = `
     <div class="order-top">
       <div>
         <h3>${escapeHtml(o.customer_name)}</h3>
-        <p>${formatDateTime(o.created_at)} · <span class="order-phone">${escapeHtml(o.customer_phone)}</span></p>
+        <p>${formatDateTime(o.created_at)} · مرجع ${shortId}</p>
       </div>
       <span class="status-pill ${o.status}">${statusLabel(o.status)}</span>
     </div>
+    ${decideHint}
+
+    <section class="order-section">
+      <h4 class="order-section-title">بيانات العميل</h4>
+      <div class="order-kv">
+        <div class="item"><span class="lbl">الاسم</span><span class="val">${escapeHtml(o.customer_name || "—")}</span></div>
+        <div class="item"><span class="lbl">الجوال</span><span class="val order-phone">${escapeHtml(o.customer_phone || "—")}</span></div>
+      </div>
+    </section>
 
     <section class="order-section">
       <h4 class="order-section-title">المناسبة والبكج</h4>
       <div class="order-kv">
-        <div class="item"><span class="lbl">المدينة</span><span class="val">${escapeHtml(o.city_label)}</span></div>
-        <div class="item"><span class="lbl">المناسبة</span><span class="val">${escapeHtml(o.event_label)}</span></div>
-        <div class="item"><span class="lbl">البكج</span><span class="val">${escapeHtml(o.package_name)}</span></div>
+        <div class="item"><span class="lbl">المدينة</span><span class="val">${escapeHtml(o.city_label || "—")}</span></div>
+        <div class="item"><span class="lbl">المناسبة</span><span class="val">${escapeHtml(o.event_label || "—")}</span></div>
+        <div class="item"><span class="lbl">البكج</span><span class="val">${escapeHtml(o.package_name || "—")}</span></div>
         <div class="item"><span class="lbl">سعر البكج</span><span class="val">${money(o.package_price)}</span></div>
         <div class="item"><span class="lbl">مجموع الإضافات</span><span class="val">${money(o.addons_total)}</span></div>
         <div class="item"><span class="lbl">تاريخ المناسبة</span><span class="val">${formatDate(o.event_date)}</span></div>
@@ -847,8 +884,12 @@ function renderOrderDetail(o) {
     }
 
     <div class="order-actions">
-      <button type="button" class="btn btn-ok" data-action="accept" ${o.status === "accepted" ? "disabled" : ""}>قبول + إرسال PDF</button>
-      <button type="button" class="btn btn-err" data-action="reject" ${o.status === "rejected" ? "disabled" : ""}>رفض + إرسال PDF</button>
+      <button type="button" class="btn btn-ok" data-action="accept" ${
+        o.status === "accepted" ? "disabled" : ""
+      }>قبول + إرسال PDF</button>
+      <button type="button" class="btn btn-err" data-action="reject" ${
+        o.status === "rejected" ? "disabled" : ""
+      }>رفض + إرسال PDF</button>
       <button type="button" class="btn btn-ghost" data-action="pdf">معاينة / تحميل PDF</button>
       <button type="button" class="btn btn-wa" data-action="whatsapp">واتساب نص فقط</button>
     </div>
@@ -934,7 +975,12 @@ async function handleOrderAction(action, order, btn) {
 }
 
 async function setStatus(id, status) {
+  const current = state.orders.find((o) => o.id === id);
   await window.BakrStore.updateOrderStatus(id, status);
+  // عند الرفض يتحرر التاريخ من الحجز المحلي أيضاً
+  if (status === "rejected" && current?.event_date) {
+    releaseLocalBookedDate(current.event_date);
+  }
   await loadData();
 }
 
@@ -1018,23 +1064,13 @@ function setup() {
     }
   });
 
-  $("#ordersList")?.addEventListener("click", async (e) => {
+  $("#ordersList")?.addEventListener("click", (e) => {
     const row = e.target.closest(".order-row");
     if (!row) return;
     const id = row.dataset.id;
     if (!id) return;
-
-    const actionBtn = e.target.closest("[data-action]");
-    if (actionBtn) {
-      e.preventDefault();
-      e.stopPropagation();
-      const order = state.orders.find((o) => o.id === id);
-      if (!order) return;
-      await handleOrderAction(actionBtn.dataset.action, order, actionBtn);
-      return;
-    }
-
-    if (e.target.closest("[data-open]") || e.target.closest(".order-row-main")) {
+    // القرار فقط من صفحة التفاصيل بعد مراجعة كل المعلومات
+    if (e.target.closest("[data-open]") || e.target.closest(".order-row-main") || e.target.closest(".order-row-side")) {
       showOrderDetail(id);
     }
   });
@@ -1070,8 +1106,9 @@ function setup() {
     $("#bookingForm")?.reset();
     const dateInput = $("#bkDate");
     if (dateInput) {
-      const t = new Date();
-      dateInput.min = t.toISOString().slice(0, 10);
+      const { minIso, maxIso } = bookingWindowBounds();
+      dateInput.min = minIso;
+      dateInput.max = maxIso;
     }
     if (modal) {
       modal.hidden = false;
@@ -1114,9 +1151,13 @@ function setup() {
     if (!city) return showErr("اختر المدينة");
     if (!eventDate) return showErr("اختر تاريخ المناسبة");
 
+    const { minIso, maxIso } = bookingWindowBounds();
+    if (eventDate < minIso) return showErr("لا يمكن اختيار تاريخ سابق");
+    if (eventDate > maxIso) return showErr("الحجز متاح لـ ١٢ شهراً قادمة فقط");
+
     const booked = await window.BakrStore.listBookedDates();
     if ((booked || []).includes(eventDate)) {
-      return showErr("هذا التاريخ محجوز مسبقاً — اختر تاريخاً آخر");
+      return showErr("هذا التاريخ محجوز أو عليه طلب بانتظار القرار — اختر تاريخاً آخر");
     }
 
     const btn = $("#bkSaveBtn");
