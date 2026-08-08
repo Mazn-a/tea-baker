@@ -1304,10 +1304,9 @@ function renderWizard() {
             type="url"
             inputmode="url"
             dir="ltr"
-            placeholder="اختياري — الصق الرابط إن توفر"
+            placeholder="الصق رابط خرائط قوقل"
             value="${esc(state.locationLink)}"
           />
-          <p class="field-hint">مو لازم — تقدر تكمّل بدون رابط.</p>
           <div class="field-error" id="fieldError"></div>
         </div>
       </div>`;
