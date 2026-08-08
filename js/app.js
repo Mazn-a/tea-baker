@@ -35,7 +35,16 @@ const state = {
   orderSaved: true,
 };
 
-const money = (n) => `${Number(n).toLocaleString("ar-SA")} ر.س`;
+/**
+ * كل الأرقام في الواجهة إنجليزية (1٬2٬3) مع نص عربي.
+ * السبب: نفس أرقام لوحة المفاتيح والواتساب، وما يصير خلط بين ٨ و 8.
+ * التقويم مثبّت على الميلادي/الهجري صراحةً حتى لا يختلف بين الأجهزة.
+ */
+const AR_GREGORIAN = "ar-SA-u-ca-gregory-nu-latn";
+const AR_HIJRI = "ar-SA-u-ca-islamic-umalqura-nu-latn";
+const AR_NUMBERS = "ar-SA-u-nu-latn";
+
+const money = (n) => `${Number(n).toLocaleString(AR_NUMBERS)} ر.س`;
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
@@ -617,13 +626,25 @@ function openWhatsApp() {
 function formatDateLabel(iso) {
   if (!iso) return "—";
   const d = new Date(`${iso}T12:00:00`);
-  const g = d.toLocaleDateString("ar-SA", {
+  const g = d.toLocaleDateString(AR_GREGORIAN, {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric",
   });
-  return `${g} · ${formatHijriFull(d)}`;
+  // مسافة غير فاصلة قبل «هـ» حتى لا تنزل وحدها في سطر جديد على الجوال
+  return `${g} · ${formatHijriFull(d).replace(/\s(هـ)$/, "\u00A0$1")}`;
+}
+
+/** تاريخ ميلادي مختصر بدون اسم اليوم — للتلميحات القصيرة */
+function formatShortDate(iso) {
+  if (!iso) return "—";
+  const d = new Date(`${iso}T12:00:00`);
+  return d.toLocaleDateString(AR_GREGORIAN, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function toISO(y, m, d) {
@@ -644,14 +665,14 @@ function getHijriParts(date) {
 }
 
 function formatHijriMonthLabel(date) {
-  return new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura", {
+  return new Intl.DateTimeFormat(AR_HIJRI, {
     month: "long",
     year: "numeric",
   }).format(date);
 }
 
 function formatHijriFull(date) {
-  return new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura", {
+  return new Intl.DateTimeFormat(AR_HIJRI, {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -700,7 +721,7 @@ function findGregorianForHijri(hy, hm, hd) {
 }
 
 function parseDateSearch(raw, mode) {
-  const text = String(raw || "").trim();
+  const text = normalizeDigits(raw).trim();
   if (!text) return null;
   const m = text.match(/^(\d{1,4})[\/\-.](\d{1,2})[\/\-.](\d{1,4})$/);
   if (!m) return null;
@@ -819,7 +840,7 @@ function renderCalendar() {
   } else {
     const year = state.calendar.getFullYear();
     const month = state.calendar.getMonth();
-    label = state.calendar.toLocaleDateString("ar-SA", { month: "long", year: "numeric" });
+    label = state.calendar.toLocaleDateString(AR_GREGORIAN, { month: "long", year: "numeric" });
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     for (let i = 0; i < firstDay; i++) {
@@ -861,7 +882,7 @@ function renderCalendar() {
           canGoPrevMonth() ? "" : "disabled"
         }>›</button>
       </div>
-      <p class="cal-window-hint">الحجز متاح حتى ${formatDateLabel(maxBookingIso())} (١٢ شهراً قادمة فقط).</p>
+      <p class="cal-window-hint">الحجز متاح حتى ${formatShortDate(maxBookingIso())} (12 شهراً قادمة).</p>
       <div class="cal-week" aria-label="أيام الأسبوع">
         ${weekdayHeadersAr()
           .map((day) => `<span>${day}</span>`)
@@ -989,9 +1010,16 @@ function renderField(id, label, type, value, placeholder, extra = "", attrs = ""
     </div>`;
 }
 
+/** يحوّل الأرقام العربية ٠١٢ والفارسية ۰۱۲ إلى 012 (لوحة المفاتيح العربية على الجوال) */
+function normalizeDigits(value) {
+  return String(value ?? "")
+    .replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d))
+    .replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
+}
+
 /** رقم سعودي: أرقام فقط وبحد أقصى 10 */
 function sanitizePhoneInput(value) {
-  let digits = String(value || "").replace(/\D/g, "");
+  let digits = normalizeDigits(value).replace(/\D/g, "");
   if (digits.startsWith("966")) digits = `0${digits.slice(3)}`;
   else if (digits.startsWith("00966")) digits = `0${digits.slice(5)}`;
   return digits.slice(0, 10);

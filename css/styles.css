@@ -2490,6 +2490,16 @@ select {
   font-size: inherit;
 }
 
+/* روابط الاتصال: مساحة لمس مريحة على الجوال */
+.footer-contact .contact-line a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  padding-inline: 0.15rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .footer-copy {
   margin: 0.15rem 0 0;
   text-align: center;
@@ -2739,6 +2749,29 @@ select {
     padding: 0.9rem;
   }
 
+  /* المراجعة على الجوال: العنوان فوق والقيمة تحته بعرض كامل
+     بدل عمودين ضيقين يكسران التاريخ والرابط الطويل */
+  .review-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.15rem;
+    font-size: 1rem;
+  }
+
+  .review-row span:first-child {
+    font-size: 0.85rem;
+  }
+
+  .review-row strong {
+    overflow-wrap: anywhere;
+  }
+
+  .review-row.price {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
   .cal-wrap {
     width: 100%;
     padding: 0.45rem 0.5rem 0.5rem;
@@ -2756,8 +2789,8 @@ select {
   }
 
   .cal-mode {
-    min-height: 1.85rem;
-    font-size: 0.82rem;
+    min-height: 2.25rem;
+    font-size: 0.85rem;
   }
 
   .cal-search-row input,
@@ -2771,9 +2804,9 @@ select {
   }
 
   .cal-nav button {
-    width: 28px;
-    height: 28px;
-    font-size: 0.9rem;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
   }
 
   .cal-week,
@@ -2787,10 +2820,10 @@ select {
   }
 
   .day-btn {
-    min-height: 1.7rem;
-    height: 1.7rem;
-    font-size: 0.78rem;
-    border-radius: 0.4rem;
+    min-height: 2.15rem;
+    height: 2.15rem;
+    font-size: 0.85rem;
+    border-radius: 0.45rem;
     padding: 0;
   }
 

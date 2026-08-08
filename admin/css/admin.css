@@ -500,9 +500,16 @@ code {
 .conn-alert,
 .order-detail-view,
 .stats-panel,
+.visitors-panel,
 .orders-panel {
   width: min(1100px, calc(100% - 1.5rem));
   margin-inline: auto;
+}
+
+/* يمنع تمدد عناصر الشبكة أكثر من الشاشة على الجوال */
+.admin-main > *,
+#dashboardView > * {
+  min-width: 0;
 }
 
 .conn-alert {
@@ -510,6 +517,7 @@ code {
 }
 
 .stats-panel,
+.visitors-panel,
 .orders-panel {
   margin-top: 1.15rem;
 }
@@ -808,6 +816,12 @@ code {
 .chart-canvas-wrap {
   position: relative;
   height: 220px;
+  overflow: hidden;
+}
+
+/* Chart.js يكتب عرضاً مباشراً على العنصر — نمنعه من تجاوز الشاشة */
+.chart-canvas-wrap canvas {
+  max-width: 100% !important;
 }
 
 .chart-canvas-wide {
@@ -1653,6 +1667,19 @@ body:has(#adminHome.is-page-on) .admin-main {
   word-break: break-all;
 }
 
+/* رابط الخريطة: زر بمساحة لمس واضحة بدل نص صغير */
+.order-kv .val a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  padding-inline: 0.65rem;
+  border-radius: 0.6rem;
+  background: rgba(99, 58, 17, 0.07);
+  border: 1px solid rgba(99, 58, 17, 0.16);
+  font-weight: 800;
+  color: var(--tea);
+}
+
 .detail-panel .order-actions {
   position: sticky;
   bottom: 0;
@@ -1800,9 +1827,12 @@ body:has(#adminHome.is-page-on) .admin-main {
     gap: 0.45rem;
   }
 
+  /* الشعار يتقلّص أولاً حتى لا يزحف على أزرار تحديث/خروج */
   .admin-brand {
     gap: 0.5rem;
-    max-width: calc(100% - 7.5rem);
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: none;
   }
 
   .admin-brand img,
@@ -1847,6 +1877,15 @@ body:has(#adminHome.is-page-on) .admin-main {
     font-size: 0.84rem;
   }
 
+  .pin-eye {
+    width: 34px;
+    height: 34px;
+  }
+
+  .period-today {
+    min-height: 2rem;
+  }
+
   .welcome-art-wrap { display: none; }
   .welcome-brand-block { flex-direction: column; }
   .stat-grid:not(.stat-grid-hero) { grid-template-columns: 1fr 1fr; }
@@ -1863,4 +1902,15 @@ body:has(#adminHome.is-page-on) .admin-main {
   .order-row-actions .btn { flex: 1; }
   .orders-head-actions { width: 100%; }
   .orders-head-actions .btn-primary { width: 100%; }
+}
+
+/* جوال ضيق: الشعار وحده يكفي في الترويسة */
+@media (max-width: 430px) {
+  .admin-brand-text {
+    display: none;
+  }
+
+  .visitors-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }

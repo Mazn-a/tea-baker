@@ -32,15 +32,19 @@ function expectedPin() {
   return normalizeDigits(cfg().adminPin || "1234") || "1234";
 }
 
+/** نفس أسلوب الموقع: نص عربي وأرقام إنجليزية وتقويم ميلادي مثبّت */
+const AR_GREGORIAN = "ar-SA-u-ca-gregory-nu-latn";
+const AR_NUMBERS = "ar-SA-u-nu-latn";
+
 function money(n) {
-  return `${Number(n || 0).toLocaleString("ar-SA")} ر.س`;
+  return `${Number(n || 0).toLocaleString(AR_NUMBERS)} ر.س`;
 }
 
 function formatDate(iso) {
   if (!iso) return "—";
   const d = new Date(iso.includes("T") ? iso : `${iso}T12:00:00`);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("ar-SA", {
+  return d.toLocaleDateString(AR_GREGORIAN, {
     weekday: "short",
     year: "numeric",
     month: "short",
@@ -52,7 +56,7 @@ function formatDateTime(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString("ar-SA", {
+  return d.toLocaleString(AR_GREGORIAN, {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -98,9 +102,9 @@ function inPeriod(iso) {
 function periodLabelText() {
   const c = state.cursor;
   if (state.range === "year") {
-    return c.toLocaleDateString("ar-SA", { year: "numeric" });
+    return c.toLocaleDateString(AR_GREGORIAN, { year: "numeric" });
   }
-  return c.toLocaleDateString("ar-SA", { month: "long", year: "numeric" });
+  return c.toLocaleDateString(AR_GREGORIAN, { month: "long", year: "numeric" });
 }
 
 function shiftPeriod(dir) {
@@ -720,7 +724,7 @@ function renderVisitors() {
   });
   const rows = [...counts.entries()].map(([key, n]) => {
     const d = new Date(`${key}T12:00:00`);
-    return [d.toLocaleDateString("ar-SA", { day: "numeric", month: "numeric" }), n];
+    return [d.toLocaleDateString(AR_GREGORIAN, { day: "numeric", month: "numeric" }), n];
   });
 
   makeBar("visitsChart", "visits", rows, "ما فيه زيارات بعد", "الزيارات");

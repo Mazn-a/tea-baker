@@ -7,15 +7,18 @@
     return window.BAKR_LOGO_DATA_URL || "../assets/logo-brand.png?v=12";
   }
 
+  /** نفس أسلوب الموقع: نص عربي وأرقام إنجليزية وتقويم ميلادي مثبّت */
+  const AR_GREGORIAN = "ar-SA-u-ca-gregory-nu-latn";
+
   function money(n) {
-    return `${Number(n || 0).toLocaleString("ar-SA")} ر.س`;
+    return `${Number(n || 0).toLocaleString("ar-SA-u-nu-latn")} ر.س`;
   }
 
   function formatDate(iso) {
     if (!iso) return "—";
     const d = new Date(iso.includes("T") ? iso : `${iso}T12:00:00`);
     if (Number.isNaN(d.getTime())) return iso;
-    return d.toLocaleDateString("ar-SA", {
+    return d.toLocaleDateString(AR_GREGORIAN, {
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -27,7 +30,7 @@
     if (!iso) return "—";
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
-    return d.toLocaleString("ar-SA", {
+    return d.toLocaleString(AR_GREGORIAN, {
       year: "numeric",
       month: "short",
       day: "numeric",
