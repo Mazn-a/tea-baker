@@ -281,7 +281,7 @@ function canProceed() {
     case "phone":
       return /^05\d{8}$/.test(state.phone.replace(/\s+/g, ""));
     case "location":
-      return state.hallName.trim().length >= 2 && state.locationArea.trim().length >= 2;
+      return state.hallName.trim().length >= 2;
     case "notes":
       return true;
     case "review":
@@ -377,10 +377,6 @@ function validateCurrent() {
       if (err) err.textContent = "اكتب اسم القاعة.";
       return false;
     }
-    if (state.locationArea.trim().length < 2) {
-      if (err) err.textContent = "اكتب الحي أو وصف موقع القاعة.";
-      return false;
-    }
     if (state.locationLink.trim() && !isValidLocationLink(state.locationLink)) {
       if (err)
         err.textContent =
@@ -454,10 +450,9 @@ async function confirmBooking() {
         customerName: state.name.trim(),
         customerPhone: state.phone.replace(/\s+/g, ""),
         hallName: state.hallName.trim(),
-        locationArea: state.locationArea.trim(),
+        locationArea: "",
         locationLink: state.locationLink.trim(),
         notes: [
-          state.locationArea.trim() ? `الموقع: ${state.locationArea.trim()}` : "",
           state.notes.trim(),
           state.discountApplied
             ? `كود خصم مطبّق: ${state.discountCode} (سعر البكج ${packageTotal()} بدل ${packageListPrice()})`
@@ -496,7 +491,6 @@ function buildWhatsAppMessage() {
     ...addonLines,
     `• التاريخ: ${formatDateLabel(state.date)}`,
     `• اسم القاعة: ${state.hallName}`,
-    `• موقع القاعة: ${state.locationArea}`,
     state.locationLink.trim() ? `• رابط الخريطة: ${state.locationLink}` : null,
     `• الإجمالي: ${money(grandTotal())}`,
     `• الاسم: ${state.name}`,
@@ -865,7 +859,6 @@ function renderReview() {
     ],
     ["تاريخ المناسبة", formatDateLabel(state.date)],
     ["اسم القاعة", state.hallName || "—"],
-    ["موقع القاعة", state.locationArea || "—"],
     ["رابط الخريطة", state.locationLink || "—"],
     ["الاسم", state.name || "—"],
     ["الجوال", state.phone || "—"],
@@ -1030,7 +1023,7 @@ function renderWizard() {
     date: "ميلادي أو هجري، واكتب التاريخ أو اختره من التقويم.",
     name: "خطوة واحدة فقط الآن.",
     phone: "للتواصل وإرسال رسالة القبول أو الرفض على واتساب.",
-    location: "اكتب اسم القاعة والحي من هنا مباشرة — رابط الخريطة اختياري.",
+    location: "اكتب اسم القاعة — رابط الخريطة اختياري.",
     notes: "اختياري — يمكنك تركها فارغة والضغط على التالي.",
     review: "راجع كل التفاصيل والسعر، ثم أكّد الطلب من الموقع.",
     success: "",
@@ -1209,16 +1202,6 @@ function renderWizard() {
           )}" />
         </div>
         <div class="field-card">
-          <label for="inputLocationArea">الحي / وصف الموقع</label>
-          <input
-            id="inputLocationArea"
-            type="text"
-            placeholder="مثال: حي الشوقية — قرب جامع…"
-            value="${esc(state.locationArea)}"
-          />
-          <p class="field-hint">اكتب الموقع من هنا مباشرة بدون ما تطلع من الصفحة.</p>
-        </div>
-        <div class="field-card">
           <label for="inputLocationLink">رابط خرائط قوقل <span class="field-optional">(اختياري)</span></label>
           <input
             id="inputLocationLink"
@@ -1228,13 +1211,12 @@ function renderWizard() {
             placeholder="اختياري — الصق الرابط إن توفر"
             value="${esc(state.locationLink)}"
           />
-          <p class="field-hint">مو لازم — فقط إن عندك رابط جاهز.</p>
+          <p class="field-hint">مو لازم — تقدر تكمّل بدون رابط.</p>
           <div class="field-error" id="fieldError"></div>
         </div>
       </div>`;
     const sync = () => {
       state.hallName = $("#inputHallName").value;
-      state.locationArea = $("#inputLocationArea").value;
       state.locationLink = $("#inputLocationLink").value.trim();
       nextBtn.disabled = !canProceed();
       const err = $("#fieldError");
@@ -1249,7 +1231,6 @@ function renderWizard() {
         : "هذا ليس رابط خرائط قوقل صالحاً — عدّله أو امسحه.";
     };
     $("#inputHallName").addEventListener("input", sync);
-    $("#inputLocationArea").addEventListener("input", sync);
     $("#inputLocationLink").addEventListener("input", sync);
   } else if (step === "notes") {
     body.innerHTML = renderField(
