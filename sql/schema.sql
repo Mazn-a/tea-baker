@@ -86,6 +86,10 @@ drop policy if exists "orders_update_anon" on public.orders;
 create policy "orders_update_anon" on public.orders
   for update to anon using (true) with check (true);
 
+drop policy if exists "orders_delete_anon" on public.orders;
+create policy "orders_delete_anon" on public.orders
+  for delete to anon using (true);
+
 drop policy if exists "visits_insert_anon" on public.visits;
 create policy "visits_insert_anon" on public.visits
   for insert to anon with check (true);

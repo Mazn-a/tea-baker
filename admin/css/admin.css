@@ -122,6 +122,17 @@ code {
   border-color: var(--ok);
 }
 
+.btn-delete {
+  background: transparent;
+  color: #b42318;
+  border: 1.5px solid rgba(180, 35, 24, 0.35);
+}
+
+.btn-delete:hover:not(:disabled) {
+  background: #fdecea;
+  border-color: rgba(180, 35, 24, 0.55);
+}
+
 .btn-err {
   background: var(--err);
   color: #fff;

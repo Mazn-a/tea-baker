@@ -194,6 +194,28 @@
     return all[idx];
   }
 
+  /** حذف طلب (مثلاً تجارب) — يحرّر التاريخ من الحجز بعد إعادة التحميل */
+  async function deleteOrder(id) {
+    let cloudDeleted = false;
+    try {
+      const sb = await getClient();
+      if (sb) {
+        const { error } = await sb.from("orders").delete().eq("id", id);
+        if (error) throw error;
+        cloudDeleted = true;
+      }
+    } catch (err) {
+      console.warn("deleteOrder cloud → local:", err);
+    }
+
+    const all = readLocal(KEYS.orders, []);
+    writeLocal(
+      KEYS.orders,
+      all.filter((o) => String(o.id) !== String(id))
+    );
+    return { ok: true, cloud: cloudDeleted };
+  }
+
   async function trackVisit(path) {
     const sid = sessionId();
     const flag = `bakr-visited-${sid}`;
@@ -246,6 +268,7 @@
     listOrders,
     listBookedDates,
     updateOrderStatus,
+    deleteOrder,
     trackVisit,
     listVisits,
     ping,

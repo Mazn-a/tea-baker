@@ -825,6 +825,7 @@ function renderOrders() {
           <span class="order-row-hint">${addons.length ? `${addons.length} إضافة` : "بدون إضافات"}</span>
           ${pendingHint}
           <button type="button" class="${ctaClass}" data-open-order="1">فتح الطلب</button>
+          <button type="button" class="btn btn-delete btn-sm" data-action="delete">حذف</button>
         </div>
       </article>`;
     })
@@ -928,6 +929,7 @@ function renderOrderDetail(o) {
       }>رفض + إرسال PDF</button>
       <button type="button" class="btn btn-ghost" data-action="pdf">معاينة / تحميل PDF</button>
       <button type="button" class="btn btn-wa" data-action="whatsapp">واتساب نص فقط</button>
+      <button type="button" class="btn btn-delete" data-action="delete">حذف الطلب وتحرير التاريخ</button>
     </div>
   `;
 }
@@ -1007,6 +1009,52 @@ async function handleOrderAction(action, order, btn) {
     }
   } else if (action === "whatsapp") {
     openWhatsApp(order);
+  } else if (action === "delete") {
+    await deleteOrderById(order, btn);
+  }
+}
+
+function isDateStillBooked(iso, exceptId) {
+  const day = String(iso || "").slice(0, 10);
+  if (!day) return false;
+  return state.orders.some(
+    (o) =>
+      String(o.id) !== String(exceptId) &&
+      o.status !== "rejected" &&
+      String(o.event_date || "").slice(0, 10) === day
+  );
+}
+
+async function deleteOrderById(order, btn) {
+  const name = order.customer_name || "هذا الطلب";
+  const dateLabel = formatDate(order.event_date);
+  const ok = window.confirm(
+    `حذف طلب «${name}» بتاريخ ${dateLabel}؟\n\nسيُحذف نهائياً ويتحرر التاريخ إن لم يكن عليه طلب آخر.`
+  );
+  if (!ok) return false;
+
+  if (btn) btn.disabled = true;
+  try {
+    const eventDate = order.event_date;
+    const result = await window.BakrStore.deleteOrder(order.id);
+    if (!isDateStillBooked(eventDate, order.id)) {
+      releaseLocalBookedDate(eventDate);
+    }
+    state.selectedOrderId = null;
+    document.body.classList.remove("admin-detail-open");
+    await loadData();
+    showPage("orders");
+    if (result?.cloud === false && window.BakrStore.hasCloud?.()) {
+      showToast("حُذف محلياً — نفّذ sql/patch-delete-orders.sql في Supabase للحذف من السحابة", "warn");
+    } else {
+      showToast("تم حذف الطلب وتحرير التاريخ");
+    }
+    return true;
+  } catch (err) {
+    console.warn(err);
+    showToast("تعذر حذف الطلب", "warn");
+    if (btn) btn.disabled = false;
+    return false;
   }
 }
 
@@ -1122,11 +1170,22 @@ function setup() {
     }
   });
 
-  $("#ordersList")?.addEventListener("click", (e) => {
+  $("#ordersList")?.addEventListener("click", async (e) => {
     const row = e.target.closest(".order-row[data-id]");
     if (!row) return;
     const id = row.dataset.id;
     if (!id) return;
+
+    const delBtn = e.target.closest("[data-action='delete']");
+    if (delBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const order = state.orders.find((o) => String(o.id) === String(id));
+      if (!order) return;
+      await deleteOrderById(order, delBtn);
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
     showOrderDetail(id);
