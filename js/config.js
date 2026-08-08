@@ -6,6 +6,12 @@
 window.BAKR_CONFIG = {
   supabaseUrl: "https://oseejvjsiesmjmgubthj.supabase.co",
   supabaseAnonKey: "sb_publishable_1LMApXtxzQfYx0rgAAZjNA_x9jgF7ro",
+  /**
+   * طريقة دخول الإدارة:
+   *   "supabase" = بريد وكلمة مرور فقط (الوضع الآمن — بعد تنفيذ sql/patch-secure-admin.sql)
+   *   أي قيمة أخرى = يسمح أيضاً بالدخول بالرمز المؤقت أدناه
+   */
+  adminAuth: "pin",
   adminPin: "1234",
   waNumber: "966533508361",
 

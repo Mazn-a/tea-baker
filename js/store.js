@@ -27,6 +27,9 @@
    */
   const DELETED_MARK = "__deleted__";
 
+  /** بادئة تميّز سطور خطوات الحجز داخل جدول الزيارات */
+  const STEP_PREFIX = "step/";
+
   function cfg() {
     return global.BAKR_CONFIG || {};
   }
@@ -50,6 +53,58 @@
     const c = cfg();
     client = global.supabase.createClient(c.supabaseUrl.trim(), c.supabaseAnonKey.trim());
     return client;
+  }
+
+  /* ---------------------------------------------------------
+   * دخول الإدارة (Supabase Auth)
+   * الجلسة تُحفظ في المتصفح، فيدخل الموظف مرة واحدة ويبقى داخلاً.
+   * ------------------------------------------------------- */
+
+  function authMessageAr(error) {
+    const msg = String(error?.message || "").toLowerCase();
+    if (msg.includes("invalid login")) return "البريد أو كلمة المرور غير صحيحة";
+    if (msg.includes("email not confirmed")) return "لازم تأكيد البريد من Supabase أولاً";
+    if (msg.includes("rate limit") || msg.includes("too many"))
+      return "محاولات كثيرة — انتظر دقيقة وحاول مرة ثانية";
+    if (msg.includes("failed to fetch")) return "لا يوجد اتصال بالإنترنت";
+    return error?.message || "تعذر تسجيل الدخول";
+  }
+
+  async function signIn(email, password) {
+    const sb = await getClient();
+    if (!sb) return { ok: false, message: "قاعدة البيانات غير مربوطة بعد" };
+    try {
+      const { data, error } = await sb.auth.signInWithPassword({
+        email: String(email || "").trim(),
+        password: String(password || ""),
+      });
+      if (error) return { ok: false, message: authMessageAr(error) };
+      return { ok: true, user: data?.user || null };
+    } catch (err) {
+      return { ok: false, message: authMessageAr(err) };
+    }
+  }
+
+  async function signOut() {
+    try {
+      const sb = await getClient();
+      await sb?.auth?.signOut();
+    } catch (err) {
+      console.warn("signOut:", err);
+    }
+  }
+
+  /** المستخدم الحالي أو null — يُستعمل لمعرفة هل الإدارة مسجّلة دخول */
+  async function currentUser() {
+    try {
+      const sb = await getClient();
+      if (!sb) return null;
+      const { data } = await sb.auth.getSession();
+      return data?.session?.user || null;
+    } catch (err) {
+      console.warn("currentUser:", err);
+      return null;
+    }
   }
 
   function uid() {
@@ -153,15 +208,16 @@
     try {
       const sb = await getClient();
       if (sb) {
+        // بدون select() — الزائر يضيف الطلب ولا يملك صلاحية قراءة الطلبات
         // إن ما كان عمود location_area موجود في السحابة، نعيد المحاولة بدونه
-        let { data, error } = await sb.from("orders").insert(row).select().single();
+        let { error } = await sb.from("orders").insert(row);
         if (error && /location_area/i.test(String(error.message || ""))) {
           const { location_area, ...fallback } = row;
-          ({ data, error } = await sb.from("orders").insert(fallback).select().single());
+          ({ error } = await sb.from("orders").insert(fallback));
         }
         if (error) throw error;
         // saved: true يعني وصل الطلب فعلاً للوحة الإدارة
-        return { ...data, saved: true };
+        return { ...row, saved: true };
       }
     } catch (err) {
       console.warn("createOrder cloud → local:", err);
@@ -180,6 +236,22 @@
    * مجرد إرسال الطلب يحجز التاريخ حتى يُرفض أو يُحذف.
    */
   async function listBookedDates() {
+    // الطريقة الآمنة: دالة في قاعدة البيانات ترجّع التواريخ فقط بدون بيانات العملاء.
+    // إن لم تكن منشأة بعد (قبل تنفيذ sql/patch-secure-admin.sql) نرجع للطريقة القديمة.
+    try {
+      const sb = await getClient();
+      if (sb) {
+        const { data, error } = await sb.rpc("booked_days");
+        if (!error && Array.isArray(data)) {
+          return data
+            .map((row) => String(row?.booked_days ?? row?.event_date ?? row).slice(0, 10))
+            .filter(Boolean);
+        }
+      }
+    } catch (err) {
+      console.warn("booked_days RPC → fallback:", err);
+    }
+
     const orders = await listOrders();
     const dates = new Set();
     (orders || []).forEach((o) => {
@@ -295,9 +367,13 @@
     return { ok: true, cloud: cloudOk };
   }
 
-  async function trackVisit(path) {
+  /**
+   * يسجّل سطراً في جدول الزيارات مرة واحدة لكل جلسة ولكل مفتاح.
+   * path = "/" للزيارة العادية، و "step/date" لخطوات الحجز (قياس أين يتوقف الزوار).
+   */
+  async function recordVisitRow(path, onceKey) {
     const sid = sessionId();
-    const flag = `bakr-visited-${sid}`;
+    const flag = `bakr-visited-${sid}-${onceKey}`;
     if (sessionStorage.getItem(flag)) return null;
     sessionStorage.setItem(flag, "1");
 
@@ -310,9 +386,10 @@
     try {
       const sb = await getClient();
       if (sb) {
-        const { data, error } = await sb.from("visits").insert(row).select().single();
+        // بدون select() — الزائر يضيف ولا يقرأ
+        const { error } = await sb.from("visits").insert(row);
         if (error) throw error;
-        return data;
+        return row;
       }
     } catch (err) {
       console.warn("trackVisit cloud → local:", err);
@@ -323,6 +400,26 @@
     all.push(localRow);
     writeLocal(KEYS.visits, all);
     return localRow;
+  }
+
+  function trackVisit(path) {
+    return recordVisitRow(path, "visit");
+  }
+
+  /** يسجّل أن الزائر وصل لخطوة معيّنة في الحجز */
+  function trackStep(step) {
+    const name = String(step || "").trim();
+    if (!name) return Promise.resolve(null);
+    return recordVisitRow(`${STEP_PREFIX}${name}`, `step-${name}`);
+  }
+
+  /** true إذا كان السطر خطوة حجز وليس زيارة للموقع */
+  function isStepRow(row) {
+    return String(row?.path || "").startsWith(STEP_PREFIX);
+  }
+
+  function stepName(row) {
+    return String(row?.path || "").slice(STEP_PREFIX.length);
   }
 
   async function listVisits() {
@@ -350,7 +447,13 @@
     deleteOrder,
     isDeletedOrder,
     trackVisit,
+    trackStep,
+    isStepRow,
+    stepName,
     listVisits,
+    signIn,
+    signOut,
+    currentUser,
     ping,
     hasCloud,
     storageMode: () => (hasCloud() ? "cloud" : "local"),

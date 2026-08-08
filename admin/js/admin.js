@@ -307,13 +307,39 @@ async function deliverDecision(order) {
   }
 }
 
-function isAuthed() {
+/* =========================================================
+ * الدخول
+ * الأساس: حساب حقيقي في Supabase (بريد + كلمة مرور) والجلسة تبقى محفوظة
+ * الاحتياط: رمز مؤقت — يبقى متاحاً حتى تُضبط الحماية، ثم يُخفى
+ * ========================================================= */
+
+/** هل ما زال الدخول بالرمز مسموحاً؟ يُقفل بوضع adminAuth: "supabase" */
+function pinLoginAllowed() {
+  return String(cfg().adminAuth || "").toLowerCase() !== "supabase";
+}
+
+function pinAuthed() {
   return sessionStorage.getItem(AUTH_KEY) === "1";
 }
 
-function setAuthed(on) {
+function setPinAuthed(on) {
   if (on) sessionStorage.setItem(AUTH_KEY, "1");
   else sessionStorage.removeItem(AUTH_KEY);
+}
+
+async function isAuthed() {
+  if (await window.BakrStore?.currentUser?.()) return true;
+  return pinLoginAllowed() && pinAuthed();
+}
+
+/** تنبيه واضح داخل اللوحة إن كان الدخول برمز مؤقت */
+async function updatePinModeAlert() {
+  const el = $("#pinModeAlert");
+  if (!el) return;
+  const realUser = await window.BakrStore?.currentUser?.();
+  const show = !realUser && pinAuthed() && Boolean(window.BakrStore?.hasCloud?.());
+  el.hidden = !show;
+  el.classList.toggle("is-hidden", !show);
 }
 
 async function refreshConnectionStatus() {
@@ -371,6 +397,7 @@ function showApp() {
     app.classList.remove("is-hidden");
   }
   refreshConnectionStatus();
+  updatePinModeAlert();
   loadData()
     .then(() => {
       if (!state.selectedOrderId && !state.pendingOpenId) {
@@ -395,25 +422,145 @@ function showLogin() {
   }
 }
 
-function tryLogin() {
+function showLoginError(message) {
+  const errEl = $("#loginError");
+  if (!errEl) return;
+  errEl.textContent = message || "";
+  errEl.hidden = !message;
+  errEl.classList.toggle("is-hidden", !message);
+}
+
+/** دخول بالبريد وكلمة المرور — الجلسة تبقى محفوظة فلا يعيد الكتابة كل مرة */
+async function tryLogin() {
+  const email = String($("#adminEmail")?.value || "").trim();
+  const password = String($("#adminPassword")?.value || "");
+  const btn = $("#loginBtn");
+
+  if (!email || !password) {
+    showLoginError("اكتب البريد وكلمة المرور");
+    return false;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "جاري الدخول…";
+  }
+  const res = (await window.BakrStore?.signIn?.(email, password)) || {
+    ok: false,
+    message: "المخزن غير جاهز",
+  };
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = "دخول";
+  }
+
+  if (!res.ok) {
+    showLoginError(res.message);
+    return false;
+  }
+
+  showLoginError("");
+  const pass = $("#adminPassword");
+  if (pass) pass.value = "";
+  setPinAuthed(false);
+  showApp();
+  showPage(state.page || "home");
+  return true;
+}
+
+function tryPinLogin() {
   const pin = normalizeDigits($("#adminPin")?.value);
   const expected = expectedPin();
   const errEl = $("#loginError");
-  if (!pin || pin !== expected) {
-    if (errEl) {
-      errEl.hidden = false;
-      errEl.classList.remove("is-hidden");
-      errEl.textContent = "رمز غير صحيح";
-    }
+  if (!pinLoginAllowed()) {
+    showLoginError("الدخول بالرمز موقوف — استخدم البريد وكلمة المرور");
     return false;
   }
-  if (errEl) {
-    errEl.hidden = true;
-    errEl.classList.add("is-hidden");
+  if (!pin || pin !== expected) {
+    showLoginError("رمز غير صحيح");
+    return false;
   }
-  setAuthed(true);
+  showLoginError("");
+  setPinAuthed(true);
   showApp();
+  showPage(state.page || "home");
   return true;
+}
+
+/* =========================================================
+ * تصدير الطلبات — نسخة احتياطية تفتح في Excel
+ * ========================================================= */
+
+function csvCell(value) {
+  const text = String(value ?? "").replace(/"/g, '""');
+  return `"${text}"`;
+}
+
+function ordersToCsv(orders) {
+  const head = [
+    "التاريخ",
+    "الحالة",
+    "الاسم",
+    "الجوال",
+    "المدينة",
+    "المناسبة",
+    "البكج",
+    "سعر البكج",
+    "الإضافات",
+    "مجموع الإضافات",
+    "الإجمالي",
+    "القاعة",
+    "رابط الخريطة",
+    "ملاحظات",
+    "وقت الطلب",
+  ];
+
+  const lines = orders.map((o) => {
+    const addons = (Array.isArray(o.addons) ? o.addons : [])
+      .map((a) => `${a.name} ×${a.qty || 1}`)
+      .join(" | ");
+    return [
+      o.event_date || "",
+      statusLabel(o.status),
+      o.customer_name || "",
+      o.customer_phone || "",
+      o.city_label || "",
+      o.event_label || "",
+      o.package_name || "",
+      Number(o.package_price || 0),
+      addons,
+      Number(o.addons_total || 0),
+      Number(o.grand_total || 0),
+      o.hall_name || "",
+      o.location_link || "",
+      o.notes || "",
+      o.created_at || "",
+    ]
+      .map(csvCell)
+      .join(",");
+  });
+
+  // BOM حتى يقرأ Excel العربية صح
+  return `\uFEFF${[head.map(csvCell).join(","), ...lines].join("\r\n")}`;
+}
+
+function exportOrders() {
+  const orders = activeOrders();
+  if (!orders.length) {
+    showToast("ما فيه طلبات للتصدير", "warn");
+    return;
+  }
+  const stamp = new Date().toISOString().slice(0, 10);
+  const blob = new Blob([ordersToCsv(orders)], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `طلبات-شاي-بكر-${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast(`تم تصدير ${orders.length} طلب`);
 }
 
 function countBy(items, keyFn) {
@@ -582,7 +729,7 @@ function makeBar(canvasId, key, rows, emptyText, barLabel = "الطلبات") {
 function renderStats() {
   updatePeriodNav();
   const orders = state.orders.filter((o) => inPeriod(o.created_at));
-  const visits = state.visits.filter((v) => inPeriod(v.created_at));
+  const visits = realVisits().filter((v) => inPeriod(v.created_at));
   const accepted = orders.filter((o) => o.status === "accepted");
   const rejected = orders.filter((o) => o.status === "rejected");
   const pending = orders.filter((o) => o.status === "pending");
@@ -672,8 +819,66 @@ function countSince(list, days, field = "created_at") {
   return (list || []).filter((row) => new Date(row[field]) >= from).length;
 }
 
+/** الزيارات الحقيقية فقط — بدون سطور خطوات الحجز */
+function realVisits() {
+  return (state.visits || []).filter((v) => !window.BakrStore?.isStepRow?.(v));
+}
+
+const STEP_LABELS = {
+  city: "اختار المدينة",
+  event: "اختار المناسبة",
+  package: "اختار البكج",
+  addons: "وصل للإضافات",
+  date: "وصل للتاريخ",
+  name: "كتب الاسم",
+  phone: "كتب الجوال",
+  location: "كتب القاعة",
+  notes: "وصل للملاحظات",
+  review: "وصل للمراجعة",
+  success: "أرسل الطلب",
+};
+
+/** كم زائر مختلف وصل لكل خطوة في آخر 30 يوماً */
+function renderFunnel() {
+  const box = $("#funnelList");
+  if (!box) return;
+
+  const from = daysAgoStart(29);
+  const perStep = new Map();
+  (state.visits || []).forEach((v) => {
+    if (!window.BakrStore?.isStepRow?.(v)) return;
+    if (new Date(v.created_at) < from) return;
+    const step = window.BakrStore.stepName(v);
+    if (!perStep.has(step)) perStep.set(step, new Set());
+    perStep.get(step).add(v.session_id || v.id);
+  });
+
+  const flow = window.FLOW || Object.keys(STEP_LABELS);
+  const rows = flow
+    .map((step) => [step, perStep.get(step)?.size || 0])
+    .filter(([, n], i) => n > 0 || i === 0);
+
+  const top = rows[0]?.[1] || 0;
+  if (!top) {
+    box.innerHTML = `<p class="empty-hint">ما فيه بيانات بعد — تظهر أول ما يبدأ الزوار الحجز.</p>`;
+    return;
+  }
+
+  box.innerHTML = rows
+    .map(([step, n]) => {
+      const pct = Math.round((n / top) * 100);
+      return `
+      <div class="funnel-row">
+        <span class="funnel-label">${STEP_LABELS[step] || step}</span>
+        <span class="funnel-bar"><span style="width:${pct}%"></span></span>
+        <span class="funnel-value">${n}</span>
+      </div>`;
+    })
+    .join("");
+}
+
 function renderVisitors() {
-  const visits = state.visits || [];
+  const visits = realVisits();
   const orders = activeOrders();
 
   const today = countSince(visits, 0);
@@ -728,13 +933,14 @@ function renderVisitors() {
   });
 
   makeBar("visitsChart", "visits", rows, "ما فيه زيارات بعد", "الزيارات");
+  renderFunnel();
   updateVisitorsChoiceHint(today);
 }
 
 function updateVisitorsChoiceHint(todayCount) {
   const el = $("#visitorsChoiceHint");
   if (!el) return;
-  const today = typeof todayCount === "number" ? todayCount : countSince(state.visits, 0);
+  const today = typeof todayCount === "number" ? todayCount : countSince(realVisits(), 0);
   el.textContent = today > 0 ? `${today} زيارة اليوم — اضغط للتفاصيل` : "كم شخص دخل الموقع";
 }
 
@@ -1196,7 +1402,11 @@ function openWhatsApp(order) {
   window.open(url, "_blank", "noopener");
 }
 
-function setup() {
+async function setup() {
+  // يُضبط فوراً قبل أي انتظار حتى لا يظهر الزر متأخراً
+  const pinAlt = $("#showPinLogin");
+  if (pinAlt) pinAlt.hidden = !pinLoginAllowed();
+
   $("#loginBtn")?.addEventListener("click", (e) => {
     e.preventDefault();
     tryLogin();
@@ -1209,13 +1419,13 @@ function setup() {
 
   $("#togglePinVisibility")?.addEventListener("click", (e) => {
     e.preventDefault();
-    const input = $("#adminPin");
+    const input = $("#adminPassword");
     const btn = $("#togglePinVisibility");
     if (!input || !btn) return;
     const show = input.type === "password";
     input.type = show ? "text" : "password";
     btn.setAttribute("aria-pressed", show ? "true" : "false");
-    btn.setAttribute("aria-label", show ? "إخفاء رمز الدخول" : "إظهار رمز الدخول");
+    btn.setAttribute("aria-label", show ? "إخفاء كلمة المرور" : "إظهار كلمة المرور");
     const openIcon = btn.querySelector(".eye-open");
     const closedIcon = btn.querySelector(".eye-closed");
     if (openIcon) openIcon.hidden = show;
@@ -1242,18 +1452,47 @@ function setup() {
   $("#adminPin")?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      tryLogin();
+      tryPinLogin();
     }
   });
 
-  $("#logoutBtn")?.addEventListener("click", () => {
-    setAuthed(false);
+  $("#pinLoginBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    tryPinLogin();
+  });
+
+  $("#showPinLogin")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    const block = $("#pinBlock");
+    if (!block) return;
+    block.hidden = false;
+    e.currentTarget.hidden = true;
+    $("#adminPin")?.focus();
+  });
+
+  [$("#adminEmail"), $("#adminPassword")].forEach((el) => {
+    el?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        tryLogin();
+      }
+    });
+  });
+
+  $("#logoutBtn")?.addEventListener("click", async () => {
+    setPinAuthed(false);
+    await window.BakrStore?.signOut?.();
     showLogin();
   });
 
   $("#refreshBtn")?.addEventListener("click", () => {
     refreshConnectionStatus();
     loadData().catch((err) => console.warn(err));
+  });
+
+  $("#exportOrdersBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    exportOrders();
   });
 
   $("#pingBtn")?.addEventListener("click", () => {
@@ -1440,7 +1679,7 @@ function setup() {
   else if (hash === "#visitors") state.page = "visitors";
   else if (hash === "#stats") state.page = "stats";
 
-  if (isAuthed()) {
+  if (await isAuthed()) {
     showApp();
     if (!state.pendingOpenId) showPage(state.page || "home");
   } else showLogin();

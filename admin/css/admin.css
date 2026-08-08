@@ -244,7 +244,7 @@ code {
   display: grid;
 }
 
-.pin-field #adminPin {
+.pin-field input {
   width: 100%;
   min-height: 3rem;
   border: 1.5px solid rgba(99, 58, 17, 0.18);
@@ -253,24 +253,63 @@ code {
   padding: 0.65rem 2.35rem 0.65rem 0.85rem;
   background: #fffaf3;
   outline: none;
-  letter-spacing: 0.35em;
-  font-size: 1.15rem;
+  letter-spacing: 0.2em;
+  font-size: 1.05rem;
   font-weight: 800;
 }
 
-.pin-field #adminPin[type="password"] {
-  -webkit-text-security: disc;
-}
-
-.pin-field #adminPin:focus {
+.pin-field input:focus {
   border-color: var(--tea-mid);
   box-shadow: 0 0 0 3px rgba(99, 58, 17, 0.1);
 }
 
-.pin-field #adminPin::placeholder {
-  letter-spacing: 0.28em;
+.pin-field input::placeholder {
+  letter-spacing: 0.22em;
   color: rgba(74, 43, 25, 0.35);
   font-weight: 800;
+}
+
+/* الدخول بالرمز المؤقت — يختفي بعد ضبط الحماية */
+.login-alt {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  min-height: 2.4rem;
+}
+
+.pin-block {
+  display: grid;
+  gap: 0.55rem;
+  padding-top: 0.35rem;
+  border-top: 1px dashed rgba(99, 58, 17, 0.18);
+}
+
+.login-note {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--warn);
+}
+
+.login-note code {
+  font-size: 0.76rem;
+  word-break: break-all;
+}
+
+.conn-alert.is-warn {
+  background: var(--warn-bg);
+  border-color: rgba(154, 103, 0, 0.28);
+}
+
+.conn-alert.is-warn .setup-status {
+  color: #7a5200;
 }
 
 .pin-eye {
@@ -664,6 +703,62 @@ code {
 }
 .stat-card.is-total::before {
   background: #c4a35a;
+}
+
+/* مسار الحجز — أين يتوقف الزوار */
+.funnel-list {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.funnel-row {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr 2.5rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.funnel-label {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--tea-deep);
+}
+
+.funnel-bar {
+  height: 0.85rem;
+  border-radius: 999px;
+  background: rgba(99, 58, 17, 0.09);
+  overflow: hidden;
+}
+
+.funnel-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #8b5a2b, #633a11);
+  min-width: 2px;
+}
+
+.funnel-value {
+  font-weight: 800;
+  color: var(--tea);
+  text-align: end;
+  font-size: 0.92rem;
+}
+
+.funnel-card .funnel-list {
+  margin-top: 0.35rem;
+}
+
+@media (max-width: 430px) {
+  .funnel-row {
+    grid-template-columns: 6rem 1fr 2rem;
+    gap: 0.4rem;
+  }
+
+  .funnel-label {
+    font-size: 0.78rem;
+  }
 }
 
 /* صفحة الزوار */
