@@ -971,7 +971,7 @@ function renderDayCell(iso, dayLabel) {
   else cls += " available";
   if (selected) cls += " selected";
   const mark = booked ? "<small>محجوز</small>" : "";
-  const title = beyond ? ' title="خارج مدى الـ ١٢ شهراً"' : booked ? ' title="محجوز"' : "";
+  const title = beyond ? ' title="خارج مدى الـ 12 شهراً"' : booked ? ' title="محجوز"' : "";
   return `<button class="${cls}" type="button" data-date="${iso}"${title} ${
     locked ? "disabled" : ""
   }>${dayLabel}${mark}</button>`;
@@ -982,7 +982,7 @@ function dateStatusText() {
     return state.date ? `التاريخ متاح: ${formatDateLabel(state.date)}` : "هذا التاريخ متاح.";
   }
   if (state.dateFeedback === "beyond") {
-    return "لا يمكن الحجز لأكثر من ١٢ شهراً قادمة. اختر تاريخاً أقرب.";
+    return "لا يمكن الحجز لأكثر من 12 شهراً قادمة. اختر تاريخاً أقرب.";
   }
   if (state.dateFeedback === "bad") return "هذا اليوم غير متاح (محجوز أو بانتظار قرار)، اختر تاريخاً آخر.";
   return "اختر يوماً من التقويم أو ابحث بالأعلى.";

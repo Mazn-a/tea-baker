@@ -691,19 +691,19 @@ function renderVisitors() {
         <em>منذ منتصف الليل</em>
       </article>
       <article class="stat-card is-orders">
-        <span>آخر ٧ أيام</span>
+        <span>آخر 7 أيام</span>
         <strong>${week}</strong>
         <em>مجموع الزيارات في الأسبوع</em>
       </article>
       <article class="stat-card is-money">
-        <span>آخر ٣٠ يوم</span>
+        <span>آخر 30 يوم</span>
         <strong>${month}</strong>
         <em>${ordersMonth} منهم أرسلوا طلباً</em>
       </article>
       <article class="stat-card is-pending">
-        <span>من كل ١٠٠ زائر</span>
-        <strong>${rate}</strong>
-        <em>يرسلون طلب حجز</em>
+        <span>من كل 100 زائر</span>
+        <strong>${month >= 10 ? rate : "—"}</strong>
+        <em>${month >= 10 ? "يرسلون طلب حجز" : "تحتاج زيارات أكثر للقياس"}</em>
       </article>
       <article class="stat-card is-total">
         <span>إجمالي الزيارات</span>
@@ -712,7 +712,7 @@ function renderVisitors() {
       </article>`;
   }
 
-  // آخر ١٤ يوماً بالترتيب من الأقدم للأحدث
+  // آخر 14 يوماً بالترتيب من الأقدم للأحدث
   const counts = new Map();
   for (let i = 13; i >= 0; i -= 1) {
     const d = daysAgoStart(i);
@@ -1380,7 +1380,7 @@ function setup() {
 
     const { minIso, maxIso } = bookingWindowBounds();
     if (eventDate < minIso) return showErr("لا يمكن اختيار تاريخ سابق");
-    if (eventDate > maxIso) return showErr("الحجز متاح لـ ١٢ شهراً قادمة فقط");
+    if (eventDate > maxIso) return showErr("الحجز متاح لـ 12 شهراً قادمة فقط");
 
     const booked = await window.BakrStore.listBookedDates();
     if ((booked || []).includes(eventDate)) {
