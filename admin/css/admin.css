@@ -211,11 +211,66 @@ code {
 .login-error {
   color: var(--err);
   font-weight: 700;
+  margin: 0;
 }
 
-.login-hint {
-  font-size: 0.82rem;
+.login-ok {
+  margin: 0;
+  color: #1f7a3f;
+  font-weight: 800;
+}
+
+.login-forgot {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--tea);
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.92rem;
+  cursor: pointer;
+  padding: 0.35rem;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.login-forgot:hover {
+  color: var(--tea-deep);
+}
+
+.recover-panel {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.recover-panel[hidden] {
+  display: none !important;
+}
+
+.recover-lead {
+  margin: 0;
   color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.recover-actions {
+  display: grid;
+  gap: 0.5rem;
+}
+
+#pinLoginPanel {
+  display: grid;
+  gap: 0.7rem;
+}
+
+#pinLoginPanel[hidden] {
+  display: none !important;
+}
+
+#adminPin {
+  -webkit-text-security: disc;
+  letter-spacing: 0.2em;
 }
 
 /* App shell */

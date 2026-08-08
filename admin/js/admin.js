@@ -32,6 +32,73 @@ function expectedPin() {
   return normalizeDigits(cfg().adminPin || "1234") || "1234";
 }
 
+/** يوحّد رقم الجوال للمقارنة (05xxxxxxxx) */
+function normalizePhoneLocal(value) {
+  let digits = normalizeDigits(value).replace(/\D/g, "");
+  if (digits.startsWith("966") && digits.length >= 12) digits = `0${digits.slice(3)}`;
+  if (digits.startsWith("00966")) digits = `0${digits.slice(5)}`;
+  return digits;
+}
+
+function expectedRecoveryPhone() {
+  const fromCfg = cfg().adminRecoveryPhone || cfg().waNumber || "";
+  return normalizePhoneLocal(fromCfg);
+}
+
+function showPinLoginPanel() {
+  const pinPanel = $("#pinLoginPanel");
+  const recoverPanel = $("#recoverPanel");
+  if (pinPanel) pinPanel.hidden = false;
+  if (recoverPanel) recoverPanel.hidden = true;
+  const recoverErr = $("#recoverError");
+  const recoverOk = $("#recoverOk");
+  if (recoverErr) {
+    recoverErr.hidden = true;
+    recoverErr.textContent = "الرقم غير مطابق";
+  }
+  if (recoverOk) {
+    recoverOk.hidden = true;
+    recoverOk.textContent = "";
+  }
+}
+
+function showRecoverPanel() {
+  const pinPanel = $("#pinLoginPanel");
+  const recoverPanel = $("#recoverPanel");
+  if (pinPanel) pinPanel.hidden = true;
+  if (recoverPanel) recoverPanel.hidden = false;
+  const loginErr = $("#loginError");
+  if (loginErr) loginErr.hidden = true;
+  $("#recoverPhone")?.focus();
+}
+
+function tryRecoverPin() {
+  const entered = normalizePhoneLocal($("#recoverPhone")?.value);
+  const expected = expectedRecoveryPhone();
+  const errEl = $("#recoverError");
+  const okEl = $("#recoverOk");
+  if (okEl) {
+    okEl.hidden = true;
+    okEl.textContent = "";
+  }
+  if (!expected || !entered || entered !== expected) {
+    if (errEl) {
+      errEl.hidden = false;
+      errEl.textContent = "الرقم غير مطابق";
+    }
+    return false;
+  }
+  if (errEl) errEl.hidden = true;
+  const pin = expectedPin();
+  if (okEl) {
+    okEl.hidden = false;
+    okEl.innerHTML = `تم التحقق — رمز الدخول: <strong dir="ltr">${pin}</strong>`;
+  }
+  const pinInput = $("#adminPin");
+  if (pinInput) pinInput.value = pin;
+  return true;
+}
+
 function money(n) {
   return `${Number(n || 0).toLocaleString("ar-SA")} ر.س`;
 }
@@ -394,7 +461,7 @@ function tryLogin() {
     if (errEl) {
       errEl.hidden = false;
       errEl.classList.remove("is-hidden");
-      errEl.textContent = "رمز غير صحيح — جرّب 1234 (بأرقام إنجليزية)";
+      errEl.textContent = "رمز غير صحيح";
     }
     return false;
   }
@@ -997,11 +1064,46 @@ function setup() {
     tryLogin();
   });
 
+  $("#forgotPinBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    showRecoverPanel();
+  });
+
+  $("#backToPinBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    showPinLoginPanel();
+    $("#adminPin")?.focus();
+  });
+
+  $("#recoverBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (tryRecoverPin()) {
+      // بعد التحقق يرجع لخانة الرمز (مخفي) مع تعبئة الرمز
+      window.setTimeout(() => {
+        showPinLoginPanel();
+        $("#adminPin")?.focus();
+      }, 1400);
+    }
+  });
+
+  $("#recoverPhone")?.addEventListener("input", (e) => {
+    const el = e.target;
+    const next = normalizeDigits(el.value).replace(/\D/g, "").slice(0, 14);
+    if (next !== el.value) el.value = next;
+  });
+
+  $("#recoverPhone")?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      $("#recoverBtn")?.click();
+    }
+  });
+
   $("#adminPin")?.addEventListener("input", (e) => {
     const el = e.target;
     const start = el.selectionStart;
     const before = el.value;
-    const next = normalizeDigits(before).replace(/\D/g, "");
+    const next = normalizeDigits(before).replace(/\D/g, "").slice(0, 12);
     if (next !== before) {
       el.value = next;
       const pos = Math.min(start ?? next.length, next.length);

@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <link rel="stylesheet" href="./css/admin.css?v=30" />
+    <link rel="stylesheet" href="./css/admin.css?v=31" />
   </head>
   <body>
     <div id="loginView" class="login-view">
@@ -21,20 +21,46 @@
         <img class="login-logo" src="../assets/logo-brand.png?v=11" alt="شاي بكر" />
         <h1>لوحة إدارة شاي بكر</h1>
         <p>أدخل رمز الدخول للمتابعة</p>
-        <label class="field">
-          <span>رمز الدخول</span>
-          <input
-            id="adminPin"
-            type="text"
-            inputmode="numeric"
-            autocomplete="one-time-code"
-            placeholder="1234"
-            dir="ltr"
-          />
-        </label>
-        <p class="login-error" id="loginError" hidden>رمز غير صحيح — جرّب 1234 (بأرقام إنجليزية)</p>
-        <button type="button" class="btn btn-primary" id="loginBtn">دخول</button>
-        <p class="login-hint">الرمز الافتراضي: <strong dir="ltr">1234</strong> — غيّره لاحقاً من <code>js/config.js</code></p>
+
+        <div id="pinLoginPanel">
+          <label class="field">
+            <span>رمز الدخول</span>
+            <input
+              id="adminPin"
+              type="password"
+              inputmode="numeric"
+              autocomplete="current-password"
+              placeholder="••••"
+              dir="ltr"
+              maxlength="12"
+            />
+          </label>
+          <p class="login-error" id="loginError" hidden>رمز غير صحيح</p>
+          <button type="button" class="btn btn-primary" id="loginBtn">دخول</button>
+          <button type="button" class="login-forgot" id="forgotPinBtn">نسيت رمز الدخول؟</button>
+        </div>
+
+        <div id="recoverPanel" class="recover-panel" hidden>
+          <p class="recover-lead">أدخل رقم الجوال المسجّل للتحقق واستعادة رمز الدخول</p>
+          <label class="field">
+            <span>رقم الجوال</span>
+            <input
+              id="recoverPhone"
+              type="tel"
+              inputmode="numeric"
+              autocomplete="tel"
+              placeholder="05xxxxxxxx"
+              dir="ltr"
+              maxlength="14"
+            />
+          </label>
+          <p class="login-error" id="recoverError" hidden>الرقم غير مطابق</p>
+          <p class="login-ok" id="recoverOk" hidden></p>
+          <div class="recover-actions">
+            <button type="button" class="btn btn-primary" id="recoverBtn">تحقق</button>
+            <button type="button" class="btn btn-ghost" id="backToPinBtn">رجوع</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -218,7 +244,7 @@
       </div>
     </div>
 
-    <script src="../js/config.js?v=8"></script>
+    <script src="../js/config.js?v=9"></script>
     <script src="../js/catalog.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./vendor/html2pdf.bundle.min.js"></script>
@@ -227,6 +253,6 @@
     <script src="./js/logo-data.js?v=11"></script>
     <script src="./js/order-pdf.js?v=11"></script>
     <script src="./js/wa-send.js?v=8"></script>
-    <script src="./js/admin.js?v=31"></script>
+    <script src="./js/admin.js?v=32"></script>
   </body>
 </html>

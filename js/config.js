@@ -7,6 +7,8 @@ window.BAKR_CONFIG = {
   supabaseUrl: "https://oseejvjsiesmjmgubthj.supabase.co",
   supabaseAnonKey: "sb_publishable_1LMApXtxzQfYx0rgAAZjNA_x9jgF7ro",
   adminPin: "1234",
+  /** رقم التحقق عند نسيان رمز الدخول (05 أو 966) */
+  adminRecoveryPhone: "0533508361",
   waNumber: "966533508361",
 
   /**

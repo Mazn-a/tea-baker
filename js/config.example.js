@@ -5,6 +5,7 @@
 window.BAKR_CONFIG = {
   supabaseUrl: "https://YOUR_PROJECT_REF.supabase.co",
   supabaseAnonKey: "YOUR_ANON_PUBLIC_KEY",
-  adminPin: "غيّر-هذا-الرمز",
+  adminPin: "1234",
+  adminRecoveryPhone: "05xxxxxxxx",
   waNumber: "966533508361",
 };
