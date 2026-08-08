@@ -997,41 +997,6 @@ function setup() {
     tryLogin();
   });
 
-  $("#forgotPinBtn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    showRecoverPanel();
-  });
-
-  $("#backToPinBtn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    showPinLoginPanel();
-    $("#adminPin")?.focus();
-  });
-
-  $("#recoverBtn")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (tryRecoverPin()) {
-      // بعد التحقق يرجع لخانة الرمز (مخفي) مع تعبئة الرمز
-      window.setTimeout(() => {
-        showPinLoginPanel();
-        $("#adminPin")?.focus();
-      }, 1400);
-    }
-  });
-
-  $("#recoverPhone")?.addEventListener("input", (e) => {
-    const el = e.target;
-    const next = normalizeDigits(el.value).replace(/\D/g, "").slice(0, 14);
-    if (next !== el.value) el.value = next;
-  });
-
-  $("#recoverPhone")?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      $("#recoverBtn")?.click();
-    }
-  });
-
   $("#adminPin")?.addEventListener("input", (e) => {
     const el = e.target;
     const start = el.selectionStart;
