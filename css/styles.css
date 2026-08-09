@@ -640,6 +640,14 @@ select {
 }
 
 /* بكجات خطوة الحجز: عرض مرتب للابتوب والجوال */
+.pkg-city-price-note {
+  margin: 0 0 0.75rem;
+  text-align: center;
+  font-weight: 700;
+  color: var(--brown, #633a11);
+  font-size: 0.95rem;
+}
+
 .pkg-wizard {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.85rem;

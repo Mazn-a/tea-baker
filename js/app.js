@@ -83,16 +83,38 @@ function pkg() {
   return PACKAGES.find((p) => p.id === state.packageId);
 }
 
+/**
+ * تسعير البكج حسب المدينة.
+ * بدون مدينة / مكة → السعر الافتراضي.
+ * جدة والطائف → cityPricing إن وُجد.
+ * startsFrom (صفحة التسويق) يستخدم سعر مكة الأدنى.
+ */
+function packagePricing(p = pkg(), cityId = state.city, { baseOnly = false } = {}) {
+  if (!p) return { listPrice: 0, price: 0 };
+  const cityKey = baseOnly ? "" : String(cityId || "");
+  const cityDeal =
+    cityKey && cityKey !== "makkah" && p.cityPricing && p.cityPricing[cityKey]
+      ? p.cityPricing[cityKey]
+      : null;
+  if (cityDeal) {
+    const price = Number(cityDeal.price) || 0;
+    const listPrice =
+      cityDeal.listPrice != null ? Number(cityDeal.listPrice) || price : price;
+    return { listPrice, price };
+  }
+  const price = Number(p.price) || 0;
+  const listPrice = Number(p.listPrice != null ? p.listPrice : p.price) || 0;
+  return { listPrice, price };
+}
+
 /** السعر الظاهر للبكج (حركة تسويقية) */
 function packageListPrice(p = pkg()) {
-  if (!p) return 0;
-  return Number(p.listPrice != null ? p.listPrice : p.price) || 0;
+  return packagePricing(p).listPrice;
 }
 
 /** السعر الحقيقي للبكج بعد الخصم */
 function packageSalePrice(p = pkg()) {
-  if (!p) return 0;
-  return Number(p.price) || 0;
+  return packagePricing(p).price;
 }
 
 function offerBadgeText() {
@@ -132,9 +154,14 @@ function grandTotal() {
 
 /** يعرض السعر الأصلي مشطوباً وسعر العرض بجانبه — دائماً وبدون أي كود */
 function formatPkgPriceHtml(p, { startsFrom = false } = {}) {
-  const stack = `<span class="pkg-price-stack"><span class="pkg-price-old">${money(
-    packageListPrice(p)
-  )}</span><span class="pkg-price-now">${money(packageSalePrice(p))}</span></span>`;
+  const { listPrice, price } = packagePricing(p, state.city, { baseOnly: startsFrom });
+  const now = `<span class="pkg-price-now">${money(price)}</span>`;
+  const stack =
+    listPrice > price
+      ? `<span class="pkg-price-stack"><span class="pkg-price-old">${money(
+          listPrice
+        )}</span>${now}</span>`
+      : `<span class="pkg-price-stack">${now}</span>`;
   if (startsFrom) {
     return `<span class="pkg-price-from"><span class="pkg-price-from-label">يبدأ من</span> ${stack}</span>`;
   }
@@ -1013,7 +1040,15 @@ function dateStatusText() {
 }
 
 function renderPackagesStep() {
+  const cityLabel = labelOf(CITIES, state.city);
+  const cityNote =
+    state.city && state.city !== "makkah"
+      ? `<p class="pkg-city-price-note">أسعار ${esc(cityLabel)}</p>`
+      : state.city === "makkah"
+        ? `<p class="pkg-city-price-note">أسعار ${esc(cityLabel)}</p>`
+        : "";
   return `
+    ${cityNote}
     <div class="pkg-stack pkg-wizard">
       ${PACKAGES.map((p) => {
         const selected = state.packageId === p.id;
