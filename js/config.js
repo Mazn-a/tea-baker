@@ -16,7 +16,7 @@ window.BAKR_CONFIG = {
    */
   adminEmails: [],
   /** عنوان الموقع الرسمي بعد ربط الدومين */
-  siteUrl: "https://mazn-a.github.io/tea-baker",
+  siteUrl: "https://bakr-tea.com",
   waNumber: "966533508361",
 
   /**
