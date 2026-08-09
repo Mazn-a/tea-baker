@@ -122,7 +122,16 @@ async function injectCaption(page, text) {
     }
 
     const line = document.getElementById("demo-caption-text");
-    if (line) line.textContent = caption;
+    if (line) {
+      line.textContent = caption;
+      const len = caption.length;
+      line.style.fontSize = len > 72 ? "17px" : len > 52 ? "19px" : "21px";
+    }
+
+    const card = document.getElementById("demo-caption-card");
+    if (card) {
+      card.style.padding = caption.length > 72 ? "10px 14px 12px" : "12px 16px 14px";
+    }
   }, text);
 }
 
@@ -212,8 +221,8 @@ async function runActions(page, action) {
           <div class="success-wrap">
             <div class="success-card">
               <div class="success-mark">✓</div>
-              <h2>تم استلام طلبكم</h2>
-              <p class="success-lead">وصل طلبكم إلى شاي بكر. نراجعه ونرد عليكم على واتساب.</p>
+              <h2>تم استلام طلبك</h2>
+              <p class="success-lead">سيصلك التأكيد عبر الواتساب في أسرع وقت.</p>
             </div>
           </div>`;
       });
