@@ -670,6 +670,7 @@ select {
   display: grid;
   grid-template-rows: auto 1fr;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .pkg-pick:hover {
@@ -727,7 +728,32 @@ select {
   gap: 0.2rem;
   font-size: 0.88rem;
   line-height: 1.45;
-  flex: 1 1 auto;
+}
+
+.pkg-highlights {
+  margin: 0.15rem 0 0;
+  flex: 0 0 auto;
+}
+
+.pkg-pick .pkg-details {
+  margin: 0.15rem 0 0.25rem;
+}
+
+.pkg-sections {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.55rem;
+}
+
+.pkg-section-title {
+  margin: 0 0 0.25rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--tea-deep, #633a11);
+}
+
+.pkg-section .pkg-features {
+  margin: 0;
 }
 
 .pkg-pick-label {
@@ -741,6 +767,7 @@ select {
   color: var(--tea);
   font-weight: 800;
   font-size: 0.92rem;
+  pointer-events: none;
 }
 
 .pkg-pick.is-selected .pkg-pick-label {
@@ -1799,12 +1826,15 @@ select {
 }
 
 .pkg-details .pkg-features {
-  margin-top: 0.55rem;
+  margin-top: 0.35rem;
 }
 
-.market-pkg .pkg-features-desk {
-  flex: 1 1 auto;
-  margin: 0;
+.market-pkg .pkg-highlights {
+  margin: 0.2rem 0 0.15rem;
+}
+
+.market-pkg .pkg-details {
+  margin: 0 0 0.35rem;
 }
 
 .market-pkg .btn {
@@ -2077,19 +2107,7 @@ select {
   padding: 1rem 1.15rem;
 }
 
-.pkg-details-mob {
-  display: none;
-}
-
 @media (max-width: 960px) {
-  .pkg-features-desk {
-    display: none;
-  }
-
-  .pkg-details-mob {
-    display: block;
-  }
-
   .pkg-market-grid {
     display: flex;
     overflow-x: auto;
@@ -2920,6 +2938,15 @@ body:has(.view[data-view="booking"].is-active) .fab-stack {
 
   .view[data-view="booking"] .pkg-pick .pkg-features {
     font-size: 0.82rem;
+  }
+
+  .view[data-view="booking"] .pkg-pick .pkg-details summary {
+    min-height: 2.2rem;
+    font-size: 0.88rem;
+  }
+
+  .view[data-view="booking"] .pkg-section-title {
+    font-size: 0.86rem;
   }
 
   .view[data-view="booking"] .addons-pick-grid {
