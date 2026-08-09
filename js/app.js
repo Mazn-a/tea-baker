@@ -1039,21 +1039,61 @@ function dateStatusText() {
   return "اختر يوماً من التقويم أو ابحث بالأعلى.";
 }
 
+function pkgHighlights(p) {
+  if (Array.isArray(p.highlights) && p.highlights.length) return p.highlights;
+  if (Array.isArray(p.features) && p.features.length) return p.features.slice(0, 3);
+  return [];
+}
+
+function renderPkgHighlightsHtml(p) {
+  const items = pkgHighlights(p);
+  if (!items.length) return "";
+  return `<ul class="pkg-features pkg-highlights">${items
+    .map((f) => `<li>${esc(f)}</li>`)
+    .join("")}</ul>`;
+}
+
+function renderPkgSectionsHtml(p) {
+  if (Array.isArray(p.sections) && p.sections.length) {
+    return `<div class="pkg-sections">${p.sections
+      .map(
+        (section) => `
+        <div class="pkg-section">
+          <h4 class="pkg-section-title">${esc(section.title)}</h4>
+          <ul class="pkg-features">
+            ${(section.items || []).map((item) => `<li>${esc(item)}</li>`).join("")}
+          </ul>
+        </div>`
+      )
+      .join("")}</div>`;
+  }
+  const fallback = Array.isArray(p.features) ? p.features : [];
+  if (!fallback.length) return "";
+  return `<ul class="pkg-features">${fallback.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>`;
+}
+
+function renderPkgDetailsBlock(p) {
+  const body = renderPkgSectionsHtml(p);
+  if (!body) return "";
+  return `
+    <details class="pkg-details">
+      <summary>عرض التفاصيل</summary>
+      ${body}
+    </details>`;
+}
+
 function renderPackagesStep() {
   const cityLabel = labelOf(CITIES, state.city);
-  const cityNote =
-    state.city && state.city !== "makkah"
-      ? `<p class="pkg-city-price-note">أسعار ${esc(cityLabel)}</p>`
-      : state.city === "makkah"
-        ? `<p class="pkg-city-price-note">أسعار ${esc(cityLabel)}</p>`
-        : "";
+  const cityNote = state.city
+    ? `<p class="pkg-city-price-note">أسعار ${esc(cityLabel)}</p>`
+    : "";
   return `
     ${cityNote}
     <div class="pkg-stack pkg-wizard">
       ${PACKAGES.map((p) => {
         const selected = state.packageId === p.id;
         return `
-        <button type="button" class="pkg-card pkg-pick ${selected ? "is-selected" : ""}" data-pick-pkg="${p.id}">
+        <article class="pkg-card pkg-pick ${selected ? "is-selected" : ""}" data-pick-pkg="${p.id}">
           <img src="${p.image}" alt="" width="860" height="1147" loading="lazy" decoding="async" />
           <div class="body">
             <h3>${p.name}</h3>
@@ -1061,12 +1101,11 @@ function renderPackagesStep() {
               <span class="pkg-price">${formatPkgPriceHtml(p)}</span>
               <span class="pkg-guests">${p.guests}</span>
             </div>
-            <ul class="pkg-features">
-              ${p.features.map((f) => `<li>${f}</li>`).join("")}
-            </ul>
+            ${renderPkgHighlightsHtml(p)}
+            ${renderPkgDetailsBlock(p)}
             <span class="pkg-pick-label">${selected ? "تم الاختيار ✓" : "اضغط للاختيار"}</span>
           </div>
-        </button>`;
+        </article>`;
       }).join("")}
     </div>`;
 }
@@ -1380,9 +1419,12 @@ function renderWizard() {
   } else if (step === "package") {
     body.innerHTML = renderPackagesStep();
     nextBtn.disabled = !state.packageId;
-    $$("[data-pick-pkg]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        state.packageId = btn.dataset.pickPkg;
+    $$(".pkg-pick .pkg-details").forEach((details) => {
+      details.addEventListener("click", (e) => e.stopPropagation());
+    });
+    $$("[data-pick-pkg]").forEach((card) => {
+      card.addEventListener("click", () => {
+        state.packageId = card.dataset.pickPkg;
         nextBtn.disabled = false;
         renderWizard();
       });
@@ -1619,15 +1661,8 @@ function renderMarketingPackages() {
           </div>
           <div class="pkg-price">${formatPkgPriceHtml(p, { startsFrom: true })}</div>
         </div>
-        <ul class="pkg-features pkg-features-desk">
-          ${p.features.map((f) => `<li>${f}</li>`).join("")}
-        </ul>
-        <details class="pkg-details pkg-details-mob">
-          <summary>عرض التفاصيل</summary>
-          <ul class="pkg-features">
-            ${p.features.map((f) => `<li>${f}</li>`).join("")}
-          </ul>
-        </details>
+        ${renderPkgHighlightsHtml(p)}
+        ${renderPkgDetailsBlock(p)}
         <button type="button" class="btn btn-primary" data-book-pkg="${p.id}">
           اطلب هذا البكج
         </button>
