@@ -35,6 +35,23 @@
     return global.BAKR_CONFIG || {};
   }
 
+  function normalizeEmail(email) {
+    return String(email || "").trim().toLowerCase();
+  }
+
+  /** null = لا قيود — أي مستخدم Supabase Auth مسموح */
+  function allowedAdminEmails() {
+    const list = cfg().adminEmails;
+    if (!Array.isArray(list) || list.length === 0) return null;
+    return list.map(normalizeEmail).filter(Boolean);
+  }
+
+  function isAdminEmail(email) {
+    const allowed = allowedAdminEmails();
+    if (!allowed) return true;
+    return allowed.includes(normalizeEmail(email));
+  }
+
   function hasCloud() {
     const c = cfg();
     const url = (c.supabaseUrl || "").trim();
@@ -82,7 +99,12 @@
         password: String(password || ""),
       });
       if (error) return { ok: false, message: authMessageAr(error) };
-      return { ok: true, user: data?.user || null };
+      const user = data?.user || null;
+      if (user && !isAdminEmail(user.email)) {
+        await sb.auth.signOut();
+        return { ok: false, message: "هذا البريد غير مخوّل للدخول إلى الإدارة" };
+      }
+      return { ok: true, user };
     } catch (err) {
       return { ok: false, message: authMessageAr(err) };
     }
@@ -103,7 +125,12 @@
       const sb = await getClient();
       if (!sb) return null;
       const { data } = await sb.auth.getSession();
-      return data?.session?.user || null;
+      const user = data?.session?.user || null;
+      if (user && !isAdminEmail(user.email)) {
+        await sb.auth.signOut();
+        return null;
+      }
+      return user;
     } catch (err) {
       console.warn("currentUser:", err);
       return null;
