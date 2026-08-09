@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://bakr-tea.com/sitemap.xml
