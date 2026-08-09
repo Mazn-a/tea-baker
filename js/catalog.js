@@ -48,8 +48,8 @@
         badge: "خيار عملي",
         image: "./assets/corner.jpg",
         cityPricing: {
-          jeddah: { price: 5800 },
-          taif: { price: 5800 },
+          jeddah: { listPrice: 7500, price: 5800 },
+          taif: { listPrice: 7500, price: 5800 },
         },
         highlights: [
           "كورنر ضيافة ملكية 5 متر",
@@ -100,8 +100,8 @@
         featured: true,
         image: "./assets/hero.jpg",
         cityPricing: {
-          jeddah: { price: 6800 },
-          taif: { price: 6800 },
+          jeddah: { listPrice: 9000, price: 6800 },
+          taif: { listPrice: 9000, price: 6800 },
         },
         highlights: [
           "كورنر ضيافة ملكية 6 متر",
@@ -150,8 +150,8 @@
         badge: "الأكثر اكتمالاً",
         image: "./assets/corner.jpg",
         cityPricing: {
-          jeddah: { price: 8000 },
-          taif: { price: 8000 },
+          jeddah: { listPrice: 11000, price: 8000 },
+          taif: { listPrice: 11000, price: 8000 },
         },
         highlights: [
           "كورنر 6 متر مع خلفية ديكور وشاشات",

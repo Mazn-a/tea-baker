@@ -1082,13 +1082,26 @@ function renderPkgDetailsBlock(p) {
     </details>`;
 }
 
-function renderPackagesStep() {
+function packageCityPriceNoteHtml() {
+  if (!state.city) return "";
   const cityLabel = labelOf(CITIES, state.city);
-  const cityNote = state.city
-    ? `<p class="pkg-city-price-note">أسعار ${esc(cityLabel)}</p>`
-    : "";
+  if (state.city === "makkah") {
+    return `
+      <div class="pkg-city-price-note" role="note">
+        <strong>أسعار مكة المكرمة</strong>
+        <span>الأسعار المعروضة خاصة بمكة، وتختلف في جدة والطائف حسب المدينة والموقع.</span>
+      </div>`;
+  }
   return `
-    ${cityNote}
+    <div class="pkg-city-price-note is-outside-makkah" role="note">
+      <strong>أسعار ${esc(cityLabel)}</strong>
+      <span>تختلف أسعار البكجات خارج مكة المكرمة حسب المدينة والموقع — السعر النهائي ظاهر بعد الخصم.</span>
+    </div>`;
+}
+
+function renderPackagesStep() {
+  return `
+    ${packageCityPriceNoteHtml()}
     <div class="pkg-stack pkg-wizard">
       ${PACKAGES.map((p) => {
         const selected = state.packageId === p.id;
