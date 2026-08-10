@@ -131,6 +131,8 @@ function isWeddingOrder(order) {
   if (label === "زواج") return true;
   // حجوزات الإدارة القديمة — قبل حقل «نوع المناسبة» كانت تُحفظ كـ «حجز خارجي»
   if (label === "حجز خارجي") return true;
+  const notes = String(order?.notes || "");
+  if (notes.includes("حجز مسجّل من الإدارة") || notes.includes("حجز خارجي")) return true;
   return false;
 }
 
@@ -143,8 +145,10 @@ function upcomingOccasions(list = state.orders) {
     .sort((a, b) => String(a.event_date).localeCompare(String(b.event_date)));
 }
 
+/** المناسبات القادمة — زواج + حجوزات الإدارة + أي طلب مقبول/جديد بتاريخ مستقبلي */
 function upcomingWeddings(list = state.orders) {
-  return upcomingOccasions(list).filter((o) => isWeddingOrder(o));
+  // اعرض كل المناسبات القادمة — الإدارة تحتاج تشوف كل الحجوزات المستقبلية
+  return upcomingOccasions(list);
 }
 
 function formatDateTime(iso) {
@@ -1058,7 +1062,7 @@ function updateUpcomingChoiceHint() {
   const el = $("#upcomingChoiceHint");
   if (!el) return;
   const n = upcomingWeddings().length;
-  el.textContent = n > 0 ? `${n} زواج قادم — مرتّب بالأيام` : "لا توجد زواجات قادمة حالياً";
+  el.textContent = n > 0 ? `${n} مناسبة قادمة — مرتّبة بالأيام` : "لا توجد مناسبات قادمة حالياً";
 }
 
 function updateOrdersChoiceHint() {
@@ -1217,8 +1221,8 @@ function renderUpcoming() {
     const allFuture = upcomingOccasions().length;
     const hint =
       allFuture > 0
-        ? `في ${allFuture} مناسبة قادمة لكن نوعها ليس «زواج» — راجعها من الطلبات.`
-        : "لا توجد زواجات قادمة حالياً.";
+        ? `في ${allFuture} مناسبة قادمة — حدّث الصفحة أو اضغط تحديث.`
+        : "لا توجد مناسبات قادمة — تأكد أن الطلبات محفوظة في Supabase (اضغط تحديث).";
     list.innerHTML = `<p class="empty-hint">${hint}</p>`;
     return;
   }
