@@ -1311,6 +1311,42 @@ body.admin-detail-open #orderDetailView {
   color: var(--ok);
 }
 
+.bk-price-due strong {
+  color: #b45309;
+}
+
+.order-row-due {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #b45309;
+}
+
+.order-paid-edit {
+  margin-top: 0.75rem;
+}
+
+.order-paid-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.order-paid-row input {
+  flex: 1;
+  min-height: 2.75rem;
+  border: 1.5px solid rgba(99, 58, 17, 0.18);
+  border-radius: 0.85rem;
+  padding: 0.55rem 0.85rem;
+  background: #fffaf3;
+  font: inherit;
+}
+
+.order-kv .item.due-row .val {
+  color: #b45309;
+  font-weight: 800;
+}
+
 .order-row-title {
   display: flex;
   flex-wrap: wrap;
@@ -2360,6 +2396,42 @@ body:has(#adminHome.is-page-on) .admin-main {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
+}
+
+.upcoming-package {
+  margin: 0.45rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--tea-deep);
+}
+
+.upcoming-pay {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  align-items: center;
+  margin: 0.55rem 0 0;
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.75rem;
+  background: rgba(99, 58, 17, 0.06);
+  font-size: 0.84rem;
+}
+
+.upcoming-pay span {
+  color: #6a5240;
+}
+
+.upcoming-due {
+  color: var(--ok);
+  font-weight: 800;
+}
+
+.upcoming-card.has-due .upcoming-due {
+  color: #b45309;
+}
+
+.upcoming-card.has-due {
+  border-color: rgba(180, 83, 9, 0.35);
 }
 
 .upcoming-open {

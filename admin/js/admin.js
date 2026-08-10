@@ -87,6 +87,39 @@ function daysUntilLabel(iso) {
   return `باقي ${n} يوم بالضبط`;
 }
 
+function parsePaidFromNotes(notes) {
+  const m = String(notes || "").match(/المدفوع\s*:\s*([\d,\.]+)/);
+  if (!m) return null;
+  return Number(String(m[1]).replace(/,/g, "")) || 0;
+}
+
+/** إجمالي العقد = البكج + الإضافات */
+function orderContractTotal(o) {
+  const parts = Number(o?.package_price || 0) + Number(o?.addons_total || 0);
+  if (parts > 0) return parts;
+  return Number(o?.grand_total || 0);
+}
+
+/** المبلغ المدفوع — من العمود أو الملاحظات أو الحجوزات القديمة */
+function orderAmountPaid(o) {
+  if (o?.amount_paid != null && Number.isFinite(Number(o.amount_paid))) {
+    return Math.max(0, Number(o.amount_paid));
+  }
+  const fromNotes = parsePaidFromNotes(o?.notes);
+  if (fromNotes != null) return fromNotes;
+
+  const total = orderContractTotal(o);
+  const grand = Number(o?.grand_total || 0);
+  if (String(o?.notes || "").includes("حجز مسجّل من الإدارة") && total > grand) {
+    return grand;
+  }
+  return 0;
+}
+
+function orderRemaining(o) {
+  return Math.max(0, orderContractTotal(o) - orderAmountPaid(o));
+}
+
 function startOfToday() {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -216,13 +249,16 @@ function buildConfirmMessage(order) {
     `مرحباً ${order.customer_name}،`,
     decision,
     `المناسبة: ${order.event_label} · ${formatDate(order.event_date)}`,
-    `الإجمالي: ${money(order.grand_total)}`,
+    `الإجمالي: ${money(orderContractTotal(order))}`,
+    orderRemaining(order) > 0 ? `المتبقي: ${money(orderRemaining(order))}` : "",
     isAccepted
       ? "للتأكيد النهائي ردّ بكلمة «أؤكد»."
       : isRejected
         ? "يمكنك تقديم طلب جديد بتاريخ آخر."
         : "سنوافيك بالنتيجة قريباً.",
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function showToast(message, tone = "ok") {
@@ -1178,8 +1214,12 @@ function renderUpcoming() {
     .map((o, idx) => {
       const days = daysUntilLabel(o.event_date);
       const urgent = daysUntil(o.event_date) <= 7;
+      const total = orderContractTotal(o);
+      const paid = orderAmountPaid(o);
+      const remaining = orderRemaining(o);
+      const addons = Array.isArray(o.addons) ? o.addons : [];
       return `
-      <article class="upcoming-card ${urgent ? "is-soon" : ""}">
+      <article class="upcoming-card ${urgent ? "is-soon" : ""} ${remaining > 0 ? "has-due" : ""}">
         <div class="upcoming-rank">${idx + 1}</div>
         <div class="upcoming-body">
           <div class="upcoming-top">
@@ -1194,6 +1234,12 @@ function renderUpcoming() {
             <span>·</span>
             <span>${statusLabel(o.status)}</span>
           </p>
+          <p class="upcoming-package">${escapeHtml(o.package_name || "—")}${addons.length ? ` · ${addons.length} إضافة` : ""}</p>
+          <div class="upcoming-pay">
+            <span>الإجمالي ${money(total)}</span>
+            <span>مدفوع ${money(paid)}</span>
+            <strong class="upcoming-due">${remaining > 0 ? `باقي ${money(remaining)}` : "مسدّد بالكامل"}</strong>
+          </div>
           <button type="button" class="btn btn-ghost upcoming-open" data-id="${escapeAttr(o.id)}">فتح الطلب</button>
         </div>
       </article>`;
@@ -1221,7 +1267,9 @@ function renderOrders() {
   list.innerHTML = orders
     .map((o, index) => {
       const addons = Array.isArray(o.addons) ? o.addons : [];
-      const isExternal = o.package_id === "external";
+      const isExternal =
+        o.package_id === "external" ||
+        String(o.notes || "").includes("حجز مسجّل من الإدارة");
       const status = o.status || "pending";
       const pendingHint =
         status === "pending" ? `<span class="order-row-hint pending-hint">بانتظار قرارك</span>` : "";
@@ -1241,6 +1289,8 @@ function renderOrders() {
             <span>·</span>
             <span>${escapeHtml(o.event_label)}</span>
             <span>·</span>
+            <span>${escapeHtml(o.package_name || "—")}</span>
+            <span>·</span>
             <span>${formatDate(o.event_date)}</span>
           </div>
           <div class="order-row-sub">
@@ -1249,7 +1299,12 @@ function renderOrders() {
           </div>
         </div>
         <div class="order-row-side">
-          <strong class="order-row-total">${money(o.grand_total)}</strong>
+          <strong class="order-row-total">${money(orderContractTotal(o))}</strong>
+          ${
+            orderRemaining(o) > 0
+              ? `<span class="order-row-due">باقي ${money(orderRemaining(o))}</span>`
+              : `<span class="order-row-hint">مسدّد</span>`
+          }
           <span class="order-row-hint">${addons.length ? `${addons.length} إضافة` : "بدون إضافات"}</span>
           ${pendingHint}
           <button type="button" class="${ctaClass}" data-open-order="1">فتح الطلب</button>
@@ -1286,6 +1341,9 @@ function renderOrderDetail(o) {
     o.status === "pending"
       ? `<p class="order-decide-hint">راجع كل التفاصيل بالأسفل ثم اضغط قبول أو رفض.</p>`
       : "";
+  const contractTotal = orderContractTotal(o);
+  const amountPaid = orderAmountPaid(o);
+  const remaining = orderRemaining(o);
 
   root.innerHTML = `
     <div class="order-top">
@@ -1314,7 +1372,25 @@ function renderOrderDetail(o) {
         <div class="item"><span class="lbl">سعر البكج</span><span class="val">${money(o.package_price)}</span></div>
         <div class="item"><span class="lbl">مجموع الإضافات</span><span class="val">${money(o.addons_total)}</span></div>
         <div class="item"><span class="lbl">تاريخ المناسبة</span><span class="val">${formatDate(o.event_date)}</span></div>
-        <div class="item total span-2"><span class="lbl">الإجمالي</span><span class="val">${money(o.grand_total)}</span></div>
+        <div class="item total span-2"><span class="lbl">إجمالي العقد</span><span class="val">${money(contractTotal)}</span></div>
+      </div>
+    </section>
+
+    <section class="order-section">
+      <h4 class="order-section-title">الدفع والمتبقي</h4>
+      <div class="order-kv">
+        <div class="item"><span class="lbl">المبلغ المدفوع</span><span class="val">${money(amountPaid)}</span></div>
+        <div class="item total span-2 ${remaining > 0 ? "due-row" : ""}"><span class="lbl">المتبقي</span><span class="val">${remaining > 0 ? money(remaining) : "مسدّد بالكامل ✓"}</span></div>
+      </div>
+      <div class="order-paid-edit">
+        <label class="field">
+          <span>تحديث المبلغ المدفوع</span>
+          <div class="order-paid-row">
+            <input id="orderPaidInput" type="number" min="0" step="1" inputmode="numeric" value="${amountPaid || ""}" dir="ltr" />
+            <button type="button" class="btn btn-ok btn-sm" data-action="save-paid">حفظ المدفوع</button>
+          </div>
+          <small class="field-hint">اكتب كم دفع العميل — المتبقي يتحدّث تلقائياً في الزواجات القادمة</small>
+        </label>
       </div>
     </section>
 
@@ -1452,6 +1528,24 @@ async function handleOrderAction(action, order, btn) {
     }
   } else if (action === "whatsapp") {
     openWhatsApp(order);
+  } else if (action === "save-paid") {
+    const raw = normalizeDigits($("#orderPaidInput")?.value || "").replace(/[^\d.]/g, "");
+    const paid = raw === "" ? 0 : Number(raw);
+    if (!Number.isFinite(paid) || paid < 0) {
+      showToast("المبلغ المدفoع غير صحيح", "warn");
+      return;
+    }
+    if (btn) btn.disabled = true;
+    try {
+      await window.BakrStore.updateOrderPayment(id, paid);
+      await loadData();
+      showToast("تم حفظ المبلغ المدفوع");
+    } catch (err) {
+      console.warn(err);
+      showToast("تعذر حفظ المبلغ — حاول مرة ثانية", "warn");
+    } finally {
+      if (btn) btn.disabled = false;
+    }
   } else if (action === "delete") {
     await deleteOrderById(order, btn);
   }
@@ -1626,6 +1720,9 @@ function updateBkPriceSummary({ syncPaid = true } = {}) {
   const addonsTotal = calcBkAddonsTotal();
   const calculated = pkgPrice + addonsTotal;
   const selected = getBkSelectedAddons();
+  const paidRaw = normalizeDigits(paidInput?.value || "").replace(/[^\d.]/g, "");
+  const paid = paidRaw !== "" ? Number(paidRaw) : calculated;
+  const remaining = Math.max(0, calculated - (Number.isFinite(paid) ? paid : 0));
 
   if (syncPaid && paidInput && !bkState.paidTouched) {
     paidInput.value = calculated > 0 ? String(calculated) : "";
@@ -1634,7 +1731,9 @@ function updateBkPriceSummary({ syncPaid = true } = {}) {
   root.innerHTML = `
     <div class="bk-price-row"><span>البكج</span><strong>${escapeHtml(pkg?.name || "—")} · ${money(pkgPrice)}</strong></div>
     <div class="bk-price-row"><span>الإضافات</span><strong>${selected.length ? `${selected.length} نوع · ${money(addonsTotal)}` : "بدون إضافات"}</strong></div>
-    <div class="bk-price-row bk-price-total"><span>إجمالي البكج والإضافات</span><strong>${money(calculated)}</strong></div>`;
+    <div class="bk-price-row bk-price-total"><span>إجمالي العقد</span><strong>${money(calculated)}</strong></div>
+    <div class="bk-price-row"><span>المبلغ المدفوع</span><strong>${money(Number.isFinite(paid) ? paid : 0)}</strong></div>
+    <div class="bk-price-row bk-price-due"><span>المتبقي</span><strong>${remaining > 0 ? money(remaining) : "مسدّد بالكامل"}</strong></div>`;
 }
 
 function resetBkBookingForm() {
@@ -1816,6 +1915,7 @@ async function setup() {
 
   $("#bkPaid")?.addEventListener("input", () => {
     bkState.paidTouched = true;
+    updateBkPriceSummary({ syncPaid: false });
   });
 
   bkAddonsHost?.addEventListener("click", (e) => {
@@ -1925,10 +2025,6 @@ async function setup() {
     try {
       const noteParts = ["حجز مسجّل من الإدارة (خارج الموقع)"];
       if (notes) noteParts.push(notes);
-      if (paidAmount !== calculatedTotal) {
-        noteParts.push(`إجمالي البكج والإضافات: ${money(calculatedTotal)}`);
-        noteParts.push(`المدفوع: ${money(paidAmount)}`);
-      }
 
       await window.BakrStore.createOrder({
         status: "accepted",
@@ -1945,7 +2041,8 @@ async function setup() {
           qty: a.qty,
         })),
         addonsTotal,
-        grandTotal: paidAmount,
+        grandTotal: calculatedTotal,
+        amountPaid: paidAmount,
         eventDate,
         customerName,
         customerPhone: phone,
