@@ -1169,7 +1169,9 @@ body.admin-detail-open #orderDetailView {
 
 .booking-card {
   text-align: right;
-  width: min(100%, 28rem);
+  width: min(100%, 26rem);
+  max-height: min(92vh, 44rem);
+  overflow: auto;
 }
 
 .booking-form {
@@ -1561,6 +1563,13 @@ body.admin-detail-open #orderDetailView {
 }
 
 .welcome-choice.is-issues > span:last-child { color: #8a6a3d; }
+
+.welcome-choice.is-upcoming {
+  background: linear-gradient(145deg, #fff8ef, #f3e4cf);
+  border: 1.5px solid rgba(139, 105, 20, 0.28);
+}
+
+.welcome-choice.is-upcoming > span:last-child { color: #6a5240; }
 
 .welcome-end-line {
   position: relative;
@@ -2036,4 +2045,207 @@ body:has(#adminHome.is-page-on) .admin-main {
   .visitors-grid {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* تقويم حجز الإدارة — ميلادي/هجري */
+.admin-cal.cal-wrap {
+  width: 100%;
+  margin: 0.35rem 0 0;
+  padding: 0.65rem 0.7rem 0.75rem;
+  border-radius: 0.85rem;
+  border: 1.5px solid rgba(99, 58, 17, 0.12);
+  background: #fffaf3;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.admin-cal .cal-mode-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem;
+  background: rgba(99, 58, 17, 0.06);
+  padding: 0.2rem;
+  border-radius: 999px;
+}
+
+.admin-cal .cal-mode {
+  border: 0;
+  background: transparent;
+  min-height: 2.1rem;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.88rem;
+  color: var(--tea-deep);
+  cursor: pointer;
+}
+
+.admin-cal .cal-mode.is-on {
+  background: var(--tea);
+  color: #fff8ef;
+}
+
+.admin-cal .cal-search label {
+  font-weight: 800;
+  font-size: 0.84rem;
+  color: var(--tea-deep);
+}
+
+.admin-cal .cal-search-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.35rem;
+}
+
+.admin-cal .cal-search-row input {
+  min-height: 2.35rem;
+  border: 1.5px solid rgba(99, 58, 17, 0.15);
+  border-radius: 0.75rem;
+  padding: 0.4rem 0.65rem;
+  background: #fff;
+  font: inherit;
+}
+
+.admin-cal .cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-cal .cal-nav button {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(99, 58, 17, 0.08);
+  color: var(--tea);
+  cursor: pointer;
+}
+
+.admin-cal .cal-week,
+.admin-cal .cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.18rem;
+  text-align: center;
+}
+
+.admin-cal .cal-week span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--tea-deep);
+}
+
+.admin-cal .day-btn {
+  border: 0;
+  min-height: 2rem;
+  border-radius: 0.55rem;
+  background: rgba(99, 58, 17, 0.05);
+  color: var(--tea-deep);
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.admin-cal .day-btn small {
+  display: block;
+  font-size: 0.55rem;
+}
+
+.admin-cal .day-btn.muted { opacity: 0.3; cursor: default; }
+.admin-cal .day-btn.booked { background: #fde8e8; color: #9b2c2c; }
+.admin-cal .day-btn.selected { background: var(--tea); color: #fff8ef; }
+
+.admin-cal .date-status {
+  border-radius: 0.65rem;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+  background: rgba(99, 58, 17, 0.06);
+  color: var(--tea-deep);
+}
+
+.admin-cal .date-status.ok { background: #e8f5eb; color: #1f6b3a; }
+.admin-cal .date-status.bad { background: #fde8e8; color: #9b2c2c; }
+
+/* الزواجات القادمة */
+.upcoming-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.upcoming-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.85rem 0.95rem;
+  border-radius: 1rem;
+  border: 1.5px solid rgba(99, 58, 17, 0.12);
+  background: #fffaf3;
+}
+
+.upcoming-card.is-soon {
+  border-color: rgba(196, 163, 90, 0.55);
+  box-shadow: 0 8px 24px rgba(139, 105, 20, 0.12);
+}
+
+.upcoming-rank {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  background: rgba(99, 58, 17, 0.1);
+  color: var(--tea-deep);
+}
+
+.upcoming-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.upcoming-top strong {
+  font-size: 1.05rem;
+  color: var(--tea-deep);
+}
+
+.upcoming-days {
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: var(--tea);
+  background: rgba(99, 58, 17, 0.08);
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+
+.upcoming-card.is-soon .upcoming-days {
+  background: rgba(196, 163, 90, 0.22);
+  color: #7a5a12;
+}
+
+.upcoming-date {
+  margin: 0.35rem 0 0.25rem;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #4a3428;
+}
+
+.upcoming-meta {
+  margin: 0;
+  font-size: 0.84rem;
+  color: #6a5240;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.upcoming-open {
+  margin-top: 0.55rem;
 }

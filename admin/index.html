@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <link rel="stylesheet" href="./css/admin.css?v=51" />
+    <link rel="stylesheet" href="./css/admin.css?v=52" />
   </head>
   <body>
     <div id="loginView" class="login-view">
@@ -138,6 +138,10 @@
                       <strong>الطلبات</strong>
                       <span id="ordersChoiceHint">عرض الطلبات واتخاذ القرار</span>
                     </button>
+                    <button type="button" class="welcome-choice is-upcoming" data-page="upcoming">
+                      <strong>الزواجات القادمة</strong>
+                      <span id="upcomingChoiceHint">المناسبات بالترتيب ومتبقي بالأيام</span>
+                    </button>
                     <button type="button" class="welcome-choice is-secondary" data-page="stats">
                       <strong>الإحصائيات</strong>
                       <span>الدخل وأوقات الذروة وأكثر البكجات</span>
@@ -179,6 +183,17 @@
             </div>
             <p class="orders-lead">اضغط «فتح الطلب» للتفاصيل والقرار — لون كل طلب حسب حالته.</p>
             <div id="ordersList" class="orders-list"></div>
+          </section>
+
+          <section class="panel upcoming-panel admin-page" id="upcomingPanel" data-page="upcoming" hidden>
+            <div class="panel-head">
+              <div class="page-nav">
+                <button type="button" class="btn btn-ghost" data-page="home">← الرئيسية</button>
+                <h2>الزواجات القادمة</h2>
+              </div>
+            </div>
+            <p class="orders-lead">كل زواج مقبول أو بانتظار القرار — مرتّب من الأقرب للأبعد مع عدّ الأيام المتبقية.</p>
+            <div id="upcomingList" class="upcoming-list"></div>
           </section>
 
           <section class="panel visitors-panel admin-page" id="visitorsPanel" data-page="visitors" hidden>
@@ -305,13 +320,18 @@
             <input id="bkPhone" type="tel" required placeholder="05xxxxxxxx" dir="ltr" inputmode="numeric" />
           </label>
           <label class="field">
+            <span>نوع المناسبة</span>
+            <select id="bkEvent" required></select>
+          </label>
+          <label class="field">
             <span>المدينة</span>
             <select id="bkCity" required></select>
           </label>
-          <label class="field">
+          <div class="field">
             <span>تاريخ المناسبة</span>
-            <input id="bkDate" type="date" required dir="ltr" />
-          </label>
+            <div id="bkCalendarHost"></div>
+            <input id="bkDate" type="hidden" required />
+          </div>
           <label class="field">
             <span>ملاحظات (اختياري)</span>
             <input id="bkNotes" type="text" placeholder="مثال: حجز واتساب / اتصال" />
@@ -334,6 +354,7 @@
     <script src="./js/logo-data.js?v=11"></script>
     <script src="./js/order-pdf.js?v=14"></script>
     <script src="./js/wa-send.js?v=8"></script>
-    <script src="./js/admin.js?v=51"></script>
+    <script src="./js/admin-calendar.js?v=1"></script>
+    <script src="./js/admin.js?v=52"></script>
   </body>
 </html>
