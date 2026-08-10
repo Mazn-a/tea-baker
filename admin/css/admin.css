@@ -1537,13 +1537,15 @@ body.admin-detail-open #orderDetailView {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.welcome-intro {
+.welcome-intro,
+.welcome-shell {
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(220px, 320px);
-  align-items: center;
-  gap: clamp(1rem, 3vw, 2rem);
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  gap: clamp(0.85rem, 2.5vw, 1.5rem);
   width: min(1080px, calc(100% - 2rem));
   margin: 0 auto;
   padding: 0.75rem 0 0.5rem;
@@ -1552,12 +1554,41 @@ body.admin-detail-open #orderDetailView {
   animation: adminFadeUp 0.45s ease both;
 }
 
-.welcome-brand-block {
+.welcome-brand-block,
+.welcome-hero {
+  grid-column: 1;
+  grid-row: 1;
   display: flex;
   align-items: center;
   justify-content: flex-start;
   gap: clamp(0.75rem, 1.8vw, 1.25rem);
   min-width: 0;
+}
+
+.welcome-art-wrap {
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  max-height: 28vh;
+  line-height: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 12px 28px rgba(42, 24, 16, 0.14));
+  animation: adminFloat 6.5s ease-in-out infinite;
+  animation-delay: 0.4s;
+  overflow: hidden;
+  justify-self: end;
+}
+
+.welcome-choices {
+  grid-column: 2;
+  grid-row: 2;
+  display: grid;
+  gap: 0.55rem;
+  position: relative;
+  z-index: 1;
+  align-self: start;
+  width: min(100%, 18rem);
+  justify-self: end;
 }
 
 .welcome-logo-wrap {
@@ -1616,24 +1647,7 @@ body.admin-detail-open #orderDetailView {
 
 .welcome-side {
   position: relative;
-  display: grid;
-  gap: 0.65rem;
-  justify-items: stretch;
-  align-content: center;
-  width: min(100%, 18rem);
-  justify-self: end;
-  min-height: 0;
-}
-
-.welcome-art-wrap {
-  width: 100%;
-  max-height: 28vh;
-  line-height: 0;
-  pointer-events: none;
-  filter: drop-shadow(0 12px 28px rgba(42, 24, 16, 0.14));
-  animation: adminFloat 6.5s ease-in-out infinite;
-  animation-delay: 0.4s;
-  overflow: hidden;
+  display: contents;
 }
 
 .welcome-art {
@@ -1645,13 +1659,6 @@ body.admin-detail-open #orderDetailView {
   object-position: center bottom;
   mask-image: linear-gradient(180deg, #000 50%, transparent 100%);
   -webkit-mask-image: linear-gradient(180deg, #000 50%, transparent 100%);
-}
-
-.welcome-choices {
-  display: grid;
-  gap: 0.55rem;
-  position: relative;
-  z-index: 1;
 }
 
 .welcome-choice {
@@ -1738,7 +1745,7 @@ body.admin-detail-open #orderDetailView {
   .welcome-landing::before,
   .welcome-logo-wrap,
   .welcome-art-wrap,
-  .welcome-intro {
+  .welcome-shell {
     animation: none !important;
   }
 }
@@ -2091,17 +2098,41 @@ body:has(#adminHome.is-page-on) .admin-main {
   .stat-grid:not(.stat-grid-hero) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .charts-grid { grid-template-columns: 1fr; }
   .chart-card.chart-wide { grid-column: auto; }
-  .welcome-intro {
+
+  .welcome-shell {
     grid-template-columns: 1fr;
-    justify-items: center;
-    text-align: center;
+    grid-template-rows: auto auto;
+    width: calc(100% - 1.5rem);
+    gap: 1rem;
   }
-  .welcome-brand-block {
-    flex-direction: row;
-    justify-content: center;
+
+  .welcome-hero {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
   }
-  .welcome-copy { text-align: center; justify-items: center; }
-  .welcome-side { justify-self: center; }
+
+  .welcome-art-wrap {
+    display: none;
+  }
+
+  .welcome-copy {
+    text-align: end;
+    justify-items: end;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .welcome-choices {
+    grid-column: 1;
+    grid-row: 2;
+    width: 100%;
+    max-width: none;
+    justify-self: stretch;
+  }
 }
 
 @media (max-width: 640px) {
@@ -2171,7 +2202,69 @@ body:has(#adminHome.is-page-on) .admin-main {
   }
 
   .welcome-art-wrap { display: none; }
-  .welcome-brand-block { flex-direction: column; }
+
+  .welcome-logo {
+    width: 4.75rem;
+  }
+
+  .welcome-name {
+    font-size: 1.35rem;
+  }
+
+  .welcome-copy h1 {
+    font-size: 0.95rem;
+  }
+
+  .welcome-tag {
+    font-size: 0.82rem;
+  }
+
+  .welcome-sub {
+    display: block;
+    font-size: 0.76rem;
+    line-height: 1.35;
+  }
+
+  .welcome-choice {
+    border-radius: 1rem;
+    text-align: start;
+    justify-items: start;
+    min-height: 3.35rem;
+    padding: 0.75rem 1rem;
+  }
+
+  /* الجوال: اسمح بالسكرول — المحتوى أطول من الشاشة */
+  body:has(#adminHome.is-page-on) {
+    overflow: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body:has(#adminHome.is-page-on) .admin-main {
+    padding-bottom: calc(1rem + var(--safe-bottom));
+  }
+
+  .admin-welcome {
+    height: auto;
+    max-height: none;
+    min-height: calc(100svh - 4.4rem);
+    overflow: visible;
+  }
+
+  .welcome-landing {
+    height: auto;
+    min-height: calc(100svh - 4.4rem);
+    overflow: visible;
+    justify-content: flex-start;
+    padding: 0.75rem 0 calc(1.25rem + var(--safe-bottom));
+  }
+
+  .welcome-shell {
+    flex: none;
+    min-height: auto;
+    padding: 0.35rem 0 0.75rem;
+  }
+
   .stat-grid:not(.stat-grid-hero) { grid-template-columns: 1fr 1fr; }
   .order-kv { grid-template-columns: 1fr; }
   .order-actions { grid-template-columns: 1fr; }
