@@ -214,14 +214,18 @@
   /** يحذف أعمدة اختيارية غير موجودة بعد في Supabase ويعيد المحاولة */
   async function insertOrderRow(sb, row) {
     let payload = { ...row };
-    const optionalCols = ["location_area", "amount_paid"];
+    const optionalCols = ["amount_paid", "location_area"];
 
     for (let attempt = 0; attempt <= optionalCols.length; attempt++) {
       const { error } = await sb.from("orders").insert(payload);
       if (!error) return payload;
 
-      const msg = String(error.message || "");
-      const missing = optionalCols.find((col) => col in payload && new RegExp(col, "i").test(msg));
+      const msg = String(error.message || error.details || error.hint || "");
+      const code = String(error.code || "");
+      let missing = optionalCols.find((col) => col in payload && new RegExp(col, "i").test(msg));
+      if (!missing && code === "PGRST204") {
+        missing = optionalCols.find((col) => col in payload && msg.includes(col));
+      }
       if (!missing) throw error;
 
       const next = { ...payload };
@@ -246,16 +250,17 @@
       addons: payload.addons || [],
       addons_total: Number(payload.addonsTotal) || 0,
       grand_total: Number(payload.grandTotal) || 0,
-      amount_paid: Number(payload.amountPaid) || 0,
       event_date: payload.eventDate,
       customer_name: payload.customerName,
       customer_phone: payload.customerPhone,
       hall_name: payload.hallName,
       location_link: payload.locationLink || "",
-      location_area: payload.locationArea || "",
       notes: payload.notes || "",
       hour_of_day: now.getHours(),
     };
+
+    if (payload.locationArea) row.location_area = payload.locationArea;
+    if (payload.amountPaid != null) row.amount_paid = Number(payload.amountPaid) || 0;
 
     try {
       const sb = await getClient();
