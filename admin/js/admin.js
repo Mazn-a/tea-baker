@@ -48,6 +48,64 @@ function formatDate(iso) {
   });
 }
 
+function formatDateDual(iso) {
+  if (!iso) return "—";
+  const d = new Date(`${String(iso).slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  const g = d.toLocaleDateString(AR_GREGORIAN, {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const h = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-umalqura-nu-latn", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+    .format(d)
+    .replace(/\s(هـ)$/, "\u00A0$1");
+  return `${g} · ${h}`;
+}
+
+function daysUntil(iso) {
+  const day = String(iso || "").slice(0, 10);
+  if (!day) return null;
+  const today = startOfToday();
+  const event = new Date(`${day}T12:00:00`);
+  if (Number.isNaN(event.getTime())) return null;
+  return Math.round((event - today) / 86400000);
+}
+
+function daysUntilLabel(iso) {
+  const n = daysUntil(iso);
+  if (n == null) return "—";
+  if (n < 0) return "انتهت";
+  if (n === 0) return "اليوم";
+  if (n === 1) return "باقي يوم واحد بالضبط";
+  return `باقي ${n} يوم بالضبط`;
+}
+
+function startOfToday() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function isWeddingOrder(order) {
+  return String(order?.event_label || "").trim() === "زواج";
+}
+
+function upcomingWeddings(list = state.orders) {
+  const todayIso = bookingWindowBounds().minIso;
+  return activeOrders(list)
+    .filter((o) => isWeddingOrder(o))
+    .filter((o) => (o.status === "accepted" || o.status === "pending"))
+    .filter((o) => String(o.event_date || "").slice(0, 10) >= todayIso)
+    .sort((a, b) => String(a.event_date).localeCompare(String(b.event_date)));
+}
+
 function formatDateTime(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -952,6 +1010,13 @@ function updateIssuesChoiceHint() {
   }
 }
 
+function updateUpcomingChoiceHint() {
+  const el = $("#upcomingChoiceHint");
+  if (!el) return;
+  const n = upcomingWeddings().length;
+  el.textContent = n > 0 ? `${n} زواج قادم — مرتّب بالأيام` : "لا توجد زواجات قادمة حالياً";
+}
+
 function updateOrdersChoiceHint() {
   const el = $("#ordersChoiceHint");
   const pending = activeOrders().filter((o) => o.status === "pending").length;
@@ -1021,6 +1086,9 @@ function showPage(page) {
   }
   if (state.page === "reports") {
     requestAnimationFrame(() => renderIssues());
+  }
+  if (state.page === "upcoming") {
+    renderUpcoming();
   }
   if (state.page === "orders") {
     renderOrders();
@@ -1095,6 +1163,46 @@ function bookingWindowBounds() {
     return `${y}-${m}-${day}`;
   };
   return { minIso: toIso(min), maxIso: toIso(max), min, max };
+}
+
+function renderUpcoming() {
+  const list = $("#upcomingList");
+  if (!list) return;
+  const rows = upcomingWeddings();
+  if (!rows.length) {
+    list.innerHTML = `<p class="empty-hint">لا توجد زواجات قادمة حالياً.</p>`;
+    return;
+  }
+
+  list.innerHTML = rows
+    .map((o, idx) => {
+      const days = daysUntilLabel(o.event_date);
+      const urgent = daysUntil(o.event_date) <= 7;
+      return `
+      <article class="upcoming-card ${urgent ? "is-soon" : ""}">
+        <div class="upcoming-rank">${idx + 1}</div>
+        <div class="upcoming-body">
+          <div class="upcoming-top">
+            <strong>${escapeHtml(o.customer_name || "—")}</strong>
+            <span class="upcoming-days">${days}</span>
+          </div>
+          <p class="upcoming-date">${formatDateDual(o.event_date)}</p>
+          <p class="upcoming-meta">
+            <span>${escapeHtml(o.city_label || "—")}</span>
+            <span>·</span>
+            <span>${escapeHtml(o.hall_name || "—")}</span>
+            <span>·</span>
+            <span>${statusLabel(o.status)}</span>
+          </p>
+          <button type="button" class="btn btn-ghost upcoming-open" data-id="${escapeAttr(o.id)}">فتح الطلب</button>
+        </div>
+      </article>`;
+    })
+    .join("");
+
+  list.querySelectorAll(".upcoming-open").forEach((btn) => {
+    btn.addEventListener("click", () => showOrderDetail(btn.dataset.id));
+  });
 }
 
 function renderOrders() {
@@ -1286,10 +1394,12 @@ async function loadData() {
   renderStats();
   renderOrders();
   updateOrdersChoiceHint();
+  updateUpcomingChoiceHint();
   updateVisitorsChoiceHint();
   updateIssuesChoiceHint();
   if (state.page === "visitors") renderVisitors();
   if (state.page === "reports") renderIssues();
+  if (state.page === "upcoming") renderUpcoming();
   if (state.selectedOrderId) {
     const still = state.orders.find((o) => String(o.id) === String(state.selectedOrderId));
     if (still) renderOrderDetail(still);
@@ -1377,6 +1487,7 @@ async function deleteOrderById(order, btn) {
   document.body.classList.remove("admin-detail-open");
   renderOrders();
   updateOrdersChoiceHint();
+  updateUpcomingChoiceHint();
   showPage("orders");
 
   try {
@@ -1567,8 +1678,27 @@ async function setup() {
       .map((c) => `<option value="${c.id}">${c.label}</option>`)
       .join("");
   }
+  const eventSelect = $("#bkEvent");
+  if (eventSelect && window.BAKR_CATALOG?.events) {
+    eventSelect.innerHTML = window.BAKR_CATALOG.events
+      .map((ev) => `<option value="${ev.id}">${ev.label}</option>`)
+      .join("");
+  }
 
-  function openBookingModal() {
+  const bkCalendarHost = $("#bkCalendarHost");
+  const bkDateInput = $("#bkDate");
+  const bookingBounds = bookingWindowBounds();
+  let bkCalendar = null;
+  if (bkCalendarHost && window.AdminCalendar) {
+    bkCalendar = window.AdminCalendar.create(
+      bkCalendarHost,
+      bkDateInput,
+      bookingBounds,
+      () => window.BakrStore?.listBookedDates?.()
+    );
+  }
+
+  async function openBookingModal() {
     const modal = $("#bookingModal");
     const err = $("#bkError");
     if (err) {
@@ -1576,12 +1706,8 @@ async function setup() {
       err.textContent = "";
     }
     $("#bookingForm")?.reset();
-    const dateInput = $("#bkDate");
-    if (dateInput) {
-      const { minIso, maxIso } = bookingWindowBounds();
-      dateInput.min = minIso;
-      dateInput.max = maxIso;
-    }
+    bkCalendar?.reset();
+    await bkCalendar?.refreshBooked();
     if (modal) {
       modal.hidden = false;
       modal.classList.remove("is-hidden");
@@ -1608,9 +1734,12 @@ async function setup() {
     const customerName = String($("#bkName")?.value || "").trim();
     const phone = normalizeDigits($("#bkPhone")?.value || "").replace(/\D/g, "");
     const cityId = $("#bkCity")?.value;
-    const eventDate = $("#bkDate")?.value;
+    const eventId = $("#bkEvent")?.value;
+    const eventDate = bkCalendar?.getValue?.() || $("#bkDate")?.value;
     const notes = String($("#bkNotes")?.value || "").trim();
     const city = (window.BAKR_CATALOG?.cities || []).find((c) => c.id === cityId);
+    const eventItem = (window.BAKR_CATALOG?.events || []).find((ev) => ev.id === eventId);
+    const eventLabel = eventItem?.label || "زواج";
 
     const showErr = (msg) => {
       if (!err) return;
@@ -1621,7 +1750,8 @@ async function setup() {
     if (customerName.length < 2) return showErr("اكتب اسم العميل");
     if (!/^05\d{8}$/.test(phone)) return showErr("رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام");
     if (!city) return showErr("اختر المدينة");
-    if (!eventDate) return showErr("اختر تاريخ المناسبة");
+    if (!eventItem) return showErr("اختر نوع المناسبة");
+    if (!eventDate) return showErr("اختر تاريخ المناسبة من التقويم");
 
     const { minIso, maxIso } = bookingWindowBounds();
     if (eventDate < minIso) return showErr("لا يمكن اختيار تاريخ سابق");
@@ -1639,7 +1769,7 @@ async function setup() {
         status: "accepted",
         cityId: city.id,
         cityLabel: city.label,
-        eventLabel: "حجز خارجي",
+        eventLabel,
         packageId: "external",
         packageName: "حجز من خارج الموقع",
         packagePrice: 0,
@@ -1682,6 +1812,7 @@ async function setup() {
   const orderMatch = hash.match(/^#order=(.+)$/);
   if (orderMatch?.[1]) state.pendingOpenId = decodeURIComponent(orderMatch[1]);
   else if (hash === "#orders") state.page = "orders";
+  else if (hash === "#upcoming") state.page = "upcoming";
   else if (hash === "#visitors") state.page = "visitors";
   else if (hash === "#stats") state.page = "stats";
   else if (hash === "#reports") state.page = "reports";
