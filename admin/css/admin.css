@@ -1169,8 +1169,8 @@ body.admin-detail-open #orderDetailView {
 
 .booking-card {
   text-align: right;
-  width: min(100%, 26rem);
-  max-height: min(92vh, 44rem);
+  width: min(100%, 34rem);
+  max-height: min(92vh, 52rem);
   overflow: auto;
 }
 
@@ -1184,6 +1184,14 @@ body.admin-detail-open #orderDetailView {
   text-align: start;
 }
 
+.booking-form .field-hint {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
 .booking-form select,
 .booking-form input {
   width: 100%;
@@ -1193,6 +1201,150 @@ body.admin-detail-open #orderDetailView {
   padding: 0.55rem 0.85rem;
   background: #fffaf3;
   font: inherit;
+}
+
+.bk-addons-host {
+  margin-top: 0.35rem;
+}
+
+.bk-addons-grid {
+  display: grid;
+  gap: 0.45rem;
+  max-height: 12rem;
+  overflow: auto;
+  padding: 0.15rem;
+}
+
+.bk-addon {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.55rem 0.65rem;
+  border: 1.5px solid rgba(99, 58, 17, 0.12);
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.bk-addon.is-on {
+  border-color: rgba(46, 125, 50, 0.45);
+  background: rgba(46, 125, 50, 0.06);
+}
+
+.bk-addon-info {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.bk-addon-name {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--tea-deep);
+  line-height: 1.35;
+}
+
+.bk-addon-unit {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.bk-addon-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.bk-addon-btn {
+  width: 1.85rem;
+  height: 1.85rem;
+  border: 1.5px solid rgba(99, 58, 17, 0.2);
+  border-radius: 0.55rem;
+  background: #fffaf3;
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.bk-addon-val {
+  min-width: 1.25rem;
+  text-align: center;
+  font-weight: 800;
+}
+
+.bk-price-summary {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.85rem;
+  background: rgba(99, 58, 17, 0.06);
+  border: 1.5px solid rgba(99, 58, 17, 0.12);
+}
+
+.bk-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  font-size: 0.88rem;
+}
+
+.bk-price-row span {
+  color: var(--muted);
+}
+
+.bk-price-row strong {
+  text-align: end;
+  color: var(--tea-deep);
+}
+
+.bk-price-total {
+  margin-top: 0.15rem;
+  padding-top: 0.45rem;
+  border-top: 1px dashed rgba(99, 58, 17, 0.18);
+  font-size: 0.95rem;
+}
+
+.bk-price-total strong {
+  font-size: 1.05rem;
+  color: var(--ok);
+}
+
+.bk-price-due strong {
+  color: #b45309;
+}
+
+.order-row-due {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #b45309;
+}
+
+.order-paid-edit {
+  margin-top: 0.75rem;
+}
+
+.order-paid-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.order-paid-row input {
+  flex: 1;
+  min-height: 2.75rem;
+  border: 1.5px solid rgba(99, 58, 17, 0.18);
+  border-radius: 0.85rem;
+  padding: 0.55rem 0.85rem;
+  background: #fffaf3;
+  font: inherit;
+}
+
+.order-kv .item.due-row .val {
+  color: #b45309;
+  font-weight: 800;
 }
 
 .order-row-title {
@@ -2244,6 +2396,42 @@ body:has(#adminHome.is-page-on) .admin-main {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
+}
+
+.upcoming-package {
+  margin: 0.45rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--tea-deep);
+}
+
+.upcoming-pay {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  align-items: center;
+  margin: 0.55rem 0 0;
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.75rem;
+  background: rgba(99, 58, 17, 0.06);
+  font-size: 0.84rem;
+}
+
+.upcoming-pay span {
+  color: #6a5240;
+}
+
+.upcoming-due {
+  color: var(--ok);
+  font-weight: 800;
+}
+
+.upcoming-card.has-due .upcoming-due {
+  color: #b45309;
+}
+
+.upcoming-card.has-due {
+  border-color: rgba(180, 83, 9, 0.35);
 }
 
 .upcoming-open {

@@ -24,6 +24,7 @@ create table if not exists public.orders (
   addons jsonb not null default '[]'::jsonb,
   addons_total numeric not null default 0,
   grand_total numeric not null default 0,
+  amount_paid numeric not null default 0,
 
   event_date date not null,
   customer_name text not null,

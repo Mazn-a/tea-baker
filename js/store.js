@@ -225,6 +225,7 @@
       addons: payload.addons || [],
       addons_total: Number(payload.addonsTotal) || 0,
       grand_total: Number(payload.grandTotal) || 0,
+      amount_paid: Number(payload.amountPaid) || 0,
       event_date: payload.eventDate,
       customer_name: payload.customerName,
       customer_phone: payload.customerPhone,
@@ -243,6 +244,10 @@
         let { error } = await sb.from("orders").insert(row);
         if (error && /location_area/i.test(String(error.message || ""))) {
           const { location_area, ...fallback } = row;
+          ({ error } = await sb.from("orders").insert(fallback));
+        }
+        if (error && /amount_paid/i.test(String(error.message || ""))) {
+          const { amount_paid, ...fallback } = row;
           ({ error } = await sb.from("orders").insert(fallback));
         }
         if (error) throw error;
@@ -337,6 +342,61 @@
     all[idx] = { ...all[idx], status };
     writeLocal(KEYS.orders, all);
     return all[idx];
+  }
+
+  async function updateOrderPayment(id, amountPaid) {
+    const paid = Math.max(0, Number(amountPaid) || 0);
+    const patch = { amount_paid: paid };
+
+    try {
+      const sb = await getClient();
+      if (sb) {
+        let { data, error } = await sb
+          .from("orders")
+          .update(patch)
+          .eq("id", id)
+          .select()
+          .single();
+        if (error && /amount_paid/i.test(String(error.message || ""))) {
+          const { data: current } = await sb
+            .from("orders")
+            .select("notes")
+            .eq("id", id)
+            .maybeSingle();
+          const notes = upsertPaidInNotes(current?.notes || "", paid);
+          ({ data, error } = await sb
+            .from("orders")
+            .update({ notes })
+            .eq("id", id)
+            .select()
+            .single());
+        }
+        if (error) throw error;
+        return data;
+      }
+    } catch (err) {
+      console.warn("updateOrderPayment cloud → local:", err);
+    }
+
+    const all = readLocal(KEYS.orders, []);
+    const idx = all.findIndex((o) => o.id === id);
+    if (idx < 0) return null;
+    all[idx] = {
+      ...all[idx],
+      amount_paid: paid,
+      notes: upsertPaidInNotes(all[idx].notes || "", paid),
+    };
+    writeLocal(KEYS.orders, all);
+    return all[idx];
+  }
+
+  function upsertPaidInNotes(notes, paid) {
+    const parts = String(notes || "")
+      .split("|")
+      .map((p) => p.trim())
+      .filter((p) => p && !/^المدفوع\s*:/.test(p));
+    parts.push(`المدفوع: ${paid.toLocaleString("en-US")} ر.س`);
+    return parts.join(" | ");
   }
 
   /**
@@ -552,6 +612,7 @@
     listOrders,
     listBookedDates,
     updateOrderStatus,
+    updateOrderPayment,
     deleteOrder,
     isDeletedOrder,
     trackVisit,
