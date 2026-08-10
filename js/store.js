@@ -211,6 +211,27 @@
     }
   }
 
+  /** يحذف أعمدة اختيارية غير موجودة بعد في Supabase ويعيد المحاولة */
+  async function insertOrderRow(sb, row) {
+    let payload = { ...row };
+    const optionalCols = ["location_area", "amount_paid"];
+
+    for (let attempt = 0; attempt <= optionalCols.length; attempt++) {
+      const { error } = await sb.from("orders").insert(payload);
+      if (!error) return payload;
+
+      const msg = String(error.message || "");
+      const missing = optionalCols.find((col) => col in payload && new RegExp(col, "i").test(msg));
+      if (!missing) throw error;
+
+      const next = { ...payload };
+      delete next[missing];
+      payload = next;
+    }
+
+    throw new Error("تعذر إرسال الطلب");
+  }
+
   async function createOrder(payload) {
     const now = new Date();
     const row = {
@@ -239,20 +260,8 @@
     try {
       const sb = await getClient();
       if (sb) {
-        // بدون select() — الزائر يضيف الطلب ولا يملك صلاحية قراءة الطلبات
-        // إن ما كان عمود location_area موجود في السحابة، نعيد المحاولة بدونه
-        let { error } = await sb.from("orders").insert(row);
-        if (error && /location_area/i.test(String(error.message || ""))) {
-          const { location_area, ...fallback } = row;
-          ({ error } = await sb.from("orders").insert(fallback));
-        }
-        if (error && /amount_paid/i.test(String(error.message || ""))) {
-          const { amount_paid, ...fallback } = row;
-          ({ error } = await sb.from("orders").insert(fallback));
-        }
-        if (error) throw error;
-        // saved: true يعني وصل الطلب فعلاً للوحة الإدارة
-        return { ...row, saved: true };
+        const inserted = await insertOrderRow(sb, row);
+        return { ...inserted, saved: true };
       }
     } catch (err) {
       console.warn("createOrder cloud → local:", err);
