@@ -1528,6 +1528,122 @@ function openWhatsApp(order) {
   window.open(url, "_blank", "noopener");
 }
 
+/** حالة نموذج الحجز اليدوي */
+const bkState = { addonQty: {}, paidTouched: false };
+
+function adminPackagePricing(p, cityId) {
+  if (!p) return { listPrice: 0, price: 0 };
+  const cityKey = String(cityId || "");
+  const cityDeal =
+    cityKey && cityKey !== "makkah" && p.cityPricing && p.cityPricing[cityKey]
+      ? p.cityPricing[cityKey]
+      : null;
+  if (cityDeal) {
+    const price = Number(cityDeal.price) || 0;
+    const listPrice =
+      cityDeal.listPrice != null ? Number(cityDeal.listPrice) || price : price;
+    return { listPrice, price };
+  }
+  const price = Number(p.price) || 0;
+  const listPrice = Number(p.listPrice != null ? p.listPrice : p.price) || 0;
+  return { listPrice, price };
+}
+
+function getBkPackage() {
+  const id = $("#bkPackage")?.value;
+  return (window.BAKR_CATALOG?.packages || []).find((p) => p.id === id) || null;
+}
+
+function getBkAddonQty(id) {
+  return Math.max(0, Number(bkState.addonQty[id] || 0));
+}
+
+function setBkAddonQty(id, qty) {
+  bkState.addonQty[id] = Math.max(0, Number(qty) || 0);
+}
+
+function getBkSelectedAddons() {
+  return (window.BAKR_CATALOG?.addons || [])
+    .map((a) => ({ ...a, qty: getBkAddonQty(a.id) }))
+    .filter((a) => a.qty > 0);
+}
+
+function calcBkPackagePrice() {
+  const pkg = getBkPackage();
+  if (!pkg) return 0;
+  return adminPackagePricing(pkg, $("#bkCity")?.value).price;
+}
+
+function calcBkAddonsTotal() {
+  return getBkSelectedAddons().reduce(
+    (sum, a) => sum + Number(a.price || 0) * a.qty,
+    0
+  );
+}
+
+function calcBkGrandTotal() {
+  return calcBkPackagePrice() + calcBkAddonsTotal();
+}
+
+function renderBkAddons() {
+  const host = $("#bkAddonsHost");
+  if (!host) return;
+  const addons = window.BAKR_CATALOG?.addons || [];
+  if (!addons.length) {
+    host.innerHTML = `<p class="empty-hint">لا توجد إضافات في الكتالوج</p>`;
+    return;
+  }
+  host.innerHTML = `
+    <div class="bk-addons-grid">
+      ${addons
+        .map((a) => {
+          const qty = getBkAddonQty(a.id);
+          const on = qty > 0;
+          return `
+          <div class="bk-addon ${on ? "is-on" : ""}" data-bk-addon="${a.id}">
+            <div class="bk-addon-info">
+              <span class="bk-addon-name">${escapeHtml(a.name)}</span>
+              <span class="bk-addon-unit">${money(a.price)}</span>
+            </div>
+            <div class="bk-addon-qty">
+              <button type="button" class="bk-addon-btn" data-bk-dec="${a.id}" aria-label="إنقاص">−</button>
+              <span class="bk-addon-val">${qty}</span>
+              <button type="button" class="bk-addon-btn" data-bk-inc="${a.id}" aria-label="زيادة">+</button>
+            </div>
+          </div>`;
+        })
+        .join("")}
+    </div>`;
+}
+
+function updateBkPriceSummary({ syncPaid = true } = {}) {
+  const root = $("#bkPriceSummary");
+  const paidInput = $("#bkPaid");
+  if (!root) return;
+
+  const pkg = getBkPackage();
+  const pkgPrice = calcBkPackagePrice();
+  const addonsTotal = calcBkAddonsTotal();
+  const calculated = pkgPrice + addonsTotal;
+  const selected = getBkSelectedAddons();
+
+  if (syncPaid && paidInput && !bkState.paidTouched) {
+    paidInput.value = calculated > 0 ? String(calculated) : "";
+  }
+
+  root.innerHTML = `
+    <div class="bk-price-row"><span>البكج</span><strong>${escapeHtml(pkg?.name || "—")} · ${money(pkgPrice)}</strong></div>
+    <div class="bk-price-row"><span>الإضافات</span><strong>${selected.length ? `${selected.length} نوع · ${money(addonsTotal)}` : "بدون إضافات"}</strong></div>
+    <div class="bk-price-row bk-price-total"><span>إجمالي البكج والإضافات</span><strong>${money(calculated)}</strong></div>`;
+}
+
+function resetBkBookingForm() {
+  bkState.addonQty = {};
+  bkState.paidTouched = false;
+  renderBkAddons();
+  updateBkPriceSummary({ syncPaid: true });
+}
+
 async function setup() {
   $("#loginBtn")?.addEventListener("click", (e) => {
     e.preventDefault();
@@ -1684,6 +1800,35 @@ async function setup() {
       .map((ev) => `<option value="${ev.id}">${ev.label}</option>`)
       .join("");
   }
+  const packageSelect = $("#bkPackage");
+  if (packageSelect && window.BAKR_CATALOG?.packages) {
+    packageSelect.innerHTML = window.BAKR_CATALOG.packages
+      .map((p) => `<option value="${p.id}">${p.name}</option>`)
+      .join("");
+  }
+
+  const bkAddonsHost = $("#bkAddonsHost");
+  renderBkAddons();
+  updateBkPriceSummary({ syncPaid: true });
+
+  packageSelect?.addEventListener("change", () => updateBkPriceSummary({ syncPaid: true }));
+  citySelect?.addEventListener("change", () => updateBkPriceSummary({ syncPaid: true }));
+
+  $("#bkPaid")?.addEventListener("input", () => {
+    bkState.paidTouched = true;
+  });
+
+  bkAddonsHost?.addEventListener("click", (e) => {
+    const inc = e.target.closest("[data-bk-inc]");
+    const dec = e.target.closest("[data-bk-dec]");
+    const id = inc?.dataset.bkInc || dec?.dataset.bkDec;
+    if (!id) return;
+    e.preventDefault();
+    const next = getBkAddonQty(id) + (inc ? 1 : -1);
+    setBkAddonQty(id, next);
+    renderBkAddons();
+    updateBkPriceSummary({ syncPaid: true });
+  });
 
   const bkCalendarHost = $("#bkCalendarHost");
   const bkDateInput = $("#bkDate");
@@ -1706,6 +1851,7 @@ async function setup() {
       err.textContent = "";
     }
     $("#bookingForm")?.reset();
+    resetBkBookingForm();
     bkCalendar?.reset();
     await bkCalendar?.refreshBooked();
     if (modal) {
@@ -1737,6 +1883,15 @@ async function setup() {
     const eventId = $("#bkEvent")?.value;
     const eventDate = bkCalendar?.getValue?.() || $("#bkDate")?.value;
     const notes = String($("#bkNotes")?.value || "").trim();
+    const hallName = String($("#bkHall")?.value || "").trim();
+    const locationLink = String($("#bkLocation")?.value || "").trim();
+    const selectedPkg = getBkPackage();
+    const packagePrice = calcBkPackagePrice();
+    const selectedAddons = getBkSelectedAddons();
+    const addonsTotal = calcBkAddonsTotal();
+    const calculatedTotal = packagePrice + addonsTotal;
+    const paidRaw = normalizeDigits($("#bkPaid")?.value || "").replace(/[^\d.]/g, "");
+    const paidAmount = paidRaw !== "" ? Number(paidRaw) : calculatedTotal;
     const city = (window.BAKR_CATALOG?.cities || []).find((c) => c.id === cityId);
     const eventItem = (window.BAKR_CATALOG?.events || []).find((ev) => ev.id === eventId);
     const eventLabel = eventItem?.label || "زواج";
@@ -1751,7 +1906,10 @@ async function setup() {
     if (!/^05\d{8}$/.test(phone)) return showErr("رقم الجوال يجب أن يبدأ بـ 05 ويتكون من 10 أرقام");
     if (!city) return showErr("اختر المدينة");
     if (!eventItem) return showErr("اختر نوع المناسبة");
+    if (!selectedPkg) return showErr("اختر باقة الضيافة");
+    if (hallName.length < 2) return showErr("اكتب اسم القاعة أو المكان");
     if (!eventDate) return showErr("اختر تاريخ المناسبة من التقويم");
+    if (!Number.isFinite(paidAmount) || paidAmount < 0) return showErr("المبلغ المدفوع غير صحيح");
 
     const { minIso, maxIso } = bookingWindowBounds();
     if (eventDate < minIso) return showErr("لا يمكن اختيار تاريخ سابق");
@@ -1765,25 +1923,35 @@ async function setup() {
     const btn = $("#bkSaveBtn");
     if (btn) btn.disabled = true;
     try {
+      const noteParts = ["حجز مسجّل من الإدارة (خارج الموقع)"];
+      if (notes) noteParts.push(notes);
+      if (paidAmount !== calculatedTotal) {
+        noteParts.push(`إجمالي البكج والإضافات: ${money(calculatedTotal)}`);
+        noteParts.push(`المدفوع: ${money(paidAmount)}`);
+      }
+
       await window.BakrStore.createOrder({
         status: "accepted",
         cityId: city.id,
         cityLabel: city.label,
         eventLabel,
-        packageId: "external",
-        packageName: "حجز من خارج الموقع",
-        packagePrice: 0,
-        addons: [],
-        addonsTotal: 0,
-        grandTotal: 0,
+        packageId: selectedPkg.id,
+        packageName: selectedPkg.name,
+        packagePrice,
+        addons: selectedAddons.map((a) => ({
+          id: a.id,
+          name: a.name,
+          price: a.price,
+          qty: a.qty,
+        })),
+        addonsTotal,
+        grandTotal: paidAmount,
         eventDate,
         customerName,
         customerPhone: phone,
-        hallName: "خارج الموقع",
-        locationLink: "https://maps.google.com/?q=Saudi+Arabia",
-        notes: notes
-          ? `حجز خارجي — ${notes}`
-          : "حجز مسجّل من الإدارة (خارج الموقع)",
+        hallName,
+        locationLink: locationLink || "https://maps.google.com/?q=Saudi+Arabia",
+        notes: noteParts.join(" | "),
       });
 
       // حدّث التخزين المحلي للتواريخ أيضاً

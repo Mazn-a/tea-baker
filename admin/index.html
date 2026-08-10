@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <link rel="stylesheet" href="./css/admin.css?v=52" />
+    <link rel="stylesheet" href="./css/admin.css?v=53" />
   </head>
   <body>
     <div id="loginView" class="login-view">
@@ -327,6 +327,28 @@
             <span>المدينة</span>
             <select id="bkCity" required></select>
           </label>
+          <label class="field">
+            <span>باقة الضيافة</span>
+            <select id="bkPackage" required></select>
+          </label>
+          <label class="field">
+            <span>اسم القاعة / المكان</span>
+            <input id="bkHall" type="text" required placeholder="مثال: قاعة السفير" />
+          </label>
+          <label class="field">
+            <span>رابط الموقع (اختياري)</span>
+            <input id="bkLocation" type="url" placeholder="https://maps.google.com/..." dir="ltr" />
+          </label>
+          <div class="field">
+            <span>الإضافات (اختياري)</span>
+            <div id="bkAddonsHost" class="bk-addons-host"></div>
+          </div>
+          <div id="bkPriceSummary" class="bk-price-summary" aria-live="polite"></div>
+          <label class="field">
+            <span>المبلغ المدفوع</span>
+            <input id="bkPaid" type="number" min="0" step="1" inputmode="numeric" placeholder="0" dir="ltr" />
+            <small class="field-hint">يُعبّأ تلقائياً من البكج + الإضافات — عدّله إذا دفع مبلغاً مختلفاً</small>
+          </label>
           <div class="field">
             <span>تاريخ المناسبة</span>
             <div id="bkCalendarHost"></div>
@@ -355,6 +377,6 @@
     <script src="./js/order-pdf.js?v=14"></script>
     <script src="./js/wa-send.js?v=8"></script>
     <script src="./js/admin-calendar.js?v=1"></script>
-    <script src="./js/admin.js?v=52"></script>
+    <script src="./js/admin.js?v=53"></script>
   </body>
 </html>
