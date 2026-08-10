@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <link rel="stylesheet" href="./css/admin.css?v=54" />
+    <link rel="stylesheet" href="./css/admin.css?v=56" />
   </head>
   <body>
     <div id="loginView" class="login-view">
@@ -116,8 +116,8 @@
         <div id="dashboardView">
           <section class="admin-welcome admin-page is-page-on" id="adminHome" data-page="home">
             <div class="welcome-landing">
-              <div class="welcome-intro">
-                <div class="welcome-brand-block">
+              <div class="welcome-shell">
+                <header class="welcome-hero">
                   <div class="welcome-logo-wrap">
                     <img class="welcome-logo" src="../assets/logo-brand.png?v=12" alt="شاي بكر" />
                   </div>
@@ -127,37 +127,35 @@
                     <p class="welcome-tag">ضيافتك .. بإدارة أوضح وأسهل</p>
                     <p class="welcome-sub">لوحة العمل اليومية للإحصائيات والطلبات</p>
                   </div>
+                </header>
+
+                <div class="welcome-art-wrap" aria-hidden="true">
+                  <img class="welcome-art" src="../assets/hero-art.png?v=10" alt="" />
                 </div>
 
-                <div class="welcome-side">
-                  <div class="welcome-art-wrap" aria-hidden="true">
-                    <img class="welcome-art" src="../assets/hero-art.png?v=10" alt="" />
-                  </div>
-                  <div class="welcome-choices" aria-label="أقسام اللوحة">
-                    <button type="button" class="welcome-choice is-primary" data-page="orders">
-                      <strong>الطلبات</strong>
-                      <span id="ordersChoiceHint">عرض الطلبات واتخاذ القرار</span>
-                    </button>
-                    <button type="button" class="welcome-choice is-upcoming" data-page="upcoming">
-                      <strong>الزواجات القادمة</strong>
-                      <span id="upcomingChoiceHint">المناسبات بالترتيب ومتبقي بالأيام</span>
-                    </button>
-                    <button type="button" class="welcome-choice is-secondary" data-page="stats">
-                      <strong>الإحصائيات</strong>
-                      <span>الدخل وأوقات الذروة وأكثر البكجات</span>
-                    </button>
-                    <button type="button" class="welcome-choice is-visitors" data-page="visitors">
-                      <strong>زوار الموقع</strong>
-                      <span id="visitorsChoiceHint">كم شخص دخل الموقع</span>
-                    </button>
-                    <button type="button" class="welcome-choice is-issues" data-page="reports">
-                      <strong>المشاكل المُبلغ عنها</strong>
-                      <span id="issuesChoiceHint">بلاغات العملاء عن أخطاء بالموقع</span>
-                    </button>
-                  </div>
-                </div>
+                <nav class="welcome-choices" aria-label="أقسام اللوحة">
+                  <button type="button" class="welcome-choice is-primary" data-page="orders">
+                    <strong>الطلبات</strong>
+                    <span id="ordersChoiceHint">عرض الطلبات واتخاذ القرار</span>
+                  </button>
+                  <button type="button" class="welcome-choice is-upcoming" data-page="upcoming">
+                    <strong>الزواجات القادمة</strong>
+                    <span id="upcomingChoiceHint">المناسبات بالترتيب ومتبقي بالأيام</span>
+                  </button>
+                  <button type="button" class="welcome-choice is-secondary" data-page="stats">
+                    <strong>الإحصائيات</strong>
+                    <span>الدخل وأوقات الذروة وأكثر البكجات</span>
+                  </button>
+                  <button type="button" class="welcome-choice is-visitors" data-page="visitors">
+                    <strong>زوار الموقع</strong>
+                    <span id="visitorsChoiceHint">كم شخص دخل الموقع</span>
+                  </button>
+                  <button type="button" class="welcome-choice is-issues" data-page="reports">
+                    <strong>المشاكل المُبلغ عنها</strong>
+                    <span id="issuesChoiceHint">بلاغات العملاء عن أخطاء بالموقع</span>
+                  </button>
+                </nav>
               </div>
-              <div class="welcome-end-line" aria-hidden="true"></div>
             </div>
           </section>
 
