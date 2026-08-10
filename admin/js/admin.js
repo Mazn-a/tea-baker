@@ -127,16 +127,24 @@ function startOfToday() {
 }
 
 function isWeddingOrder(order) {
-  return String(order?.event_label || "").trim() === "زواج";
+  const label = String(order?.event_label || "").trim();
+  if (label === "زواج") return true;
+  // حجوزات الإدارة القديمة — قبل حقل «نوع المناسبة» كانت تُحفظ كـ «حجز خارجي»
+  if (label === "حجز خارجي") return true;
+  return false;
+}
+
+/** كل المناسبات القادمة (للعرض أو التشخيص) */
+function upcomingOccasions(list = state.orders) {
+  const todayIso = bookingWindowBounds().minIso;
+  return activeOrders(list)
+    .filter((o) => o.status === "accepted" || o.status === "pending")
+    .filter((o) => String(o.event_date || "").slice(0, 10) >= todayIso)
+    .sort((a, b) => String(a.event_date).localeCompare(String(b.event_date)));
 }
 
 function upcomingWeddings(list = state.orders) {
-  const todayIso = bookingWindowBounds().minIso;
-  return activeOrders(list)
-    .filter((o) => isWeddingOrder(o))
-    .filter((o) => (o.status === "accepted" || o.status === "pending"))
-    .filter((o) => String(o.event_date || "").slice(0, 10) >= todayIso)
-    .sort((a, b) => String(a.event_date).localeCompare(String(b.event_date)));
+  return upcomingOccasions(list).filter((o) => isWeddingOrder(o));
 }
 
 function formatDateTime(iso) {
@@ -1206,7 +1214,12 @@ function renderUpcoming() {
   if (!list) return;
   const rows = upcomingWeddings();
   if (!rows.length) {
-    list.innerHTML = `<p class="empty-hint">لا توجد زواجات قادمة حالياً.</p>`;
+    const allFuture = upcomingOccasions().length;
+    const hint =
+      allFuture > 0
+        ? `في ${allFuture} مناسبة قادمة لكن نوعها ليس «زواج» — راجعها من الطلبات.`
+        : "لا توجد زواجات قادمة حالياً.";
+    list.innerHTML = `<p class="empty-hint">${hint}</p>`;
     return;
   }
 
@@ -1231,6 +1244,8 @@ function renderUpcoming() {
             <span>${escapeHtml(o.city_label || "—")}</span>
             <span>·</span>
             <span>${escapeHtml(o.hall_name || "—")}</span>
+            <span>·</span>
+            <span>${escapeHtml(o.event_label || "زواج")}</span>
             <span>·</span>
             <span>${statusLabel(o.status)}</span>
           </p>
