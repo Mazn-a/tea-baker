@@ -1218,12 +1218,7 @@ function renderUpcoming() {
   if (!list) return;
   const rows = upcomingWeddings();
   if (!rows.length) {
-    const allFuture = upcomingOccasions().length;
-    const hint =
-      allFuture > 0
-        ? `في ${allFuture} مناسبة قادمة — حدّث الصفحة أو اضغط تحديث.`
-        : "لا توجد مناسبات قادمة — تأكد أن الطلبات محفوظة في Supabase (اضغط تحديث).";
-    list.innerHTML = `<p class="empty-hint">${hint}</p>`;
+    list.innerHTML = `<p class="empty-hint">لا توجد مناسبات قادمة — إذا حجزت من الإدارة، افتح «الطلبات» وتأكد أن التاريخ مستقبلي ثم اضغط «تحديث».</p>`;
     return;
   }
 
