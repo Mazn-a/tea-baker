@@ -84,7 +84,8 @@ function daysUntilLabel(iso) {
   if (n < 0) return "انتهت";
   if (n === 0) return "اليوم";
   if (n === 1) return "باقي يوم واحد بالضبط";
-  return `باقي ${n} يوم بالضبط`;
+  if (n === 2) return "باقي يومين بالضبط";
+  return `باقي ${n} أيام بالضبط`;
 }
 
 function parsePaidFromNotes(notes) {
