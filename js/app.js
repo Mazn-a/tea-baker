@@ -1722,6 +1722,32 @@ function renderMarketingAddons() {
   paint();
 }
 
+function renderMarketingReviews() {
+  const box = $("#marketReviews");
+  if (!box) return;
+  const reviews = window.REVIEWS || window.BAKR_CATALOG?.reviews || [];
+  if (!reviews.length) {
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  box.innerHTML = reviews
+    .map((r) => {
+      const stars = Math.max(1, Math.min(5, Number(r.stars) || 5));
+      const starLabel = `${stars} من 5`;
+      return `
+    <article class="review-quote">
+      <div class="review-stars" aria-label="${starLabel}">${"★".repeat(stars)}</div>
+      <p class="review-text">«${esc(r.text || "")}»</p>
+      <footer class="review-by">
+        <strong>${esc(r.name || "عميل")}</strong>
+        <span>${esc(r.city || "")}${r.event ? ` · ${esc(r.event)}` : ""}</span>
+      </footer>
+    </article>`;
+    })
+    .join("");
+}
+
 function setupNav() {
   const toggle = $("#menuToggle");
   const links = $("#navLinks");
@@ -1896,6 +1922,7 @@ async function init() {
   }
   renderMarketingPackages();
   renderMarketingAddons();
+  renderMarketingReviews();
   setupNav();
   setupBackToTop();
   setupIssueReporting();

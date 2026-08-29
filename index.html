@@ -41,7 +41,23 @@
       href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;600;700&family=Tajawal:wght@400;500;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./css/styles.css?v=80" />
+    <link rel="stylesheet" href="./css/styles.css?v=81" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "name": "شاي بكر",
+        "url": "https://bakr-tea.com/",
+        "telephone": "+966533508361",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "مكة المكرمة",
+          "addressRegion": "الراشدية",
+          "addressCountry": "SA"
+        },
+        "areaServed": ["مكة المكرمة", "جدة", "الطائف"]
+      }
+    </script>
   </head>
   <body>
     <header class="site-header">
@@ -62,6 +78,7 @@
         <ul class="nav-links" id="navLinks">
           <li><a href="#home" data-nav="home">الرئيسية</a></li>
           <li><a href="#packages" data-nav="home">منتجاتنا</a></li>
+          <li><a href="#reviews" data-nav="home">آراء العملاء</a></li>
           <li><a href="#about" data-nav="about">عن شاي بكر</a></li>
           <li><a href="#contact" data-nav="contact">تواصل معنا</a></li>
           <li class="nav-order-desktop">
@@ -95,6 +112,11 @@
                   <h1>للضيافة والمناسبات</h1>
                   <p class="store-tag">ضيافتك .. بأسلوبنا الأصيل</p>
                   <p class="store-cities">نخدم مكة المكرمة - جدة - الطائف</p>
+                  <ul class="trust-chips" aria-label="لماذا تثق فينا">
+                    <li>محل في مكة — الراشدية</li>
+                    <li>تأكيد بواتساب على رقمك</li>
+                    <li>الأسعار ظاهرة قبل الطلب</li>
+                  </ul>
                   <div class="hero-cta-group">
                     <button type="button" class="btn-book-nav hero-cta" id="heroOrderBtn">اطلب الآن</button>
                     <a class="hero-cta-secondary" href="#packages" id="heroPackagesBtn">اكتشف بكجاتنا</a>
@@ -121,6 +143,27 @@
 
         <div class="container-wide page home-body">
           <div class="home-sections">
+            <section id="trust" class="section-block trust-block">
+              <div class="page-head">
+                <h2>كيف يتم الحجز؟</h2>
+                <p>الطلب من الموقع، والتأكيد على جوالك — بدون دفع داخل الصفحة.</p>
+              </div>
+              <ol class="trust-steps">
+                <li>
+                  <strong>١. اختر البكج والتاريخ</strong>
+                  <span>الأسعار والتفاصيل ظاهرة من أول نظرة، ثم تكمل الطلب بخطوات بسيطة.</span>
+                </li>
+                <li>
+                  <strong>٢. يصل طلبك للإدارة</strong>
+                  <span>ما تحتاج تراسل واتساب بنفسك — الطلب يوصلنا مباشرة من الموقع.</span>
+                </li>
+                <li>
+                  <strong>٣. نرد عليك بواتساب</strong>
+                  <span>قبول أو رفض الموعد على رقمك، وبعدها يتم الاتفاق على العربون.</span>
+                </li>
+              </ol>
+            </section>
+
             <section id="packages" class="section-block">
               <div class="page-head">
                 <h2>البكجات</h2>
@@ -137,6 +180,14 @@
               <div class="addons-grid" id="marketAddons"></div>
             </section>
 
+            <section id="reviews" class="section-block">
+              <div class="page-head">
+                <h2>آراء العملاء</h2>
+                <p>ضيوف مناسبات في مكة وجدة والطائف — عشان تطمئن قبل ما تطلب.</p>
+              </div>
+              <div class="reviews-grid" id="marketReviews"></div>
+            </section>
+
             <section id="faq" class="section-block">
               <div class="page-head">
                 <h2>الأسئلة الشائعة</h2>
@@ -148,6 +199,23 @@
                     <p>
                       تصفّح البكجات، ثم اضغط «اطلب الآن» وأكمل خطوات الطلب حتى تضغط «تأكيد الطلب».
                       يُرسل طلبك مباشرة إلى إدارة شاي بكر عبر الموقع.
+                    </p>
+                  </details>
+                </article>
+                <article class="faq-item panel-card">
+                  <details>
+                    <summary>هل أنتم محل حقيقي؟</summary>
+                    <p>
+                      نعم. محل شاي بكر في مكة — حي الراشدية، ويقدّم المشروبات يومياً من 4 مساءً إلى 3 صباحاً.
+                      ضيافة المناسبات تغطي مكة وجدة والطائف. تقدر تشوف الموقع من صفحة «عن شاي بكر».
+                    </p>
+                  </details>
+                </article>
+                <article class="faq-item panel-card">
+                  <details>
+                    <summary>هل أدفع من الموقع؟</summary>
+                    <p>
+                      لا. الموقع للحجز فقط. بعد قبول الطلب يصلك واتساب على رقمك، ويتم الاتفاق على العربون حينها.
                     </p>
                   </details>
                 </article>
@@ -208,6 +276,7 @@
               <p>
                 محل شاي بكر في مكة المكرمة — حي الراشدية يقدّم المشروبات يومياً،
                 ويجهّز أيضاً ضيافة المناسبات داخل مكة وجدة والطائف بأسلوب أصيل وخطوات طلب بسيطة.
+                الحجز من الموقع، والتأكيد بواتساب على جوالك — بدون دفع داخل الصفحة.
               </p>
             </div>
             <div class="about-map">
@@ -360,9 +429,9 @@
       document.getElementById("year").textContent = new Date().getFullYear();
     </script>
     <script src="./js/config.js"></script>
-    <script src="./js/catalog.js?v=14"></script>
+    <script src="./js/catalog.js?v=15"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./js/store.js?v=24"></script>
-    <script src="./js/app.js?v=67"></script>
+    <script src="./js/app.js?v=68"></script>
   </body>
 </html>
