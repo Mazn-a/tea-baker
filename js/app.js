@@ -1679,6 +1679,7 @@ function renderMarketingPackages() {
         <button type="button" class="btn btn-primary" data-book-pkg="${p.id}">
           اطلب هذا البكج
         </button>
+        <p class="pkg-cta-hint">بدون دفع من الموقع — التأكيد بواتساب على رقمك</p>
       </div>
     </article>`
   ).join("");
@@ -1733,15 +1734,17 @@ function renderMarketingReviews() {
   box.hidden = false;
   box.innerHTML = reviews
     .map((r) => {
-      const stars = Math.max(1, Math.min(5, Number(r.stars) || 5));
-      const starLabel = `${stars} من 5`;
+      const initial = String(r.name || "ع").trim().charAt(0);
+      const meta = [r.city, r.event, r.pkg, r.when].filter(Boolean).join(" · ");
       return `
-    <article class="review-quote">
-      <div class="review-stars" aria-label="${starLabel}">${"★".repeat(stars)}</div>
+    <article class="review-quote${r.featured ? " is-featured" : ""}">
       <p class="review-text">«${esc(r.text || "")}»</p>
       <footer class="review-by">
-        <strong>${esc(r.name || "عميل")}</strong>
-        <span>${esc(r.city || "")}${r.event ? ` · ${esc(r.event)}` : ""}</span>
+        <span class="review-avatar" aria-hidden="true">${esc(initial)}</span>
+        <span>
+          <strong>${esc(r.name || "عميل")}</strong>
+          <span class="review-meta">${esc(meta)}</span>
+        </span>
       </footer>
     </article>`;
     })

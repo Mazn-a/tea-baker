@@ -41,7 +41,7 @@
       href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;600;700&family=Tajawal:wght@400;500;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./css/styles.css?v=81" />
+    <link rel="stylesheet" href="./css/styles.css?v=82" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -172,20 +172,29 @@
               <div class="pkg-market-grid" id="marketPackages"></div>
             </section>
 
+            <section id="reviews" class="section-block">
+              <div class="page-head">
+                <h2>ليش يطمئنون قبل الطلب؟</h2>
+                <p>محل في مكة، تأكيد على جوالك، وأسعار ظاهرة — مو حجز مجهول.</p>
+              </div>
+              <div class="proof-photos" aria-label="من شغل الضيافة">
+                <figure>
+                  <img src="./assets/hero.jpg" alt="ركن ضيافة شاي بكر" width="860" height="1147" loading="lazy" decoding="async" />
+                </figure>
+                <figure>
+                  <img src="./assets/corner.jpg" alt="تفاصيل ركن الضيافة" width="860" height="1147" loading="lazy" decoding="async" />
+                </figure>
+              </div>
+              <div class="reviews-grid" id="marketReviews"></div>
+              <p class="reviews-note">بعد قبول الموعد يصلك واتساب على رقمك، والعربون يتم الاتفاق عليه حينها — بدون دفع داخل الموقع.</p>
+            </section>
+
             <section id="addons" class="section-block">
               <div class="page-head">
                 <h2>الإضافات الممكنة</h2>
                 <p>يمكن طلبها مع أي بكج من خلال الموقع، ويتم قبولها أو رفضها برسالة واتساب على رقمك.</p>
               </div>
               <div class="addons-grid" id="marketAddons"></div>
-            </section>
-
-            <section id="reviews" class="section-block">
-              <div class="page-head">
-                <h2>آراء العملاء</h2>
-                <p>ضيوف مناسبات في مكة وجدة والطائف — عشان تطمئن قبل ما تطلب.</p>
-              </div>
-              <div class="reviews-grid" id="marketReviews"></div>
             </section>
 
             <section id="faq" class="section-block">
@@ -429,9 +438,9 @@
       document.getElementById("year").textContent = new Date().getFullYear();
     </script>
     <script src="./js/config.js"></script>
-    <script src="./js/catalog.js?v=15"></script>
+    <script src="./js/catalog.js?v=16"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./js/store.js?v=24"></script>
-    <script src="./js/app.js?v=68"></script>
+    <script src="./js/app.js?v=69"></script>
   </body>
 </html>
