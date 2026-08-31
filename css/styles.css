@@ -2624,24 +2624,29 @@ body:has(.view[data-view="booking"].is-active) .fab-stack {
 }
 
 .rate-suggest {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
 }
 
 .rate-chip {
   appearance: none;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 3.4rem;
+  display: grid;
+  place-items: center;
   border: 1px solid rgba(139, 105, 20, 0.28);
   background: #fff8ef;
   color: var(--tea-deep);
-  border-radius: 999px;
-  padding: 0.4rem 0.75rem;
+  border-radius: 0.9rem;
+  padding: 0.5rem 0.4rem;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  line-height: 1.35;
+  line-height: 1.4;
   cursor: pointer;
-  text-align: start;
+  text-align: center;
 }
 
 .rate-chip.is-on {
