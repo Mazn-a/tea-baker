@@ -79,7 +79,7 @@
   function setCommentParts(parts) {
     const ta = $("#rateComment");
     if (!ta) return;
-    ta.value = parts.join("، ");
+    ta.value = parts.join(". ");
   }
 
   function paintSuggest() {
