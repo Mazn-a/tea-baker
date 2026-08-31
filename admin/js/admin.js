@@ -136,9 +136,17 @@ function isHospitalityRatingOpen(eventDate) {
   return Boolean(day) && day < todayIsoLocal();
 }
 
-function reviewRateUrl(orderId) {
-  const base = String(cfg().siteUrl || location.origin).replace(/\/$/, "");
-  return `${base}/rate.html?o=${encodeURIComponent(orderId)}`;
+function reviewRateUrl(order) {
+  const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  const base = String((local ? location.origin : cfg().siteUrl) || location.origin).replace(/\/$/, "");
+  const id = typeof order === "string" ? order : order?.id;
+  const pkg = typeof order === "object" && order ? String(order.package_name || "").trim() : "";
+  const dt = typeof order === "object" && order ? String(order.event_date || "").slice(0, 10) : "";
+  const params = new URLSearchParams();
+  if (id) params.set("o", String(id));
+  if (pkg) params.set("pkg", pkg);
+  if (dt) params.set("dt", dt);
+  return `${base}/rate.html?${params.toString()}`;
 }
 
 function reviewQrSrc(url) {
@@ -1718,9 +1726,9 @@ function renderOrderDetail(o) {
                 : "ينفتح التقييم تلقائياً بعد تاريخ المناسبة بيوم."
             }</p>
             <div class="rate-qr">
-              <img src="${escapeAttr(reviewQrSrc(reviewRateUrl(o.id)))}" alt="باركود التقييم" width="180" height="180" />
-              <a class="map-url" dir="ltr" href="${escapeAttr(reviewRateUrl(o.id))}" target="_blank" rel="noopener">${escapeHtml(
-                reviewRateUrl(o.id)
+              <img src="${escapeAttr(reviewQrSrc(reviewRateUrl(o)))}" alt="باركود التقييم" width="180" height="180" />
+              <a class="map-url" dir="ltr" href="${escapeAttr(reviewRateUrl(o))}" target="_blank" rel="noopener">${escapeHtml(
+                reviewRateUrl(o)
               )}</a>
               <button type="button" class="btn btn-ghost btn-sm" data-action="copy-rate">نسخ رابط التقييم</button>
             </div>
@@ -1871,7 +1879,7 @@ async function handleOrderAction(action, order, btn) {
       if (btn) btn.disabled = false;
     }
   } else if (action === "copy-rate") {
-    const url = reviewRateUrl(id);
+    const url = reviewRateUrl(order);
     try {
       await navigator.clipboard.writeText(url);
       showToast("تم نسخ رابط التقييم");

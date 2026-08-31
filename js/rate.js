@@ -9,12 +9,20 @@
     return `${y}-${m}-${day}`;
   }
 
+  function query() {
+    return new URLSearchParams(location.search);
+  }
+
   function orderIdFromUrl() {
-    return new URLSearchParams(location.search).get("o") || "";
+    return query().get("o") || "";
+  }
+
+  function isoDate(value) {
+    return String(value || "").slice(0, 10);
   }
 
   function isOpen(eventDate) {
-    const day = String(eventDate || "").slice(0, 10);
+    const day = isoDate(eventDate);
     return Boolean(day) && day < todayIso();
   }
 
@@ -29,14 +37,24 @@
       .join("");
   }
 
-  function fillPackages(selected) {
+  function fillPackages(selected, locked) {
     const sel = $("#ratePackage");
     if (!sel) return;
     const pkgs = window.BAKR_CATALOG?.packages || [];
-    sel.innerHTML = `<option value="">اختر البكج</option>${pkgs
-      .map((p) => `<option value="${p.name}">${p.name}</option>`)
+    const names = pkgs.map((p) => p.name);
+    if (selected && !names.includes(selected)) names.push(selected);
+    sel.innerHTML = `${locked && selected ? "" : `<option value="">اختر البكج</option>`}${names
+      .map((name) => `<option value="${name}">${name}</option>`)
       .join("")}`;
     if (selected) sel.value = selected;
+    sel.disabled = Boolean(locked && selected);
+  }
+
+  function lockDate(iso, locked) {
+    const input = $("#rateDate");
+    if (!input) return;
+    if (iso) input.value = iso;
+    input.readOnly = Boolean(locked && iso);
   }
 
   async function setup() {
@@ -47,6 +65,8 @@
     const lead = $("#rateLead");
     const err = $("#rateError");
     const orderId = orderIdFromUrl();
+    const urlPkg = String(query().get("pkg") || "").trim();
+    const urlDate = isoDate(query().get("dt"));
     let eventInfo = null;
 
     $("#starPick")?.addEventListener("click", (e) => {
@@ -65,21 +85,23 @@
       }
     }
 
-    if (eventInfo) {
-      fillPackages(eventInfo.package_name);
-      if (eventInfo.event_date) $("#rateDate").value = String(eventInfo.event_date).slice(0, 10);
-      if (lead) {
-        lead.textContent = `${eventInfo.hall_name || "المناسبة"} · ${eventInfo.city_label || ""} · ${
-          eventInfo.package_name || ""
-        }`.replace(/ · $/, "");
+    const packageName = String(eventInfo?.package_name || urlPkg || "").trim();
+    const eventDate = isoDate(eventInfo?.event_date || urlDate);
+    const fromEvent = Boolean(orderId && (packageName || eventDate));
+
+    fillPackages(packageName, fromEvent);
+    lockDate(eventDate, fromEvent);
+
+    if (fromEvent && lead) {
+      lead.textContent = "بعد المناسبة بيوم نرحّب بتقييمك.";
+    }
+
+    if (eventDate && !isOpen(eventDate)) {
+      if (wait) {
+        wait.hidden = false;
+        wait.textContent = "التقييم ينفتح بعد المناسبة بيوم — امسح الباركود مرة ثانية غداً.";
       }
-      if (!isOpen(eventInfo.event_date)) {
-        if (wait) {
-          wait.hidden = false;
-          wait.textContent = "التقييم ينفتح بعد المناسبة بيوم — امسح الباركود مرة ثانية غداً.";
-        }
-        return;
-      }
+      return;
     }
 
     if (form) form.hidden = false;
@@ -92,9 +114,9 @@
       }
       const firstName = String($("#rateFirst")?.value || "").trim();
       const lastName = String($("#rateLast")?.value || "").trim();
-      const packageName = String($("#ratePackage")?.value || "").trim();
+      const chosenPackage = String($("#ratePackage")?.value || "").trim();
       const rating = Number($("#rateStars")?.value || 0);
-      const eventDate = String($("#rateDate")?.value || "").slice(0, 10);
+      const chosenDate = isoDate($("#rateDate")?.value);
       const comment = String($("#rateComment")?.value || "").trim();
 
       const showErr = (msg) => {
@@ -105,10 +127,10 @@
 
       if (firstName.length < 2) return showErr("اكتب الاسم الأول");
       if (lastName.length < 2) return showErr("اكتب الاسم الثاني");
-      if (!packageName) return showErr("اختر نوع البكج");
+      if (!chosenPackage) return showErr("اختر نوع البكج");
       if (rating < 1) return showErr("اختر التقييم بالنجوم");
-      if (!eventDate) return showErr("اختر تاريخ المناسبة");
-      if (!isOpen(eventDate)) return showErr("التقييم ينفتح بعد المناسبة بيوم");
+      if (!chosenDate) return showErr("اختر تاريخ المناسبة");
+      if (!isOpen(chosenDate)) return showErr("التقييم ينفتح بعد المناسبة بيوم");
 
       const btn = $("#rateSubmit");
       if (btn) btn.disabled = true;
@@ -117,9 +139,9 @@
           orderId: orderId || "",
           firstName,
           lastName,
-          packageName,
+          packageName: chosenPackage,
           rating,
-          eventDate,
+          eventDate: chosenDate,
           comment,
           cityLabel: eventInfo?.city_label || "",
           eventLabel: eventInfo?.event_label || "",

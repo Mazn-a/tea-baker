@@ -2609,6 +2609,13 @@ body:has(.view[data-view="booking"].is-active) .fab-stack {
   width: 100%;
 }
 
+.rate-form .field-card :is(input, select):disabled,
+.rate-form .field-card input[readonly] {
+  background: #f6efe6;
+  pointer-events: none;
+  color: var(--tea-deep);
+}
+
 #btnMoreReviews[hidden] {
   display: none !important;
 }
