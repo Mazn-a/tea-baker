@@ -60,6 +60,30 @@
     return Boolean(url && key && !url.includes("YOUR_PROJECT") && key !== "YOUR_ANON_KEY");
   }
 
+  function isLocalHost() {
+    try {
+      return /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function isUuid(value) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      String(value || "")
+    );
+  }
+
+  function isMissingReviewsTable(err) {
+    const msg = `${err?.code || ""} ${err?.message || ""}`.toLowerCase();
+    return (
+      msg.includes("pgrst205") ||
+      msg.includes("hospitality_reviews") ||
+      msg.includes("schema cache") ||
+      msg.includes("does not exist")
+    );
+  }
+
   let client = null;
   /** يصير true إذا لم تُنشأ دالة booked_days بعد، فلا نكرر طلبها */
   let bookedDaysRpcMissing = false;
@@ -649,7 +673,7 @@
   async function submitReview(payload) {
     const row = {
       created_at: new Date().toISOString(),
-      order_id: payload.orderId || null,
+      order_id: isUuid(payload.orderId) ? payload.orderId : null,
       first_name: String(payload.firstName || "").trim(),
       last_name: String(payload.lastName || "").trim(),
       package_name: String(payload.packageName || "").trim(),
@@ -676,7 +700,13 @@
       }
     } catch (err) {
       console.warn("submitReview cloud → local:", err);
-      if (hasCloud()) throw err;
+      if (hasCloud() && !isLocalHost()) {
+        throw new Error(
+          isMissingReviewsTable(err)
+            ? "تعذر إرسال التقييم الآن — حاول لاحقاً"
+            : err?.message || "تعذر إرسال التقييم — حاول مرة ثانية"
+        );
+      }
     }
 
     const localRow = { id: uid(), ...row };
