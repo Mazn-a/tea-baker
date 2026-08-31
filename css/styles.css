@@ -2596,6 +2596,13 @@ body:has(.view[data-view="booking"].is-active) .fab-stack {
   margin-top: 0.85rem;
 }
 
+.rate-form[hidden],
+#rateWait[hidden],
+#rateDone[hidden],
+#rateError[hidden] {
+  display: none !important;
+}
+
 .rate-form .field-card input,
 .rate-form .field-card select,
 .rate-form .field-card textarea {
