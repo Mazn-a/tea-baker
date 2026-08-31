@@ -1740,15 +1740,6 @@ function reviewCardHtml(r) {
     </article>`;
 }
 
-function setReviewsSectionVisible(on) {
-  const section = $("#reviews");
-  if (section) section.hidden = !on;
-  $$('a[href="#reviews"]').forEach((a) => {
-    const item = a.closest("li") || a;
-    item.hidden = !on;
-  });
-}
-
 async function renderMarketingReviews() {
   const box = $("#marketReviews");
   const moreBtn = $("#btnMoreReviews");
@@ -1767,13 +1758,10 @@ async function renderMarketingReviews() {
   }
 
   if (!rows.length) {
-    setReviewsSectionVisible(false);
     box.innerHTML = "";
     if (moreBtn) moreBtn.hidden = true;
     return;
   }
-
-  setReviewsSectionVisible(true);
 
   const PAGE = 2;
   let shown = Math.min(PAGE, rows.length);
