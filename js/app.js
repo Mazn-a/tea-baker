@@ -1769,8 +1769,10 @@ async function renderMarketingReviews() {
   }
 
   if (!rows.length) {
-    box.innerHTML = "";
-    if (moreBtn) moreBtn.hidden = true;
+    if (!reviewsSectionPinned) {
+      box.innerHTML = "";
+      if (moreBtn) moreBtn.hidden = true;
+    }
     return;
   }
 
