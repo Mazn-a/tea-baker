@@ -1722,6 +1722,66 @@ function renderMarketingAddons() {
   paint();
 }
 
+function reviewCardHtml(r) {
+  const stars = Math.max(1, Math.min(5, Number(r.rating || r.stars) || 5));
+  const name = r.first_name
+    ? `${r.first_name} ${r.last_name || ""}`.trim()
+    : r.name || "عميل";
+  const meta = [r.city_label || r.city, r.event_label || r.event].filter(Boolean).join(" · ");
+  const text = r.comment || r.text || "";
+  return `
+    <article class="review-quote">
+      <div class="review-stars" aria-label="${stars} من 5">${"★".repeat(stars)}</div>
+      ${text ? `<p class="review-text">«${esc(text)}»</p>` : ""}
+      <footer class="review-by">
+        <strong>${esc(name)}</strong>
+        <span>${esc(meta)}${r.package_name ? ` · ${esc(r.package_name)}` : ""}</span>
+      </footer>
+    </article>`;
+}
+
+async function renderMarketingReviews() {
+  const box = $("#marketReviews");
+  const moreBtn = $("#btnMoreReviews");
+  if (!box) return;
+
+  let rows = [];
+  try {
+    rows = (await window.BakrStore?.listApprovedReviews?.()) || [];
+  } catch (err) {
+    console.warn(err);
+  }
+
+  const localPreview = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  if (!rows.length && localPreview) {
+    rows = window.REVIEWS || window.BAKR_CATALOG?.reviews || [];
+  }
+
+  if (!rows.length) {
+    box.innerHTML = `<p class="empty-hint">ما ظهرت تقييمات معتمدة بعد.</p>`;
+    if (moreBtn) moreBtn.hidden = true;
+    return;
+  }
+
+  const PAGE = 2;
+  let shown = Math.min(PAGE, rows.length);
+
+  const paint = () => {
+    box.innerHTML = rows.slice(0, shown).map(reviewCardHtml).join("");
+    if (moreBtn) {
+      moreBtn.hidden = shown >= rows.length;
+      moreBtn.textContent = "إظهار المزيد";
+    }
+  };
+
+  moreBtn?.addEventListener("click", () => {
+    shown = rows.length;
+    paint();
+  });
+
+  paint();
+}
+
 function setupNav() {
   const toggle = $("#menuToggle");
   const links = $("#navLinks");
@@ -1896,6 +1956,7 @@ async function init() {
   }
   renderMarketingPackages();
   renderMarketingAddons();
+  renderMarketingReviews();
   setupNav();
   setupBackToTop();
   setupIssueReporting();

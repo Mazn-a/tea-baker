@@ -1730,6 +1730,59 @@ body.admin-detail-open #orderDetailView {
 
 .welcome-choice.is-upcoming > span:last-child { color: #6a5240; }
 
+.welcome-choice.is-reviews {
+  background: linear-gradient(145deg, #fff8ef, #f3e4cf);
+  border: 1.5px solid rgba(139, 105, 20, 0.28);
+}
+
+.welcome-choice.is-reviews > span:last-child { color: #6a5240; }
+
+.due-rating-list {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 1rem;
+}
+
+.due-rating-title {
+  margin: 0 0 0.2rem;
+  font-size: 0.95rem;
+  color: var(--tea-deep);
+}
+
+.due-rating-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.8rem;
+  background: rgba(99, 58, 17, 0.05);
+  border-radius: 0.85rem;
+}
+
+.due-rating-row div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.due-rating-row span {
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.rate-qr {
+  display: grid;
+  gap: 0.55rem;
+  justify-items: start;
+}
+
+.rate-qr img {
+  width: 180px;
+  height: 180px;
+  background: #fff;
+  border-radius: 0.75rem;
+  padding: 0.4rem;
+}
+
 .welcome-end-line {
   position: relative;
   z-index: 2;
