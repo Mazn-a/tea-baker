@@ -57,9 +57,54 @@
     input.readOnly = Boolean(locked && iso);
   }
 
+  const COMMENT_SUGGESTS = [
+    "الضيافة مرتّبة ومتكاملة",
+    "المباشرون بأسلوب راقٍ",
+    "الشاي والقهوة ممتازة",
+    "التمر والحلى مميز",
+    "الركن أنيق وجاهز قبل الضيوف",
+    "تعامل راقٍ من أول تواصل",
+    "تجربة تستحق التوصية",
+  ];
+
+  function commentParts() {
+    const raw = String($("#rateComment")?.value || "").trim();
+    if (!raw) return [];
+    return raw
+      .split(/\s*[.،]\s*/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
+  function setCommentParts(parts) {
+    const ta = $("#rateComment");
+    if (!ta) return;
+    ta.value = parts.join(". ");
+  }
+
+  function paintSuggest() {
+    const host = $("#rateSuggest");
+    if (!host) return;
+    const chosen = new Set(commentParts());
+    host.innerHTML = COMMENT_SUGGESTS.map((text) => {
+      const on = chosen.has(text);
+      return `<button type="button" class="rate-chip${on ? " is-on" : ""}" data-suggest="${text}">${text}</button>`;
+    }).join("");
+  }
+
+  function toggleSuggest(text) {
+    const parts = commentParts();
+    const idx = parts.indexOf(text);
+    if (idx >= 0) parts.splice(idx, 1);
+    else parts.push(text);
+    setCommentParts(parts);
+    paintSuggest();
+  }
+
   async function setup() {
     fillPackages();
     paintStars(0);
+    paintSuggest();
     const form = $("#rateForm");
     const wait = $("#rateWait");
     const lead = $("#rateLead");
@@ -76,6 +121,13 @@
       $("#rateStars").value = String(n);
       paintStars(n);
     });
+
+    $("#rateSuggest")?.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-suggest]");
+      if (!btn) return;
+      toggleSuggest(btn.dataset.suggest);
+    });
+    $("#rateComment")?.addEventListener("input", paintSuggest);
 
     if (orderId && window.BakrStore?.getReviewEvent) {
       try {

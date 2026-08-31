@@ -12,7 +12,7 @@
       href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@600;700&family=Tajawal:wght@400;500;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./css/styles.css?v=86" />
+    <link rel="stylesheet" href="./css/styles.css?v=87" />
   </head>
   <body class="rate-page">
     <main class="rate-wrap">
@@ -46,10 +46,12 @@
             <span>تاريخ المناسبة</span>
             <input id="rateDate" type="date" required />
           </label>
-          <label class="field-card">
+          <div class="field-card">
             <span>تعليق (اختياري)</span>
             <textarea id="rateComment" rows="3" placeholder="عبّر عن رأيك في ضيافتنا"></textarea>
-          </label>
+            <p class="rate-suggest-hint">اقتراحات</p>
+            <div class="rate-suggest" id="rateSuggest" role="group" aria-label="اقتراحات جاهزة"></div>
+          </div>
           <p class="field-error" id="rateError" hidden></p>
           <button type="submit" class="btn btn-primary" id="rateSubmit">إرسال التقييم</button>
         </form>
@@ -60,6 +62,6 @@
     <script src="./js/catalog.js?v=16"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./js/store.js?v=26"></script>
-    <script src="./js/rate.js?v=3"></script>
+    <script src="./js/rate.js?v=5"></script>
   </body>
 </html>

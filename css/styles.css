@@ -2616,6 +2616,40 @@ body:has(.view[data-view="booking"].is-active) .fab-stack {
   color: var(--tea-deep);
 }
 
+.rate-suggest-hint {
+  margin: 0.15rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #7a6654;
+}
+
+.rate-suggest {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.rate-chip {
+  appearance: none;
+  border: 1px solid rgba(139, 105, 20, 0.28);
+  background: #fff8ef;
+  color: var(--tea-deep);
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.35;
+  cursor: pointer;
+  text-align: start;
+}
+
+.rate-chip.is-on {
+  background: var(--tea);
+  color: #fff8ef;
+  border-color: transparent;
+}
+
 #btnMoreReviews[hidden] {
   display: none !important;
 }
