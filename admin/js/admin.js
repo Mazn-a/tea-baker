@@ -5,7 +5,9 @@ const state = {
   orders: [],
   visits: [],
   issues: [],
+  reviews: [],
   issueStatus: "open",
+  reviewStatus: "pending",
   selectedOrderId: null,
   pendingOpenId: null,
   charts: {},
@@ -119,6 +121,41 @@ function orderAmountPaid(o) {
 
 function orderRemaining(o) {
   return Math.max(0, orderContractTotal(o) - orderAmountPaid(o));
+}
+
+function todayIsoLocal() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function isHospitalityRatingOpen(eventDate) {
+  const day = String(eventDate || "").slice(0, 10);
+  return Boolean(day) && day < todayIsoLocal();
+}
+
+function reviewRateUrl(order) {
+  const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  const base = String((local ? location.origin : cfg().siteUrl) || location.origin).replace(/\/$/, "");
+  const id = typeof order === "string" ? order : order?.id;
+  const pkg = typeof order === "object" && order ? String(order.package_name || "").trim() : "";
+  const dt = typeof order === "object" && order ? String(order.event_date || "").slice(0, 10) : "";
+  const params = new URLSearchParams();
+  if (id) params.set("o", String(id));
+  if (pkg) params.set("pkg", pkg);
+  if (dt) params.set("dt", dt);
+  return `${base}/rate.html?${params.toString()}`;
+}
+
+function reviewQrSrc(url) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${encodeURIComponent(url)}`;
+}
+
+function reviewStars(n) {
+  const v = Math.max(1, Math.min(5, Number(n) || 0));
+  return "★".repeat(v) + "☆".repeat(5 - v);
 }
 
 function startOfToday() {
@@ -414,7 +451,127 @@ async function deliverDecision(order) {
  * الدخول — حساب Supabase فقط (بريد + كلمة مرور)
  * ========================================================= */
 
+function isLocalHost() {
+  return /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+}
+
+/** معاينة الواجهة على الجهاز فقط — لا تعمل على bakr-tea.com */
+function isLocalPreview() {
+  return isLocalHost() && new URLSearchParams(location.search).get("preview") === "1";
+}
+
+function shiftIsoDays(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function ensureLocalPreviewFixtures() {
+  if (!isLocalPreview()) return;
+  const reviewKey = "bakr-reviews-v1";
+  const orderKey = "bakr-orders-v1";
+  let reviews = [];
+  try {
+    reviews = JSON.parse(localStorage.getItem(reviewKey) || "[]");
+  } catch (_) {
+    reviews = [];
+  }
+  if (!Array.isArray(reviews) || !reviews.length) {
+    reviews = [
+      {
+        id: "preview-rev-pending-1",
+        created_at: new Date().toISOString(),
+        first_name: "عبدالرحمن",
+        last_name: "الغامدي",
+        package_name: "البكج الذهبي",
+        rating: 5,
+        event_date: shiftIsoDays(-2),
+        comment: "الركن مرتّب والمباشرين بزي رسمي. الضيوف سألوا عن الشاي أكثر من مرة.",
+        city_label: "مكة المكرمة",
+        event_label: "زواج",
+        status: "pending",
+      },
+      {
+        id: "preview-rev-pending-2",
+        created_at: new Date().toISOString(),
+        first_name: "نورة",
+        last_name: "الزهراني",
+        package_name: "البكج الفضي",
+        rating: 4,
+        event_date: shiftIsoDays(-3),
+        comment: "طلبت من الموقع ووصلني واتساب في نفس اليوم.",
+        city_label: "جدة",
+        event_label: "ملكة",
+        status: "pending",
+      },
+      {
+        id: "preview-rev-approved-1",
+        created_at: new Date().toISOString(),
+        first_name: "فيصل",
+        last_name: "الحربي",
+        package_name: "البكج الملكي",
+        rating: 5,
+        event_date: shiftIsoDays(-8),
+        comment: "البكج الملكي كفى العدد اللي اتفقنا عليه.",
+        city_label: "الطائف",
+        event_label: "زواج",
+        status: "approved",
+      },
+    ];
+    localStorage.setItem(reviewKey, JSON.stringify(reviews));
+  }
+
+  let orders = [];
+  try {
+    orders = JSON.parse(localStorage.getItem(orderKey) || "[]");
+  } catch (_) {
+    orders = [];
+  }
+  if (!Array.isArray(orders)) orders = [];
+  if (!orders.some((o) => String(o.id) === "preview-rate-order")) {
+    orders.unshift({
+      id: "preview-rate-order",
+      created_at: new Date().toISOString(),
+      status: "accepted",
+      customer_name: "خالد السعيد",
+      customer_phone: "0533508361",
+      package_name: "البكج الذهبي",
+      package_price: 3500,
+      addons_total: 0,
+      grand_total: 3500,
+      amount_paid: 1000,
+      event_date: shiftIsoDays(-1),
+      event_label: "زواج",
+      city_label: "مكة المكرمة",
+      hall_name: "قاعة النور",
+      location_link: "https://maps.google.com/?q=Makkah",
+      notes: "",
+    });
+    localStorage.setItem(orderKey, JSON.stringify(orders));
+  }
+}
+
+function applyLocalPreviewData() {
+  if (!isLocalPreview()) return;
+  ensureLocalPreviewFixtures();
+  try {
+    const reviews = JSON.parse(localStorage.getItem("bakr-reviews-v1") || "[]");
+    if (Array.isArray(reviews) && reviews.length) state.reviews = reviews;
+  } catch (_) {}
+  try {
+    const orders = JSON.parse(localStorage.getItem("bakr-orders-v1") || "[]");
+    const preview = (orders || []).find((o) => String(o.id) === "preview-rate-order");
+    if (preview && !state.orders.some((o) => String(o.id) === String(preview.id))) {
+      state.orders = [preview, ...state.orders];
+    }
+  } catch (_) {}
+}
+
 async function isAuthed() {
+  if (isLocalPreview()) return true;
   return Boolean(await window.BakrStore?.currentUser?.());
 }
 
@@ -1066,6 +1223,138 @@ function updateUpcomingChoiceHint() {
   el.textContent = n > 0 ? `${n} مناسبة قادمة — مرتّبة بالأيام` : "لا توجد مناسبات قادمة حالياً";
 }
 
+function filteredReviews() {
+  const list = state.reviews || [];
+  if (state.reviewStatus === "all") return list;
+  return list.filter((r) => (r.status || "pending") === state.reviewStatus);
+}
+
+function reviewStatusLabel(s) {
+  if (s === "approved") return "ظاهرة";
+  if (s === "rejected") return "مرفوضة";
+  return "بانتظار الموافقة";
+}
+
+function dueRatingOrders() {
+  return activeOrders()
+    .filter((o) => o.status === "accepted")
+    .filter((o) => isHospitalityRatingOpen(o.event_date))
+    .sort((a, b) => String(b.event_date).localeCompare(String(a.event_date)))
+    .slice(0, 8);
+}
+
+function renderDueRatings() {
+  const box = $("#dueRatingList");
+  if (!box) return;
+  const rows = dueRatingOrders();
+  if (!rows.length) {
+    box.innerHTML = "";
+    return;
+  }
+  box.innerHTML = `
+    <h3 class="due-rating-title">مناسبات جاهزة للتقييم (بعد المناسبة بيوم)</h3>
+    ${rows
+      .map(
+        (o) => `
+      <article class="due-rating-row">
+        <div>
+          <strong>${escapeHtml(o.customer_name)}</strong>
+          <span>${escapeHtml(o.package_name || "")} · ${formatDate(o.event_date)}</span>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" data-open-rate="${escapeAttr(o.id)}">فتح الطلب / الباركود</button>
+      </article>`
+      )
+      .join("")}`;
+  box.querySelectorAll("[data-open-rate]").forEach((btn) => {
+    btn.addEventListener("click", () => showOrderDetail(btn.dataset.openRate));
+  });
+}
+
+function renderAdminReviews() {
+  const box = $("#reviewsAdminList");
+  if (!box) return;
+  renderDueRatings();
+  const list = filteredReviews();
+  if (!list.length) {
+    box.innerHTML = `<p class="empty-hint">لا توجد تقييمات في هذا التبويب.</p>`;
+    return;
+  }
+  box.innerHTML = list
+    .map((r) => {
+      const name = `${r.first_name || ""} ${r.last_name || ""}`.trim() || "ضيف";
+      return `
+      <article class="order-row is-${escapeAttr(r.status || "pending")}">
+        <div class="order-row-main">
+          <div class="order-row-title">
+            <strong>${escapeHtml(name)}</strong>
+            <span class="status-pill ${escapeAttr(r.status || "pending")}">${reviewStatusLabel(r.status)}</span>
+          </div>
+          <p class="admin-review-stars" aria-label="${escapeAttr(r.rating)} من 5">${reviewStars(r.rating)}</p>
+          <p class="issue-meta">${escapeHtml(r.package_name || "")} · ${formatDate(r.event_date)}${
+            r.city_label ? ` · ${escapeHtml(r.city_label)}` : ""
+          }</p>
+          ${r.comment ? `<p class="issue-meta">«${escapeHtml(r.comment)}»</p>` : ""}
+        </div>
+        <div class="order-row-side">
+          ${
+            r.status !== "approved"
+              ? `<button type="button" class="btn btn-ok btn-sm" data-review-status="approved" data-review-id="${escapeAttr(r.id)}">إظهار</button>`
+              : ""
+          }
+          ${
+            r.status !== "rejected"
+              ? `<button type="button" class="btn btn-err btn-sm" data-review-status="rejected" data-review-id="${escapeAttr(r.id)}">إخفاء</button>`
+              : ""
+          }
+        </div>
+      </article>`;
+    })
+    .join("");
+}
+
+function updateReviewsChoiceHint() {
+  const el = $("#reviewsChoiceHint");
+  const pending = (state.reviews || []).filter((r) => (r.status || "pending") === "pending").length;
+  if (el) {
+    el.textContent = pending > 0 ? `${pending} تقييم بانتظار موافقتك` : "اعتماد آراء الضيوف وباركود المناسبة";
+  }
+  const badge = $("#reviewsPendingBadge");
+  const tab = document.querySelector('#reviewStatusTabs [data-review-status="pending"]');
+  if (badge) {
+    badge.hidden = pending === 0;
+    badge.textContent = String(pending);
+  }
+  tab?.classList.toggle("has-new", pending > 0);
+}
+
+function reviewsToCsv(rows) {
+  const head = ["الاسم الأول", "الاسم الثاني", "البكج", "التقييم", "التاريخ", "التعليق", "الحالة"];
+  const lines = rows.map((r) =>
+    [r.first_name, r.last_name, r.package_name, r.rating, r.event_date, r.comment, reviewStatusLabel(r.status)]
+      .map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`)
+      .join(",")
+  );
+  return `\uFEFF${[head.map((h) => `"${h}"`).join(","), ...lines].join("\r\n")}`;
+}
+
+function exportReviews() {
+  const rows = state.reviews || [];
+  if (!rows.length) {
+    showToast("ما فيه تقييمات للتصدير", "warn");
+    return;
+  }
+  const blob = new Blob([reviewsToCsv(rows)], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `تقييمات-شاي-بكر-${todayIsoLocal()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 800);
+  showToast(`تم تصدير ${rows.length} تقييم`);
+}
+
 function updateOrdersChoiceHint() {
   const el = $("#ordersChoiceHint");
   const pending = activeOrders().filter((o) => o.status === "pending").length;
@@ -1138,6 +1427,9 @@ function showPage(page) {
   }
   if (state.page === "upcoming") {
     renderUpcoming();
+  }
+  if (state.page === "reviews") {
+    renderAdminReviews();
   }
   if (state.page === "orders") {
     renderOrders();
@@ -1424,6 +1716,26 @@ function renderOrderDetail(o) {
       </div>
     </section>
 
+    ${
+      o.status === "accepted"
+        ? `<section class="order-section">
+            <h4 class="order-section-title">باركود تقييم الضيافة</h4>
+            <p class="field-hint">${
+              isHospitalityRatingOpen(o.event_date)
+                ? "التقييم مفتوح للضيوف (بعد المناسبة بيوم)."
+                : "ينفتح التقييم تلقائياً بعد تاريخ المناسبة بيوم."
+            }</p>
+            <div class="rate-qr">
+              <img src="${escapeAttr(reviewQrSrc(reviewRateUrl(o)))}" alt="باركود التقييم" width="180" height="180" />
+              <a class="map-url" dir="ltr" href="${escapeAttr(reviewRateUrl(o))}" target="_blank" rel="noopener">${escapeHtml(
+                reviewRateUrl(o)
+              )}</a>
+              <button type="button" class="btn btn-ghost btn-sm" data-action="copy-rate">نسخ رابط التقييم</button>
+            </div>
+          </section>`
+        : ""
+    }
+
     <section class="order-section">
       <h4 class="order-section-title">الإضافات (${addons.length})</h4>
       ${addonList}
@@ -1472,25 +1784,30 @@ async function loadData() {
       `<p class="empty-hint">تعذر تحميل مخزن البيانات. حدّث الصفحة.</p>`;
     return;
   }
-  const [orders, visits, issues] = await Promise.all([
+  const [orders, visits, issues, reviews] = await Promise.all([
     window.BakrStore.listOrders(),
     window.BakrStore.listVisits(),
     window.BakrStore.listIssueReports?.() ?? Promise.resolve([]),
+    window.BakrStore.listReviews?.() ?? Promise.resolve([]),
   ]);
   state.orders = (orders || []).filter(
     (o) => !window.BakrStore.isDeletedOrder?.(o) && o.status !== "deleted"
   );
   state.visits = visits || [];
   state.issues = issues || [];
+  state.reviews = reviews || [];
+  applyLocalPreviewData();
   renderStats();
   renderOrders();
   updateOrdersChoiceHint();
   updateUpcomingChoiceHint();
   updateVisitorsChoiceHint();
   updateIssuesChoiceHint();
+  updateReviewsChoiceHint();
   if (state.page === "visitors") renderVisitors();
   if (state.page === "reports") renderIssues();
   if (state.page === "upcoming") renderUpcoming();
+  if (state.page === "reviews") renderAdminReviews();
   if (state.selectedOrderId) {
     const still = state.orders.find((o) => String(o.id) === String(state.selectedOrderId));
     if (still) renderOrderDetail(still);
@@ -1547,7 +1864,7 @@ async function handleOrderAction(action, order, btn) {
     const raw = normalizeDigits($("#orderPaidInput")?.value || "").replace(/[^\d.]/g, "");
     const paid = raw === "" ? 0 : Number(raw);
     if (!Number.isFinite(paid) || paid < 0) {
-      showToast("المبلغ المدفoع غير صحيح", "warn");
+      showToast("المبلغ المدفوع غير صحيح", "warn");
       return;
     }
     if (btn) btn.disabled = true;
@@ -1560,6 +1877,14 @@ async function handleOrderAction(action, order, btn) {
       showToast("تعذر حفظ المبلغ — حاول مرة ثانية", "warn");
     } finally {
       if (btn) btn.disabled = false;
+    }
+  } else if (action === "copy-rate") {
+    const url = reviewRateUrl(order);
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast("تم نسخ رابط التقييم");
+    } catch (_) {
+      window.prompt("انسخ رابط التقييم", url);
     }
   } else if (action === "delete") {
     await deleteOrderById(order, btn);
@@ -1809,6 +2134,11 @@ async function setup() {
     exportOrders();
   });
 
+  $("#exportReviewsBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    exportReviews();
+  });
+
   $("#pingBtn")?.addEventListener("click", () => {
     refreshConnectionStatus();
   });
@@ -1842,6 +2172,33 @@ async function setup() {
       state.issueStatus = btn.dataset.issueStatus;
       renderIssues();
     });
+  });
+
+  $$("#reviewStatusTabs .filter-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      $$("#reviewStatusTabs .filter-tab").forEach((b) => b.classList.remove("is-on"));
+      btn.classList.add("is-on");
+      state.reviewStatus = btn.dataset.reviewStatus;
+      renderAdminReviews();
+    });
+  });
+
+  $("#reviewsAdminList")?.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-review-id]");
+    if (!btn) return;
+    const id = btn.dataset.reviewId;
+    const next = btn.dataset.reviewStatus;
+    btn.disabled = true;
+    try {
+      await window.BakrStore.updateReviewStatus(id, next);
+      await loadData();
+      showToast(next === "approved" ? "ظهر التقييم على الموقع" : "تم إخفاء التقييم");
+    } catch (err) {
+      console.warn(err);
+      showToast("تعذر حفظ حالة التقييم", "warn");
+    } finally {
+      btn.disabled = false;
+    }
   });
 
   $("#issuesList")?.addEventListener("click", async (e) => {
@@ -2096,6 +2453,7 @@ async function setup() {
   else if (hash === "#visitors") state.page = "visitors";
   else if (hash === "#stats") state.page = "stats";
   else if (hash === "#reports") state.page = "reports";
+  else if (hash === "#reviews") state.page = "reviews";
 
   if (await isAuthed()) {
     showApp();

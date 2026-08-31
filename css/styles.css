@@ -2483,6 +2483,170 @@ body:has(.view[data-view="booking"].is-active) .fab-stack {
   font-size: 1.08rem;
 }
 
+.reviews-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.review-quote {
+  background: #fff;
+  border-radius: 1.1rem;
+  padding: 1.15rem 1.2rem 1.05rem;
+  box-shadow: 0 10px 28px rgba(42, 24, 16, 0.07);
+  display: grid;
+  gap: 0.55rem;
+  text-align: start;
+}
+
+.review-stars {
+  color: #d4a017;
+  letter-spacing: 0.14em;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.review-text {
+  margin: 0;
+  color: rgba(26, 18, 12, 0.82);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.review-by {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.review-by strong {
+  color: var(--tea-deep);
+  font-size: 0.98rem;
+}
+
+.review-by span {
+  color: #7a6654;
+  font-size: 0.86rem;
+}
+
+#btnMoreReviews {
+  margin: 1rem auto 0;
+  display: block;
+}
+
+.reviews-grid .empty-hint {
+  text-align: center;
+  color: #6a5240;
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 800px) {
+  .reviews-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.rate-page {
+  min-height: 100svh;
+  background: linear-gradient(180deg, #f7f1e8, #efe4d4);
+}
+
+.rate-wrap {
+  width: min(28rem, calc(100% - 1.5rem));
+  margin: 0 auto;
+  padding: 1.25rem 0 calc(2rem + var(--safe-bottom));
+}
+
+.rate-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+  font-weight: 800;
+  color: var(--tea-deep);
+}
+
+.rate-brand img {
+  width: 2.6rem;
+  height: auto;
+}
+
+.rate-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.15rem 1.35rem;
+  box-shadow: 0 16px 40px rgba(42, 24, 16, 0.1);
+}
+
+.rate-card h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  color: var(--tea-deep);
+}
+
+.rate-lead,
+.rate-wait {
+  color: rgba(26, 18, 12, 0.72);
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.rate-form {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+}
+
+.rate-form[hidden],
+#rateWait[hidden],
+#rateDone[hidden],
+#rateError[hidden] {
+  display: none !important;
+}
+
+.rate-form .field-card input,
+.rate-form .field-card select,
+.rate-form .field-card textarea {
+  width: 100%;
+}
+
+.rate-form .field-card :is(input, select):disabled,
+.rate-form .field-card input[readonly] {
+  background: #f6efe6;
+  pointer-events: none;
+  color: var(--tea-deep);
+}
+
+#btnMoreReviews[hidden] {
+  display: none !important;
+}
+
+.star-pick {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.star-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #d8c7a6;
+  font-size: 1.7rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.1rem;
+}
+
+.star-btn.is-on {
+  color: #d4a017;
+}
+
+.rate-qr {
+  display: grid;
+  gap: 0.65rem;
+  justify-items: center;
+  text-align: center;
+}
+
 .about-box,
 .contact-box,
 .faq-item {

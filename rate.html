@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>تقييم الضيافة | شاي بكر</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" href="./assets/logo-brand.png?v=12" type="image/png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@600;700&family=Tajawal:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./css/styles.css?v=86" />
+  </head>
+  <body class="rate-page">
+    <main class="rate-wrap">
+      <a class="rate-brand" href="./">
+        <img src="./assets/logo-brand.png?v=12" alt="شاي بكر" width="72" height="114" />
+        <span>شاي بكر</span>
+      </a>
+      <section class="rate-card" id="rateCard">
+        <h1>تقييم الضيافة</h1>
+        <p class="rate-lead" id="rateLead">بعد المناسبة بيوم نرحّب بتقييمك.</p>
+        <p class="rate-wait" id="rateWait" hidden></p>
+        <form id="rateForm" class="rate-form" hidden>
+          <label class="field-card">
+            <span>الاسم الأول</span>
+            <input id="rateFirst" type="text" required autocomplete="given-name" />
+          </label>
+          <label class="field-card">
+            <span>الاسم الثاني</span>
+            <input id="rateLast" type="text" required autocomplete="family-name" />
+          </label>
+          <label class="field-card">
+            <span>نوع البكج</span>
+            <select id="ratePackage" required></select>
+          </label>
+          <div class="field-card">
+            <span>التقييم</span>
+            <div class="star-pick" id="starPick" role="radiogroup" aria-label="التقييم من 5"></div>
+            <input id="rateStars" type="hidden" required />
+          </div>
+          <label class="field-card">
+            <span>تاريخ المناسبة</span>
+            <input id="rateDate" type="date" required />
+          </label>
+          <label class="field-card">
+            <span>تعليق (اختياري)</span>
+            <textarea id="rateComment" rows="3" placeholder="وش أعجبك في الضيافة؟"></textarea>
+          </label>
+          <p class="field-error" id="rateError" hidden></p>
+          <button type="submit" class="btn btn-primary" id="rateSubmit">إرسال التقييم</button>
+        </form>
+        <p class="site-modal-success" id="rateDone" hidden>شكراً لتقييمك.</p>
+      </section>
+    </main>
+    <script src="./js/config.js"></script>
+    <script src="./js/catalog.js?v=16"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./js/store.js?v=26"></script>
+    <script src="./js/rate.js?v=3"></script>
+  </body>
+</html>

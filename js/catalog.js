@@ -211,6 +211,46 @@
       { id: "lemon", name: "عصير ليمون نعناع بارد 8 لتر", price: 250 },
     ],
 
+    /** أمثلة للمعاينة المحلية فقط — الموقع الحي يعرض التقييمات المعتمدة من الإدارة */
+    reviews: [
+      {
+        first_name: "عبدالرحمن",
+        last_name: "الغامدي",
+        city_label: "مكة المكرمة",
+        event_label: "زواج",
+        package_name: "البكج الذهبي",
+        rating: 5,
+        comment: "الركن مرتّب والمباشرين بزي رسمي. الضيوف سألوا عن الشاي أكثر من مرة، والاتفاق كان واضح من أول رسالة.",
+      },
+      {
+        first_name: "نورة",
+        last_name: "الزهراني",
+        city_label: "جدة",
+        event_label: "ملكة",
+        package_name: "البكج الفضي",
+        rating: 5,
+        comment: "طلبت من الموقع ووصلني واتساب في نفس اليوم. السعر نفس اللي ظاهر في البكج، بدون مفاجآت بعد القبول.",
+      },
+      {
+        first_name: "فيصل",
+        last_name: "الحربي",
+        city_label: "الطائف",
+        event_label: "زواج",
+        package_name: "البكج الملكي",
+        rating: 5,
+        comment: "البكج الملكي كفى العدد اللي اتفقنا عليه. القهوة والتمر ما انقطعت، والركن انجهز قبل دخول الضيوف.",
+      },
+      {
+        first_name: "سارة",
+        last_name: "المالكي",
+        city_label: "مكة المكرمة",
+        event_label: "زواج",
+        package_name: "البكج الذهبي",
+        rating: 5,
+        comment: "كنت مترددة لأن أول مرة أحجز ضيافة من موقع. طلع محل معروف في الراشدية، والتأكيد وصل على جوالي.",
+      },
+    ],
+
     /** ترتيب خطوات الحجز — لا تحذف success من النهاية */
     flow: [
       "city",
@@ -234,6 +274,7 @@
   global.EVENTS = catalog.events;
   global.PACKAGES = catalog.packages;
   global.ADDONS = catalog.addons;
+  global.REVIEWS = catalog.reviews;
   global.FLOW = catalog.flow;
   global.WA_NUMBER = catalog.waNumber;
   global.OFFER_BADGE = catalog.offerBadge;

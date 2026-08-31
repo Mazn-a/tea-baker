@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <link rel="stylesheet" href="./css/admin.css?v=57" />
+    <link rel="stylesheet" href="./css/admin.css?v=59" />
   </head>
   <body>
     <div id="loginView" class="login-view">
@@ -150,6 +150,10 @@
                     <strong>زوار الموقع</strong>
                     <span id="visitorsChoiceHint">كم شخص دخل الموقع</span>
                   </button>
+                  <button type="button" class="welcome-choice is-reviews" data-page="reviews">
+                    <strong>تقييمات الضيافة</strong>
+                    <span id="reviewsChoiceHint">اعتماد آراء الضيوف وباركود المناسبة</span>
+                  </button>
                   <button type="button" class="welcome-choice is-issues" data-page="reports">
                     <strong>المشاكل المُبلغ عنها</strong>
                     <span id="issuesChoiceHint">بلاغات العملاء عن أخطاء بالموقع</span>
@@ -219,6 +223,31 @@
                 <canvas id="visitsChart"></canvas>
               </div>
             </article>
+          </section>
+
+          <section class="panel reviews-panel admin-page" id="reviewsPanel" data-page="reviews" hidden>
+            <div class="panel-head orders-head">
+              <div class="page-nav">
+                <button type="button" class="btn btn-ghost" data-page="home">← الرئيسية</button>
+                <h2>تقييمات الضيافة</h2>
+              </div>
+              <div class="orders-head-actions">
+                <button type="button" class="btn btn-ghost" id="exportReviewsBtn">تصدير Excel</button>
+                <div class="filter-tabs" id="reviewStatusTabs">
+                  <button type="button" class="filter-tab is-on" data-review-status="pending">
+                    بانتظار الموافقة
+                    <span class="filter-badge" id="reviewsPendingBadge" hidden></span>
+                  </button>
+                  <button type="button" class="filter-tab" data-review-status="approved">ظاهرة</button>
+                  <button type="button" class="filter-tab" data-review-status="rejected">مرفوضة</button>
+                  <button type="button" class="filter-tab" data-review-status="all">الكل</button>
+                </div>
+              </div>
+            </div>
+            <p class="orders-lead">الضيوف يرسلون التقييم من باركود المناسبة. يظهر على الموقع فقط بعد زر «إظهار».</p>
+            <div id="dueRatingList" class="due-rating-list"></div>
+            <h3 class="due-rating-title" id="reviewsListTitle">التقييمات الواردة</h3>
+            <div id="reviewsAdminList" class="orders-list"></div>
           </section>
 
           <section class="panel issues-panel admin-page" id="issuesPanel" data-page="reports" hidden>
@@ -370,11 +399,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./vendor/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="../js/store.js?v=24"></script>
+    <script src="../js/store.js?v=26"></script>
     <script src="./js/logo-data.js?v=11"></script>
     <script src="./js/order-pdf.js?v=14"></script>
     <script src="./js/wa-send.js?v=8"></script>
     <script src="./js/admin-calendar.js?v=1"></script>
-    <script src="./js/admin.js?v=58"></script>
+    <script src="./js/admin.js?v=61"></script>
   </body>
 </html>

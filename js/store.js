@@ -19,6 +19,7 @@
     visitSession: "bakr-visit-session",
     deletedIds: "bakr-deleted-orders-v1",
     issues: "bakr-issues-v1",
+    reviews: "bakr-reviews-v1",
   };
 
   /**
@@ -57,6 +58,30 @@
     const url = (c.supabaseUrl || "").trim();
     const key = (c.supabaseAnonKey || "").trim();
     return Boolean(url && key && !url.includes("YOUR_PROJECT") && key !== "YOUR_ANON_KEY");
+  }
+
+  function isLocalHost() {
+    try {
+      return /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function isUuid(value) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      String(value || "")
+    );
+  }
+
+  function isMissingReviewsTable(err) {
+    const msg = `${err?.code || ""} ${err?.message || ""}`.toLowerCase();
+    return (
+      msg.includes("pgrst205") ||
+      msg.includes("hospitality_reviews") ||
+      msg.includes("schema cache") ||
+      msg.includes("does not exist")
+    );
   }
 
   let client = null;
@@ -621,6 +646,135 @@
     return all[idx];
   }
 
+  async function getReviewEvent(orderId) {
+    const id = String(orderId || "").trim();
+    if (!id) return null;
+    try {
+      const sb = await getClient();
+      if (sb) {
+        const { data, error } = await sb.rpc("review_event_info", { p_order_id: id });
+        if (!error && Array.isArray(data) && data[0]) return data[0];
+      }
+    } catch (err) {
+      console.warn("getReviewEvent:", err);
+    }
+    const orders = readLocal(KEYS.orders, []);
+    const row = orders.find((o) => String(o.id) === id);
+    if (!row || row.status !== "accepted") return null;
+    return {
+      package_name: row.package_name,
+      event_date: row.event_date,
+      event_label: row.event_label,
+      city_label: row.city_label,
+      hall_name: row.hall_name,
+    };
+  }
+
+  async function submitReview(payload) {
+    const row = {
+      created_at: new Date().toISOString(),
+      order_id: isUuid(payload.orderId) ? payload.orderId : null,
+      first_name: String(payload.firstName || "").trim(),
+      last_name: String(payload.lastName || "").trim(),
+      package_name: String(payload.packageName || "").trim(),
+      rating: Math.max(1, Math.min(5, Number(payload.rating) || 0)),
+      event_date: String(payload.eventDate || "").slice(0, 10),
+      comment: String(payload.comment || "").trim(),
+      city_label: String(payload.cityLabel || "").trim(),
+      event_label: String(payload.eventLabel || "").trim(),
+      status: "pending",
+    };
+    if (row.first_name.length < 2 || row.last_name.length < 2) {
+      throw new Error("اكتب الاسم الأول والثاني");
+    }
+    if (!row.package_name) throw new Error("اختر نوع البكج");
+    if (!row.event_date) throw new Error("اختر تاريخ المناسبة");
+    if (row.rating < 1) throw new Error("اختر التقييم بالنجوم");
+
+    try {
+      const sb = await getClient();
+      if (sb) {
+        const { error } = await sb.from("hospitality_reviews").insert(row);
+        if (error) throw error;
+        return { ...row, saved: true };
+      }
+    } catch (err) {
+      console.warn("submitReview cloud → local:", err);
+      if (hasCloud() && !isLocalHost()) {
+        throw new Error(
+          isMissingReviewsTable(err)
+            ? "تعذر إرسال التقييم الآن — حاول لاحقاً"
+            : err?.message || "تعذر إرسال التقييم — حاول مرة ثانية"
+        );
+      }
+    }
+
+    const localRow = { id: uid(), ...row };
+    const all = readLocal(KEYS.reviews, []);
+    all.unshift(localRow);
+    writeLocal(KEYS.reviews, all);
+    return { ...localRow, saved: true };
+  }
+
+  async function listApprovedReviews() {
+    try {
+      const sb = await getClient();
+      if (sb) {
+        const { data, error } = await sb
+          .from("hospitality_reviews")
+          .select("id,created_at,first_name,last_name,package_name,rating,event_date,comment,city_label,event_label")
+          .eq("status", "approved")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        return data || [];
+      }
+    } catch (err) {
+      console.warn("listApprovedReviews cloud → local:", err);
+    }
+    return readLocal(KEYS.reviews, []).filter((r) => r.status === "approved");
+  }
+
+  async function listReviews() {
+    try {
+      const sb = await getClient();
+      if (sb) {
+        const { data, error } = await sb
+          .from("hospitality_reviews")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        return data || [];
+      }
+    } catch (err) {
+      console.warn("listReviews cloud → local:", err);
+    }
+    return readLocal(KEYS.reviews, []);
+  }
+
+  async function updateReviewStatus(id, status) {
+    try {
+      const sb = await getClient();
+      if (sb) {
+        const { data, error } = await sb
+          .from("hospitality_reviews")
+          .update({ status })
+          .eq("id", id)
+          .select()
+          .single();
+        if (error) throw error;
+        return data;
+      }
+    } catch (err) {
+      console.warn("updateReviewStatus cloud → local:", err);
+    }
+    const all = readLocal(KEYS.reviews, []);
+    const idx = all.findIndex((o) => String(o.id) === String(id));
+    if (idx < 0) return null;
+    all[idx] = { ...all[idx], status };
+    writeLocal(KEYS.reviews, all);
+    return all[idx];
+  }
+
   global.BakrStore = {
     createOrder,
     listOrders,
@@ -637,6 +791,11 @@
     reportIssue,
     listIssueReports,
     updateIssueStatus,
+    getReviewEvent,
+    submitReview,
+    listApprovedReviews,
+    listReviews,
+    updateReviewStatus,
     signIn,
     signOut,
     currentUser,
