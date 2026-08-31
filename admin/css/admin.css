@@ -1744,7 +1744,7 @@ body.admin-detail-open #orderDetailView {
 }
 
 .due-rating-title {
-  margin: 0 0 0.2rem;
+  margin: 0 0 0.45rem;
   font-size: 0.95rem;
   color: var(--tea-deep);
 }
@@ -1755,7 +1755,8 @@ body.admin-detail-open #orderDetailView {
   align-items: center;
   gap: 0.65rem;
   padding: 0.65rem 0.8rem;
-  background: rgba(99, 58, 17, 0.05);
+  background: #fff8ef;
+  border: 1px solid rgba(139, 105, 20, 0.22);
   border-radius: 0.85rem;
 }
 
@@ -1767,6 +1768,18 @@ body.admin-detail-open #orderDetailView {
 .due-rating-row span {
   font-size: 0.82rem;
   color: var(--muted);
+}
+
+.admin-review-stars {
+  margin: 0.2rem 0 0;
+  color: #d4a017;
+  letter-spacing: 0.12em;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+#reviewsListTitle {
+  margin-top: 0.35rem;
 }
 
 .rate-qr {

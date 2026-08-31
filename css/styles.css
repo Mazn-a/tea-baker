@@ -2596,6 +2596,16 @@ body:has(.view[data-view="booking"].is-active) .fab-stack {
   margin-top: 0.85rem;
 }
 
+.rate-form .field-card input,
+.rate-form .field-card select,
+.rate-form .field-card textarea {
+  width: 100%;
+}
+
+#btnMoreReviews[hidden] {
+  display: none !important;
+}
+
 .star-pick {
   display: flex;
   gap: 0.25rem;

@@ -443,7 +443,127 @@ async function deliverDecision(order) {
  * الدخول — حساب Supabase فقط (بريد + كلمة مرور)
  * ========================================================= */
 
+function isLocalHost() {
+  return /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+}
+
+/** معاينة الواجهة على الجهاز فقط — لا تعمل على bakr-tea.com */
+function isLocalPreview() {
+  return isLocalHost() && new URLSearchParams(location.search).get("preview") === "1";
+}
+
+function shiftIsoDays(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function ensureLocalPreviewFixtures() {
+  if (!isLocalPreview()) return;
+  const reviewKey = "bakr-reviews-v1";
+  const orderKey = "bakr-orders-v1";
+  let reviews = [];
+  try {
+    reviews = JSON.parse(localStorage.getItem(reviewKey) || "[]");
+  } catch (_) {
+    reviews = [];
+  }
+  if (!Array.isArray(reviews) || !reviews.length) {
+    reviews = [
+      {
+        id: "preview-rev-pending-1",
+        created_at: new Date().toISOString(),
+        first_name: "عبدالرحمن",
+        last_name: "الغامدي",
+        package_name: "البكج الذهبي",
+        rating: 5,
+        event_date: shiftIsoDays(-2),
+        comment: "الركن مرتّب والمباشرين بزي رسمي. الضيوف سألوا عن الشاي أكثر من مرة.",
+        city_label: "مكة المكرمة",
+        event_label: "زواج",
+        status: "pending",
+      },
+      {
+        id: "preview-rev-pending-2",
+        created_at: new Date().toISOString(),
+        first_name: "نورة",
+        last_name: "الزهراني",
+        package_name: "البكج الفضي",
+        rating: 4,
+        event_date: shiftIsoDays(-3),
+        comment: "طلبت من الموقع ووصلني واتساب في نفس اليوم.",
+        city_label: "جدة",
+        event_label: "ملكة",
+        status: "pending",
+      },
+      {
+        id: "preview-rev-approved-1",
+        created_at: new Date().toISOString(),
+        first_name: "فيصل",
+        last_name: "الحربي",
+        package_name: "البكج الملكي",
+        rating: 5,
+        event_date: shiftIsoDays(-8),
+        comment: "البكج الملكي كفى العدد اللي اتفقنا عليه.",
+        city_label: "الطائف",
+        event_label: "زواج",
+        status: "approved",
+      },
+    ];
+    localStorage.setItem(reviewKey, JSON.stringify(reviews));
+  }
+
+  let orders = [];
+  try {
+    orders = JSON.parse(localStorage.getItem(orderKey) || "[]");
+  } catch (_) {
+    orders = [];
+  }
+  if (!Array.isArray(orders)) orders = [];
+  if (!orders.some((o) => String(o.id) === "preview-rate-order")) {
+    orders.unshift({
+      id: "preview-rate-order",
+      created_at: new Date().toISOString(),
+      status: "accepted",
+      customer_name: "خالد السعيد",
+      customer_phone: "0533508361",
+      package_name: "البكج الذهبي",
+      package_price: 3500,
+      addons_total: 0,
+      grand_total: 3500,
+      amount_paid: 1000,
+      event_date: shiftIsoDays(-1),
+      event_label: "زواج",
+      city_label: "مكة المكرمة",
+      hall_name: "قاعة النور",
+      location_link: "https://maps.google.com/?q=Makkah",
+      notes: "",
+    });
+    localStorage.setItem(orderKey, JSON.stringify(orders));
+  }
+}
+
+function applyLocalPreviewData() {
+  if (!isLocalPreview()) return;
+  ensureLocalPreviewFixtures();
+  try {
+    const reviews = JSON.parse(localStorage.getItem("bakr-reviews-v1") || "[]");
+    if (Array.isArray(reviews) && reviews.length) state.reviews = reviews;
+  } catch (_) {}
+  try {
+    const orders = JSON.parse(localStorage.getItem("bakr-orders-v1") || "[]");
+    const preview = (orders || []).find((o) => String(o.id) === "preview-rate-order");
+    if (preview && !state.orders.some((o) => String(o.id) === String(preview.id))) {
+      state.orders = [preview, ...state.orders];
+    }
+  } catch (_) {}
+}
+
 async function isAuthed() {
+  if (isLocalPreview()) return true;
   return Boolean(await window.BakrStore?.currentUser?.());
 }
 
@@ -1161,7 +1281,10 @@ function renderAdminReviews() {
             <strong>${escapeHtml(name)}</strong>
             <span class="status-pill ${escapeAttr(r.status || "pending")}">${reviewStatusLabel(r.status)}</span>
           </div>
-          <p class="issue-meta">${reviewStars(r.rating)} · ${escapeHtml(r.package_name || "")} · ${formatDate(r.event_date)}</p>
+          <p class="admin-review-stars" aria-label="${escapeAttr(r.rating)} من 5">${reviewStars(r.rating)}</p>
+          <p class="issue-meta">${escapeHtml(r.package_name || "")} · ${formatDate(r.event_date)}${
+            r.city_label ? ` · ${escapeHtml(r.city_label)}` : ""
+          }</p>
           ${r.comment ? `<p class="issue-meta">«${escapeHtml(r.comment)}»</p>` : ""}
         </div>
         <div class="order-row-side">
@@ -1187,6 +1310,13 @@ function updateReviewsChoiceHint() {
   if (el) {
     el.textContent = pending > 0 ? `${pending} تقييم بانتظار موافقتك` : "اعتماد آراء الضيوف وباركود المناسبة";
   }
+  const badge = $("#reviewsPendingBadge");
+  const tab = document.querySelector('#reviewStatusTabs [data-review-status="pending"]');
+  if (badge) {
+    badge.hidden = pending === 0;
+    badge.textContent = String(pending);
+  }
+  tab?.classList.toggle("has-new", pending > 0);
 }
 
 function reviewsToCsv(rows) {
@@ -1658,6 +1788,7 @@ async function loadData() {
   state.visits = visits || [];
   state.issues = issues || [];
   state.reviews = reviews || [];
+  applyLocalPreviewData();
   renderStats();
   renderOrders();
   updateOrdersChoiceHint();

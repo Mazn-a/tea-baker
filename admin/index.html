@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <link rel="stylesheet" href="./css/admin.css?v=58" />
+    <link rel="stylesheet" href="./css/admin.css?v=59" />
   </head>
   <body>
     <div id="loginView" class="login-view">
@@ -234,15 +234,19 @@
               <div class="orders-head-actions">
                 <button type="button" class="btn btn-ghost" id="exportReviewsBtn">تصدير Excel</button>
                 <div class="filter-tabs" id="reviewStatusTabs">
-                  <button type="button" class="filter-tab is-on" data-review-status="pending">بانتظار الموافقة</button>
+                  <button type="button" class="filter-tab is-on" data-review-status="pending">
+                    بانتظار الموافقة
+                    <span class="filter-badge" id="reviewsPendingBadge" hidden></span>
+                  </button>
                   <button type="button" class="filter-tab" data-review-status="approved">ظاهرة</button>
                   <button type="button" class="filter-tab" data-review-status="rejected">مرفوضة</button>
                   <button type="button" class="filter-tab" data-review-status="all">الكل</button>
                 </div>
               </div>
             </div>
-            <p class="orders-lead">التقييم يظهر للزوار فقط بعد ما توافق عليه. الباركود من داخل الطلب.</p>
+            <p class="orders-lead">الضيوف يرسلون التقييم من باركود المناسبة. يظهر على الموقع فقط بعد زر «إظهار».</p>
             <div id="dueRatingList" class="due-rating-list"></div>
+            <h3 class="due-rating-title" id="reviewsListTitle">التقييمات الواردة</h3>
             <div id="reviewsAdminList" class="orders-list"></div>
           </section>
 
@@ -400,6 +404,6 @@
     <script src="./js/order-pdf.js?v=14"></script>
     <script src="./js/wa-send.js?v=8"></script>
     <script src="./js/admin-calendar.js?v=1"></script>
-    <script src="./js/admin.js?v=59"></script>
+    <script src="./js/admin.js?v=60"></script>
   </body>
 </html>
