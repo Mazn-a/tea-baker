@@ -1476,7 +1476,8 @@ body.admin-detail-open #orderDetailView {
   flex-direction: column;
   justify-content: flex-start;
   background: #ead4bd;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .welcome-landing::before {
@@ -1566,6 +1567,7 @@ body.admin-detail-open #orderDetailView {
 }
 
 .welcome-art-wrap {
+  display: none;
   grid-column: 2;
   grid-row: 1;
   width: 100%;
@@ -1581,7 +1583,7 @@ body.admin-detail-open #orderDetailView {
 
 .welcome-choices {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 1;
   display: grid;
   gap: 0.4rem;
   position: relative;
@@ -1599,7 +1601,7 @@ body.admin-detail-open #orderDetailView {
 
 .welcome-logo {
   display: block;
-  width: clamp(120px, 18vw, 180px);
+  width: clamp(96px, 14vw, 140px);
   height: auto;
   object-fit: contain;
 }
@@ -1840,11 +1842,12 @@ body.admin-detail-open #orderDetailView {
   }
 }
 
-@media (max-height: 780px) {
+@media (max-height: 900px) {
   .welcome-art-wrap { display: none; }
-  .welcome-logo { width: clamp(96px, 13vw, 132px); }
+  .welcome-logo { width: clamp(88px, 12vw, 120px); }
   .welcome-sub { display: none; }
-  .welcome-choices { gap: 0.35rem; }
+  .welcome-choices { gap: 0.32rem; }
+  .welcome-choice { min-height: 2.55rem; padding: 0.42rem 0.9rem; }
 }
 
 
