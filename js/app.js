@@ -397,9 +397,15 @@ function showView(name, opts = {}) {
 function loadAboutMap() {
   const iframe = document.querySelector(".about-map iframe");
   if (!iframe) return;
-  const src = iframe.getAttribute("data-map-src") || iframe.getAttribute("src");
-  if (!src || src === "about:blank") return;
-  iframe.src = src;
+  const src = iframe.getAttribute("data-map-src");
+  if (!src) return;
+  window.clearTimeout(loadAboutMap._tid);
+  loadAboutMap._tid = window.setTimeout(() => {
+    if (!document.querySelector('.view[data-view="about"].is-active')) return;
+    const current = iframe.getAttribute("src") || "";
+    if (current === src) return;
+    iframe.src = src;
+  }, 80);
 }
 
 function isBookingOpen() {
