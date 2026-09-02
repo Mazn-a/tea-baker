@@ -228,11 +228,11 @@ async function composeRatePoster(url) {
   const ctx = canvas.getContext("2d");
   ctx.drawImage(poster, 0, 0, canvas.width, canvas.height);
 
-  const size = Math.round(canvas.width * 0.46);
-  const pad = Math.round(size * 0.08);
+  const size = Math.round(canvas.width * 0.34);
+  const pad = Math.max(12, Math.round(size * 0.06));
   const box = size + pad * 2;
   const x = Math.round((canvas.width - box) / 2);
-  const y = Math.round(canvas.height * 0.545);
+  const y = Math.round(canvas.height * 0.468);
 
   ctx.fillStyle = "#fffdf8";
   ctx.strokeStyle = "rgba(42, 24, 16, 0.22)";
