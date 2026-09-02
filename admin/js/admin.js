@@ -154,8 +154,101 @@ function reviewRateUrl(order) {
   return `${base}/rate.html?${params.toString()}`;
 }
 
-function reviewQrSrc(url) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${encodeURIComponent(url)}`;
+function reviewQrSrc(url, size = 280) {
+  const px = Math.max(120, Number(size) || 280);
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${px}x${px}&margin=8&data=${encodeURIComponent(url)}`;
+}
+
+const RATE_LINK_LABEL = "تقييم ضيافة شاي بكر";
+const RATE_POSTER_SRC = "../assets/rate-poster.jpg";
+
+function rateFileName(order, kind) {
+  const who = String(order?.customer_name || "شاي-بكر").replace(/\s+/g, "-");
+  const prefix = kind === "poster" ? "ضيافة-شاي-بكر" : "باركود-تقييم";
+  return `${prefix}-${who}.png`;
+}
+
+function downloadBlob(blob, filename) {
+  const a = document.createElement("a");
+  const href = URL.createObjectURL(blob);
+  a.href = href;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(href), 1500);
+}
+
+async function loadQrBitmap(url, size = 800) {
+  const res = await fetch(reviewQrSrc(url, size));
+  if (!res.ok) throw new Error("تعذر إنشاء الباركود");
+  const blob = await res.blob();
+  if (typeof createImageBitmap === "function") return createImageBitmap(blob);
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("تعذر إنشاء الباركود"));
+    img.src = URL.createObjectURL(blob);
+  });
+}
+
+function loadPosterImage() {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("تعذر تحميل صورة شاي بكر"));
+    img.src = RATE_POSTER_SRC;
+  });
+}
+
+function canvasToBlob(canvas, type = "image/png") {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("تعذر تجهيز الصورة"));
+    }, type);
+  });
+}
+
+async function shareOrDownloadBlob(blob, filename, title) {
+  const file = new File([blob], filename, { type: blob.type || "image/png" });
+  if (navigator.canShare?.({ files: [file] })) {
+    await navigator.share({ files: [file], title, text: title });
+    return "shared";
+  }
+  downloadBlob(blob, filename);
+  return "downloaded";
+}
+
+async function composeRatePoster(url) {
+  const [poster, qr] = await Promise.all([loadPosterImage(), loadQrBitmap(url, 900)]);
+  const canvas = document.createElement("canvas");
+  canvas.width = poster.naturalWidth || poster.width;
+  canvas.height = poster.naturalHeight || poster.height;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(poster, 0, 0, canvas.width, canvas.height);
+
+  const size = Math.round(canvas.width * 0.46);
+  const pad = Math.round(size * 0.08);
+  const box = size + pad * 2;
+  const x = Math.round((canvas.width - box) / 2);
+  const y = Math.round(canvas.height * 0.545);
+
+  ctx.fillStyle = "#fffdf8";
+  ctx.strokeStyle = "rgba(42, 24, 16, 0.22)";
+  ctx.lineWidth = Math.max(2, Math.round(canvas.width * 0.006));
+  const r = Math.round(box * 0.08);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + box, y, x + box, y + box, r);
+  ctx.arcTo(x + box, y + box, x, y + box, r);
+  ctx.arcTo(x, y + box, x, y, r);
+  ctx.arcTo(x, y, x + box, y, r);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.drawImage(qr, x + pad, y + pad, size, size);
+  return canvas;
 }
 
 function reviewStars(n) {
@@ -1308,7 +1401,9 @@ function renderDueRatings() {
         const ended = daysUntil(o.event_date) < 0;
         return `
       <article class="due-rating-row has-qr">
-        <img src="${escapeAttr(reviewQrSrc(url))}" alt="باركود ${escapeAttr(title)}" width="96" height="96" />
+        <a class="due-rating-qr" href="${escapeAttr(url)}" target="_blank" rel="noopener" title="${escapeAttr(RATE_LINK_LABEL)}">
+          <img src="${escapeAttr(reviewQrSrc(url))}" alt="باركود ${escapeAttr(title)}" width="96" height="96" />
+        </a>
         <div>
           <strong>${escapeHtml(title)}</strong>
           <span>${escapeHtml(o.package_name || "")} · ${formatDate(o.event_date)}${
@@ -1604,7 +1699,9 @@ function renderUpcoming() {
           ${
             o.status === "accepted"
               ? `<div class="upcoming-qr">
-            <img src="${escapeAttr(reviewQrSrc(reviewRateUrl(o)))}" alt="باركود ${escapeAttr(eventOccasionTitle(o))}" width="88" height="88" />
+            <a href="${escapeAttr(reviewRateUrl(o))}" target="_blank" rel="noopener" title="${escapeAttr(RATE_LINK_LABEL)}">
+              <img src="${escapeAttr(reviewQrSrc(reviewRateUrl(o)))}" alt="باركود ${escapeAttr(eventOccasionTitle(o))}" width="88" height="88" />
+            </a>
             <span>باركود ${escapeHtml(eventOccasionTitle(o))}</span>
           </div>`
               : ""
@@ -1784,11 +1881,15 @@ function renderOrderDetail(o) {
             <h4 class="order-section-title">باركود تقييم الضيافة</h4>
             <p class="field-hint">الباركود خاص بـ${escapeHtml(eventOccasionTitle(o))} — مفتوح دائماً، والتاريخ يتعبّأ تلقائي.</p>
             <div class="rate-qr">
-              <img src="${escapeAttr(reviewQrSrc(reviewRateUrl(o)))}" alt="باركود التقييم" width="180" height="180" />
-              <a class="map-url" dir="ltr" href="${escapeAttr(reviewRateUrl(o))}" target="_blank" rel="noopener">${escapeHtml(
-                reviewRateUrl(o)
-              )}</a>
-              <button type="button" class="btn btn-ghost btn-sm" data-action="copy-rate">نسخ رابط التقييم</button>
+              <a class="rate-qr-link" href="${escapeAttr(reviewRateUrl(o))}" target="_blank" rel="noopener" title="${escapeAttr(RATE_LINK_LABEL)}">
+                <img src="${escapeAttr(reviewQrSrc(reviewRateUrl(o)))}" alt="باركود التقييم" width="180" height="180" />
+              </a>
+              <div class="rate-qr-actions">
+                <button type="button" class="btn btn-ghost btn-sm" data-action="save-qr">حفظ كصورة</button>
+                <button type="button" class="btn btn-ghost btn-sm" data-action="share-qr-poster">مشاركة صورة شاي بكر</button>
+                <button type="button" class="btn btn-ghost btn-sm" data-action="copy-rate">نسخ الرابط</button>
+              </div>
+              <a class="rate-qr-name" href="${escapeAttr(reviewRateUrl(o))}" target="_blank" rel="noopener">${escapeHtml(RATE_LINK_LABEL)}</a>
             </div>
           </section>`
         : ""
@@ -1943,6 +2044,38 @@ async function handleOrderAction(action, order, btn) {
       showToast("تم نسخ رابط التقييم");
     } catch (_) {
       window.prompt("انسخ رابط التقييم", url);
+    }
+  } else if (action === "save-qr") {
+    if (btn) btn.disabled = true;
+    try {
+      const qr = await loadQrBitmap(reviewRateUrl(order), 800);
+      const canvas = document.createElement("canvas");
+      canvas.width = qr.width || 800;
+      canvas.height = qr.height || 800;
+      canvas.getContext("2d").drawImage(qr, 0, 0, canvas.width, canvas.height);
+      downloadBlob(await canvasToBlob(canvas), rateFileName(order, "qr"));
+      showToast("تم حفظ الباركود");
+    } catch (err) {
+      console.warn(err);
+      showToast("تعذر حفظ الباركود — حاول مرة ثانية", "warn");
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  } else if (action === "share-qr-poster") {
+    if (btn) btn.disabled = true;
+    try {
+      const canvas = await composeRatePoster(reviewRateUrl(order));
+      const how = await shareOrDownloadBlob(
+        await canvasToBlob(canvas),
+        rateFileName(order, "poster"),
+        RATE_LINK_LABEL
+      );
+      showToast(how === "shared" ? "تم فتح المشاركة" : "تم حفظ صورة شاي بكر");
+    } catch (err) {
+      console.warn(err);
+      showToast(err?.message || "تعذر تجهيز صورة المشاركة", "warn");
+    } finally {
+      if (btn) btn.disabled = false;
     }
   } else if (action === "delete") {
     await deleteOrderById(order, btn);
