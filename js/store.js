@@ -667,6 +667,7 @@
       event_label: row.event_label,
       city_label: row.city_label,
       hall_name: row.hall_name,
+      customer_name: row.customer_name,
     };
   }
 

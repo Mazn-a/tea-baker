@@ -131,9 +131,10 @@ function todayIsoLocal() {
   return `${y}-${m}-${day}`;
 }
 
-function isHospitalityRatingOpen(eventDate) {
-  const day = String(eventDate || "").slice(0, 10);
-  return Boolean(day) && day < todayIsoLocal();
+function eventOccasionTitle(order) {
+  const kind = String(order?.event_label || "زواج").trim() || "زواج";
+  const who = String(order?.customer_name || "").trim();
+  return who ? `${kind} ${who}` : kind;
 }
 
 function reviewRateUrl(order) {
@@ -142,10 +143,14 @@ function reviewRateUrl(order) {
   const id = typeof order === "string" ? order : order?.id;
   const pkg = typeof order === "object" && order ? String(order.package_name || "").trim() : "";
   const dt = typeof order === "object" && order ? String(order.event_date || "").slice(0, 10) : "";
+  const ev = typeof order === "object" && order ? String(order.event_label || "").trim() : "";
+  const who = typeof order === "object" && order ? String(order.customer_name || "").trim() : "";
   const params = new URLSearchParams();
   if (id) params.set("o", String(id));
   if (pkg) params.set("pkg", pkg);
   if (dt) params.set("dt", dt);
+  if (ev) params.set("ev", ev);
+  if (who) params.set("who", who);
   return `${base}/rate.html?${params.toString()}`;
 }
 
@@ -531,8 +536,8 @@ function ensureLocalPreviewFixtures() {
     orders = [];
   }
   if (!Array.isArray(orders)) orders = [];
-  if (!orders.some((o) => String(o.id) === "preview-rate-order")) {
-    orders.unshift({
+  const previewOrders = [
+    {
       id: "preview-rate-order",
       created_at: new Date().toISOString(),
       status: "accepted",
@@ -549,9 +554,52 @@ function ensureLocalPreviewFixtures() {
       hall_name: "قاعة النور",
       location_link: "https://maps.google.com/?q=Makkah",
       notes: "",
-    });
-    localStorage.setItem(orderKey, JSON.stringify(orders));
+    },
+    {
+      id: "preview-rate-ended",
+      created_at: new Date().toISOString(),
+      status: "accepted",
+      customer_name: "سعد القحطاني",
+      customer_phone: "0533508361",
+      package_name: "البكج الملكي",
+      package_price: 5500,
+      addons_total: 0,
+      grand_total: 5500,
+      amount_paid: 5500,
+      event_date: shiftIsoDays(-21),
+      event_label: "زواج",
+      city_label: "جدة",
+      hall_name: "قاعة الورد",
+      location_link: "",
+      notes: "",
+    },
+    {
+      id: "preview-rate-soon",
+      created_at: new Date().toISOString(),
+      status: "accepted",
+      customer_name: "فهد العتيبي",
+      customer_phone: "0533508361",
+      package_name: "البكج الفضي",
+      package_price: 2500,
+      addons_total: 0,
+      grand_total: 2500,
+      amount_paid: 800,
+      event_date: shiftIsoDays(12),
+      event_label: "زواج",
+      city_label: "الطائف",
+      hall_name: "قاعة الأصيل",
+      location_link: "",
+      notes: "",
+    },
+  ];
+  let wrote = false;
+  for (const row of previewOrders) {
+    if (!orders.some((o) => String(o.id) === row.id)) {
+      orders.unshift(row);
+      wrote = true;
+    }
   }
+  if (wrote) localStorage.setItem(orderKey, JSON.stringify(orders));
 }
 
 function applyLocalPreviewData() {
@@ -563,9 +611,11 @@ function applyLocalPreviewData() {
   } catch (_) {}
   try {
     const orders = JSON.parse(localStorage.getItem("bakr-orders-v1") || "[]");
-    const preview = (orders || []).find((o) => String(o.id) === "preview-rate-order");
-    if (preview && !state.orders.some((o) => String(o.id) === String(preview.id))) {
-      state.orders = [preview, ...state.orders];
+    const previewRows = (orders || []).filter((o) => String(o.id || "").startsWith("preview-rate-"));
+    for (const preview of previewRows) {
+      if (!state.orders.some((o) => String(o.id) === String(preview.id))) {
+        state.orders = [preview, ...state.orders];
+      }
     }
   } catch (_) {}
 }
@@ -1238,9 +1288,7 @@ function reviewStatusLabel(s) {
 function dueRatingOrders() {
   return activeOrders()
     .filter((o) => o.status === "accepted")
-    .filter((o) => isHospitalityRatingOpen(o.event_date))
-    .sort((a, b) => String(b.event_date).localeCompare(String(a.event_date)))
-    .slice(0, 8);
+    .sort((a, b) => String(b.event_date).localeCompare(String(a.event_date)));
 }
 
 function renderDueRatings() {
@@ -1252,18 +1300,24 @@ function renderDueRatings() {
     return;
   }
   box.innerHTML = `
-    <h3 class="due-rating-title">مناسبات جاهزة للتقييم (بعد المناسبة بيوم)</h3>
+    <h3 class="due-rating-title">باركود التقييم لكل مناسبة — مفتوح دائماً وخاص بها</h3>
     ${rows
-      .map(
-        (o) => `
-      <article class="due-rating-row">
+      .map((o) => {
+        const title = eventOccasionTitle(o);
+        const url = reviewRateUrl(o);
+        const ended = daysUntil(o.event_date) < 0;
+        return `
+      <article class="due-rating-row has-qr">
+        <img src="${escapeAttr(reviewQrSrc(url))}" alt="باركود ${escapeAttr(title)}" width="96" height="96" />
         <div>
-          <strong>${escapeHtml(o.customer_name)}</strong>
-          <span>${escapeHtml(o.package_name || "")} · ${formatDate(o.event_date)}</span>
+          <strong>${escapeHtml(title)}</strong>
+          <span>${escapeHtml(o.package_name || "")} · ${formatDate(o.event_date)}${
+            ended ? " · انتهت" : ""
+          }</span>
         </div>
-        <button type="button" class="btn btn-ghost btn-sm" data-open-rate="${escapeAttr(o.id)}">فتح الطلب / الباركود</button>
-      </article>`
-      )
+        <button type="button" class="btn btn-ghost btn-sm" data-open-rate="${escapeAttr(o.id)}">فتح الطلب</button>
+      </article>`;
+      })
       .join("")}`;
   box.querySelectorAll("[data-open-rate]").forEach((btn) => {
     btn.addEventListener("click", () => showOrderDetail(btn.dataset.openRate));
@@ -1547,6 +1601,14 @@ function renderUpcoming() {
             <span>مدفوع ${money(paid)}</span>
             <strong class="upcoming-due">${remaining > 0 ? `باقي ${money(remaining)}` : "مسدّد بالكامل"}</strong>
           </div>
+          ${
+            o.status === "accepted"
+              ? `<div class="upcoming-qr">
+            <img src="${escapeAttr(reviewQrSrc(reviewRateUrl(o)))}" alt="باركود ${escapeAttr(eventOccasionTitle(o))}" width="88" height="88" />
+            <span>باركود ${escapeHtml(eventOccasionTitle(o))}</span>
+          </div>`
+              : ""
+          }
           <button type="button" class="btn btn-ghost upcoming-open" data-id="${escapeAttr(o.id)}">فتح الطلب</button>
         </div>
       </article>`;
@@ -1720,11 +1782,7 @@ function renderOrderDetail(o) {
       o.status === "accepted"
         ? `<section class="order-section">
             <h4 class="order-section-title">باركود تقييم الضيافة</h4>
-            <p class="field-hint">${
-              isHospitalityRatingOpen(o.event_date)
-                ? "التقييم مفتوح للضيوف (بعد المناسبة بيوم)."
-                : "ينفتح التقييم تلقائياً بعد تاريخ المناسبة بيوم."
-            }</p>
+            <p class="field-hint">الباركود خاص بـ${escapeHtml(eventOccasionTitle(o))} — مفتوح دائماً، والتاريخ يتعبّأ تلقائي.</p>
             <div class="rate-qr">
               <img src="${escapeAttr(reviewQrSrc(reviewRateUrl(o)))}" alt="باركود التقييم" width="180" height="180" />
               <a class="map-url" dir="ltr" href="${escapeAttr(reviewRateUrl(o))}" target="_blank" rel="noopener">${escapeHtml(

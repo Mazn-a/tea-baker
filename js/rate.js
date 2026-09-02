@@ -1,14 +1,6 @@
 (function () {
   const $ = (sel) => document.querySelector(sel);
 
-  function todayIso() {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
-  }
-
   function query() {
     return new URLSearchParams(location.search);
   }
@@ -21,9 +13,10 @@
     return String(value || "").slice(0, 10);
   }
 
-  function isOpen(eventDate) {
-    const day = isoDate(eventDate);
-    return Boolean(day) && day < todayIso();
+  function occasionTitle(eventLabel, customerName) {
+    const kind = String(eventLabel || "").trim() || "زواج";
+    const who = String(customerName || "").trim();
+    return who ? `${kind} ${who}` : kind;
   }
 
   function paintStars(selected) {
@@ -103,12 +96,13 @@
     paintStars(0);
     paintSuggest();
     const form = $("#rateForm");
-    const wait = $("#rateWait");
     const lead = $("#rateLead");
     const err = $("#rateError");
     const orderId = orderIdFromUrl();
     const urlPkg = String(query().get("pkg") || "").trim();
     const urlDate = isoDate(query().get("dt"));
+    const urlEvent = String(query().get("ev") || "").trim();
+    const urlWho = String(query().get("who") || "").trim();
     let eventInfo = null;
 
     $("#starPick")?.addEventListener("click", (e) => {
@@ -136,21 +130,17 @@
 
     const packageName = String(eventInfo?.package_name || urlPkg || "").trim();
     const eventDate = isoDate(eventInfo?.event_date || urlDate);
-    const fromEvent = Boolean(orderId && (packageName || eventDate));
+    const eventLabel = String(eventInfo?.event_label || urlEvent || "").trim();
+    const customerName = String(eventInfo?.customer_name || urlWho || "").trim();
+    const fromEvent = Boolean(orderId && (packageName || eventDate || eventLabel || customerName));
 
     fillPackages(packageName, fromEvent);
     lockDate(eventDate, fromEvent);
 
-    if (fromEvent && lead) {
-      lead.textContent = "بعد المناسبة بيوم نرحّب بتقييمك.";
-    }
-
-    if (eventDate && !isOpen(eventDate)) {
-      if (wait) {
-        wait.hidden = false;
-        wait.textContent = "التقييم ينفتح بعد المناسبة بيوم — امسح الباركود مرة ثانية غداً.";
-      }
-      return;
+    if (lead) {
+      lead.textContent = fromEvent
+        ? `التقييم خاص بـ${occasionTitle(eventLabel, customerName)} — التاريخ معبّأ تلقائي.`
+        : "نرحّب بتقييمك لضيافة المناسبة.";
     }
 
     if (form) form.hidden = false;
@@ -179,7 +169,6 @@
       if (!chosenPackage) return showErr("اختر نوع البكج");
       if (rating < 1) return showErr("اختر التقييم بالنجوم");
       if (!chosenDate) return showErr("اختر تاريخ المناسبة");
-      if (!isOpen(chosenDate)) return showErr("التقييم ينفتح بعد المناسبة بيوم");
 
       const btn = $("#rateSubmit");
       if (btn) btn.disabled = true;
@@ -193,7 +182,7 @@
           eventDate: chosenDate,
           comment,
           cityLabel: eventInfo?.city_label || "",
-          eventLabel: eventInfo?.event_label || "",
+          eventLabel: eventLabel || eventInfo?.event_label || "",
         });
         form.hidden = true;
         const done = $("#rateDone");

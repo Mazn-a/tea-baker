@@ -43,14 +43,15 @@ returns table (
   event_date date,
   event_label text,
   city_label text,
-  hall_name text
+  hall_name text,
+  customer_name text
 )
 language sql
 stable
 security definer
 set search_path = public
 as $$
-  select o.package_name, o.event_date, o.event_label, o.city_label, o.hall_name
+  select o.package_name, o.event_date, o.event_label, o.city_label, o.hall_name, o.customer_name
   from public.orders o
   where o.id = p_order_id
     and o.status = 'accepted'

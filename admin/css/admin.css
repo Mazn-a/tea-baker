@@ -1765,9 +1765,33 @@ body.admin-detail-open #orderDetailView {
   gap: 0.15rem;
 }
 
-.due-rating-row span {
-  font-size: 0.82rem;
-  color: var(--muted);
+.due-rating-row.has-qr {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.due-rating-row.has-qr img {
+  width: 96px;
+  height: 96px;
+  background: #fff;
+  border-radius: 0.7rem;
+  padding: 0.25rem;
+}
+
+@media (max-width: 640px) {
+  .due-rating-row.has-qr {
+    grid-template-columns: 72px minmax(0, 1fr);
+  }
+
+  .due-rating-row.has-qr img {
+    width: 72px;
+    height: 72px;
+  }
+
+  .due-rating-row.has-qr .btn {
+    grid-column: 1 / -1;
+  }
 }
 
 .admin-review-stars {
@@ -2591,6 +2615,24 @@ body:has(#adminHome.is-page-on) .admin-main {
 
 .upcoming-card.has-due {
   border-color: rgba(180, 83, 9, 0.35);
+}
+
+.upcoming-qr {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.65rem;
+  color: var(--tea-deep);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.upcoming-qr img {
+  width: 88px;
+  height: 88px;
+  background: #fff;
+  border-radius: 0.7rem;
+  padding: 0.25rem;
 }
 
 .upcoming-open {
