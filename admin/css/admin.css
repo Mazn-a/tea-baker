@@ -1771,6 +1771,10 @@ body.admin-detail-open #orderDetailView {
   align-items: center;
 }
 
+.due-rating-row.has-qr a {
+  line-height: 0;
+}
+
 .due-rating-row.has-qr img {
   width: 96px;
   height: 96px;
