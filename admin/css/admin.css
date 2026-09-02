@@ -1666,9 +1666,9 @@ body.admin-detail-open #orderDetailView {
 .welcome-choice {
   appearance: none;
   border: 0;
-  border-radius: 999px;
+  border-radius: 1.15rem;
   min-height: 3rem;
-  padding: 0.65rem 1.1rem;
+  padding: 0.6rem 0.85rem;
   display: grid;
   gap: 0.1rem;
   justify-items: stretch;
@@ -1842,9 +1842,7 @@ body.admin-detail-open #orderDetailView {
   }
 }
 
-@media (max-height: 720px) {
-  .welcome-art-wrap { display: none; }
-  .welcome-logo { width: clamp(100px, 14vw, 140px); }
+@media (max-height: 600px) {
   .welcome-sub { display: none; }
 }
 
@@ -2322,8 +2320,16 @@ body:has(#adminHome.is-page-on) .admin-main {
     border-radius: 1rem;
     text-align: start;
     justify-items: start;
-    min-height: 3.35rem;
-    padding: 0.75rem 1rem;
+    min-height: 3.1rem;
+    padding: 0.55rem 0.75rem;
+  }
+
+  .welcome-choice strong {
+    font-size: 0.95rem;
+  }
+
+  .welcome-choice > span:last-child {
+    font-size: 0.72rem;
   }
 
   /* الجوال: اسمح بالسكرول — المحتوى أطول من الشاشة */
