@@ -41,7 +41,7 @@
       href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;600;700&family=Tajawal:wght@400;500;700;800&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./css/styles.css?v=86" />
+    <link rel="stylesheet" href="./css/styles.css?v=89" />
   </head>
   <body>
     <header class="site-header">
@@ -62,7 +62,7 @@
         <ul class="nav-links" id="navLinks">
           <li><a href="#home" data-nav="home">الرئيسية</a></li>
           <li><a href="#packages" data-nav="home">منتجاتنا</a></li>
-          <li><a href="#reviews" data-nav="home">آراء العملاء</a></li>
+          <li id="navReviews" hidden><a href="#reviews" data-nav="home">آراء العملاء</a></li>
           <li><a href="#about" data-nav="about">عن شاي بكر</a></li>
           <li><a href="#contact" data-nav="contact">تواصل معنا</a></li>
           <li class="nav-order-desktop">
@@ -138,7 +138,7 @@
               <div class="addons-grid" id="marketAddons"></div>
             </section>
 
-            <section id="reviews" class="section-block">
+            <section id="reviews" class="section-block" hidden>
               <div class="page-head">
                 <h2>آراء العملاء</h2>
               </div>
@@ -372,6 +372,6 @@
     <script src="./js/catalog.js?v=16"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="./js/store.js?v=26"></script>
-    <script src="./js/app.js?v=72"></script>
+    <script src="./js/app.js?v=73"></script>
   </body>
 </html>

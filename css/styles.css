@@ -2655,7 +2655,9 @@ body:has(.view[data-view="booking"].is-active) .fab-stack {
   border-color: transparent;
 }
 
-#btnMoreReviews[hidden] {
+#btnMoreReviews[hidden],
+#reviews[hidden],
+.nav-links li[hidden] {
   display: none !important;
 }
 

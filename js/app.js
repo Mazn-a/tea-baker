@@ -363,6 +363,10 @@ function applyRoute() {
     return;
   }
   if (["packages", "addons", "reviews", "contact", "faq"].includes(hash)) {
+    if (hash === "reviews" && document.getElementById("reviews")?.hidden) {
+      showView("home");
+      return;
+    }
     showView("home", { scroll: false });
     requestAnimationFrame(() => {
       document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1740,6 +1744,18 @@ function reviewCardHtml(r) {
     </article>`;
 }
 
+/** بعد أول تعليق معتمد نُظهر القسم والقائمة ونثبّتهما — بدون إخفاء لاحق يسبب وميض */
+let reviewsSectionPinned = false;
+
+function setReviewsSectionVisible(on) {
+  if (on) reviewsSectionPinned = true;
+  const show = reviewsSectionPinned;
+  const section = $("#reviews");
+  const navItem = $("#navReviews");
+  if (section) section.hidden = !show;
+  if (navItem) navItem.hidden = !show;
+}
+
 async function renderMarketingReviews() {
   const box = $("#marketReviews");
   const moreBtn = $("#btnMoreReviews");
@@ -1752,16 +1768,15 @@ async function renderMarketingReviews() {
     console.warn(err);
   }
 
-  const localPreview = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-  if (!rows.length && localPreview) {
-    rows = window.REVIEWS || window.BAKR_CATALOG?.reviews || [];
-  }
-
   if (!rows.length) {
-    box.innerHTML = "";
-    if (moreBtn) moreBtn.hidden = true;
+    if (!reviewsSectionPinned) {
+      box.innerHTML = "";
+      if (moreBtn) moreBtn.hidden = true;
+    }
     return;
   }
+
+  setReviewsSectionVisible(true);
 
   const PAGE = 2;
   let shown = Math.min(PAGE, rows.length);
