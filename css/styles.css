@@ -243,6 +243,11 @@ select {
   animation: fadeIn 0.35s ease;
 }
 
+/* بدون transform حتى خريطة قوقل ترسم بعد إظهار القسم */
+.view[data-view="about"].is-active {
+  animation: aboutFade 0.35s ease;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -251,6 +256,15 @@ select {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes aboutFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
