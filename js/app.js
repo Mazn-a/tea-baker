@@ -514,10 +514,11 @@ function isValidLocationLink(value) {
   if (host === "g.co") return path.startsWith("/maps");
   if (host === "maps.app.goo.gl" || host === "share.google") return url.pathname.length > 1;
   if (host.startsWith("maps.google.")) return true;
+  if (path.includes("/maps") || path.includes("maps?")) return true;
+  // إحداثيات أو معرّف مكان بدون /maps في المسار
   return (
-    path.includes("/maps") ||
-    path.includes("maps?") ||
-    /[?&](q|ll|query|cid|place_id)=/i.test(url.search)
+    /[?&](cid|place_id)=/i.test(url.search) ||
+    /[?&](q|ll|query)=-?\d+(?:\.\d+)?\s*,\s*-?\d+/i.test(url.search)
   );
 }
 
