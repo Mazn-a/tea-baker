@@ -1771,6 +1771,10 @@ body.admin-detail-open #orderDetailView {
   align-items: center;
 }
 
+.due-rating-row.has-qr a {
+  line-height: 0;
+}
+
 .due-rating-row.has-qr img {
   width: 96px;
   height: 96px;
@@ -1808,16 +1812,53 @@ body.admin-detail-open #orderDetailView {
 
 .rate-qr {
   display: grid;
-  gap: 0.55rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.7rem 0.9rem;
+  align-items: start;
   justify-items: start;
 }
 
+.rate-qr-link {
+  display: block;
+  border-radius: 0.85rem;
+  line-height: 0;
+}
+
+.rate-qr-link img,
 .rate-qr img {
   width: 180px;
   height: 180px;
   background: #fff;
   border-radius: 0.75rem;
   padding: 0.4rem;
+}
+
+.rate-qr-actions {
+  display: grid;
+  gap: 0.4rem;
+  align-content: start;
+  min-width: 10rem;
+}
+
+.rate-qr-actions .btn {
+  width: 100%;
+}
+
+.rate-qr-name {
+  grid-column: 1 / -1;
+  color: var(--tea-deep);
+  font-weight: 800;
+  font-size: 1.02rem;
+  text-decoration: none;
+}
+
+.rate-qr-name:hover {
+  text-decoration: underline;
+}
+
+.due-rating-qr {
+  display: block;
+  line-height: 0;
 }
 
 .welcome-end-line {
