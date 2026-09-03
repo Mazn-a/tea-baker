@@ -42,7 +42,7 @@
 
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100%;
   /* يمنع سحب الصفحة يمين/يسار على الجوال */
   touch-action: pan-y;
@@ -57,7 +57,7 @@ body {
     linear-gradient(180deg, #f7f1e8, #efe4d4 50%, #f7f1e8);
   line-height: 1.7;
   font-size: 1.05rem;
-  overflow-x: hidden;
+  overflow-x: clip;
   overflow-y: auto;
   max-width: 100%;
   width: 100%;
@@ -1011,6 +1011,10 @@ select {
   grid-template-columns: repeat(7, 1fr);
   gap: 0.22rem;
   text-align: center;
+}
+
+.cal-days {
+  min-height: calc(6 * 2.2rem + 5 * 0.22rem);
 }
 
 .cal-week span {
@@ -2167,23 +2171,19 @@ select {
 
 @media (max-width: 960px) {
   .pkg-market-grid {
-    display: flex;
-    overflow-x: auto;
-    gap: 0.75rem;
-    padding: 0.35rem 0.1rem 0.9rem;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-x pinch-zoom;
+    display: grid;
+    grid-template-columns: 1fr;
+    overflow: visible;
+    gap: 0.85rem;
+    padding: 0.15rem 0 0.4rem;
+    scroll-snap-type: none;
+    touch-action: pan-y;
     max-width: 100%;
   }
 
-  .pkg-market-grid::-webkit-scrollbar {
-    height: 4px;
-  }
-
   .receipt-pkg {
-    flex: 0 0 min(82vw, 300px);
-    scroll-snap-align: start;
+    width: 100%;
+    max-width: 100%;
     height: auto;
     border-radius: 0 0 1.1rem 1.1rem;
     box-shadow: 0 10px 24px rgba(42, 24, 16, 0.1);

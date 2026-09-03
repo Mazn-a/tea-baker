@@ -928,7 +928,9 @@ code {
 
 /* Chart.js يكتب عرضاً مباشراً على العنصر — نمنعه من تجاوز الشاشة */
 .chart-canvas-wrap canvas {
-  max-width: 100% !important;
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .chart-canvas-wide {
@@ -1476,7 +1478,7 @@ body.admin-detail-open #orderDetailView {
   flex-direction: column;
   justify-content: center;
   background: #ead4bd;
-  overflow-x: hidden;
+  overflow-x: clip;
   overflow-y: auto;
 }
 
@@ -1484,7 +1486,7 @@ body.admin-detail-open #orderDetailView {
   content: "";
   display: block;
   position: absolute;
-  inset: -20% -10% -30% -15%;
+  inset: 0;
   z-index: 0;
   pointer-events: none;
   background:
@@ -1506,7 +1508,6 @@ body.admin-detail-open #orderDetailView {
     );
   mix-blend-mode: soft-light;
   opacity: 0.95;
-  animation: adminSunGlow 10s ease-in-out infinite alternate;
 }
 
 .welcome-landing::after {
@@ -1521,16 +1522,6 @@ body.admin-detail-open #orderDetailView {
     radial-gradient(ellipse 42% 55% at 100% 70%, rgba(196, 163, 90, 0.16), transparent 70%);
   mix-blend-mode: overlay;
   opacity: 0.9;
-}
-
-@keyframes adminSunGlow {
-  0% { transform: rotate(-5deg) translateX(0); opacity: 0.82; }
-  100% { transform: rotate(-2deg) translateX(1.2%); opacity: 1; }
-}
-
-@keyframes adminFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
 }
 
 @keyframes adminFadeUp {
@@ -1574,8 +1565,6 @@ body.admin-detail-open #orderDetailView {
   line-height: 0;
   pointer-events: none;
   filter: drop-shadow(0 12px 28px rgba(42, 24, 16, 0.14));
-  animation: adminFloat 6.5s ease-in-out infinite;
-  animation-delay: 0.4s;
   overflow: hidden;
   justify-self: end;
 }
@@ -1596,7 +1585,6 @@ body.admin-detail-open #orderDetailView {
 .welcome-logo-wrap {
   flex-shrink: 0;
   filter: drop-shadow(0 10px 24px rgba(42, 24, 16, 0.16));
-  animation: adminFloat 5.5s ease-in-out infinite;
 }
 
 .welcome-logo {
@@ -2394,7 +2382,8 @@ body:has(#adminHome.is-page-on) .admin-main {
   .welcome-landing {
     height: auto;
     min-height: calc(100svh - 4.4rem);
-    overflow: visible;
+    overflow-x: clip;
+    overflow-y: visible;
     justify-content: flex-start;
     padding: 0.75rem 0 calc(1.25rem + var(--safe-bottom));
   }
@@ -2513,6 +2502,10 @@ body:has(#adminHome.is-page-on) .admin-main {
   grid-template-columns: repeat(7, 1fr);
   gap: 0.18rem;
   text-align: center;
+}
+
+.admin-cal .cal-days {
+  min-height: calc(6 * 2rem + 5 * 0.18rem);
 }
 
 .admin-cal .cal-week span {
