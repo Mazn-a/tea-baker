@@ -245,10 +245,10 @@ async function composeRatePoster(url) {
   ctx.fillStyle = "#ead4bd";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const shift = Math.round(canvas.height * 0.1);
+  const shift = Math.round(canvas.height * 0.135);
   ctx.drawImage(poster, 0, -shift, canvas.width, canvas.height);
 
-  const size = Math.round(canvas.width * 0.22);
+  const size = Math.round(canvas.width * 0.2);
   const pad = Math.max(10, Math.round(size * 0.09));
   const box = size + pad * 2;
   const labelSize = Math.round(canvas.width * 0.055);
