@@ -1476,7 +1476,8 @@ body.admin-detail-open #orderDetailView {
   flex-direction: column;
   justify-content: center;
   background: #ead4bd;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .welcome-landing::before {
@@ -1580,15 +1581,16 @@ body.admin-detail-open #orderDetailView {
 }
 
 .welcome-choices {
-  grid-column: 2;
+  grid-column: 1 / -1;
   grid-row: 2;
   display: grid;
-  gap: 0.55rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
   position: relative;
   z-index: 1;
   align-self: start;
-  width: min(100%, 18rem);
-  justify-self: end;
+  width: 100%;
+  justify-self: stretch;
 }
 
 .welcome-logo-wrap {
@@ -1664,9 +1666,9 @@ body.admin-detail-open #orderDetailView {
 .welcome-choice {
   appearance: none;
   border: 0;
-  border-radius: 999px;
+  border-radius: 1.15rem;
   min-height: 3rem;
-  padding: 0.65rem 1.1rem;
+  padding: 0.6rem 0.85rem;
   display: grid;
   gap: 0.1rem;
   justify-items: stretch;
@@ -1881,9 +1883,7 @@ body.admin-detail-open #orderDetailView {
   }
 }
 
-@media (max-height: 720px) {
-  .welcome-art-wrap { display: none; }
-  .welcome-logo { width: clamp(100px, 14vw, 140px); }
+@media (max-height: 600px) {
   .welcome-sub { display: none; }
 }
 
@@ -2260,6 +2260,7 @@ body:has(#adminHome.is-page-on) .admin-main {
   .welcome-choices {
     grid-column: 1;
     grid-row: 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
     max-width: none;
     justify-self: stretch;
@@ -2360,8 +2361,16 @@ body:has(#adminHome.is-page-on) .admin-main {
     border-radius: 1rem;
     text-align: start;
     justify-items: start;
-    min-height: 3.35rem;
-    padding: 0.75rem 1rem;
+    min-height: 3.1rem;
+    padding: 0.55rem 0.75rem;
+  }
+
+  .welcome-choice strong {
+    font-size: 0.95rem;
+  }
+
+  .welcome-choice > span:last-child {
+    font-size: 0.72rem;
   }
 
   /* الجوال: اسمح بالسكرول — المحتوى أطول من الشاشة */
