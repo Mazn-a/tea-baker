@@ -1013,6 +1013,10 @@ select {
   text-align: center;
 }
 
+.cal-days {
+  min-height: calc(6 * 2.2rem + 5 * 0.22rem);
+}
+
 .cal-week span {
   font-size: 0.9rem;
   font-weight: 800;

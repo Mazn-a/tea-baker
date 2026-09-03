@@ -981,13 +981,14 @@ function makeDoughnut(canvasId, key, rows, emptyText) {
           backgroundColor: rows.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]),
           borderColor: "#fffdf9",
           borderWidth: 3,
-          hoverOffset: 6,
+          hoverOffset: 0,
         },
       ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      resizeDelay: 80,
       cutout: "58%",
       plugins: {
         legend: {
@@ -1055,6 +1056,7 @@ function makeBar(canvasId, key, rows, emptyText, barLabel = "الطلبات") {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      resizeDelay: 80,
       plugins: {
         legend: { display: false },
         tooltip: {
