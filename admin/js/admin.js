@@ -239,42 +239,52 @@ async function composeRatePoster(url) {
     } catch (_) {}
   }
   const canvas = document.createElement("canvas");
-  canvas.width = poster.naturalWidth || poster.width;
-  canvas.height = poster.naturalHeight || poster.height;
+  const width = poster.naturalWidth || poster.width;
+  const height = poster.naturalHeight || poster.height;
+  canvas.width = width;
+  canvas.height = height;
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#ead4bd";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const shift = Math.round(canvas.height * 0.135);
-  ctx.drawImage(poster, 0, -shift, canvas.width, canvas.height);
+  // قوام الجدار البيج — بدون سطر «نخدم مكة...»
+  const texY = Math.round(height * 0.58);
+  const texH = Math.max(12, Math.round(height * 0.05));
+  ctx.drawImage(poster, 0, texY, width, texH, 0, 0, width, height);
 
-  const size = Math.round(canvas.width * 0.2);
-  const pad = Math.max(10, Math.round(size * 0.09));
+  // شعار شاي بكر مرفوع لفوق
+  const logoSrcY = Math.round(height * 0.195);
+  const logoSrcH = Math.round(height * 0.31);
+  const logoDestY = Math.round(height * 0.008);
+  ctx.drawImage(poster, 0, logoSrcY, width, logoSrcH, 0, logoDestY, width, logoSrcH);
+
+  const woodSrcY = Math.round(height * 0.662);
+  const woodH = height - woodSrcY;
+  ctx.drawImage(poster, 0, woodSrcY, width, woodH, 0, height - woodH, width, woodH);
+
+  const gapTop = logoDestY + logoSrcH;
+  const gapBot = height - woodH;
+  const size = Math.round(width * 0.18);
+  const pad = Math.max(10, Math.round(size * 0.1));
   const box = size + pad * 2;
-  const labelSize = Math.round(canvas.width * 0.055);
-  const labelGap = Math.round(canvas.height * 0.012);
+  const labelSize = Math.round(width * 0.052);
+  const labelGap = Math.round(height * 0.011);
   const blockH = box + labelGap + labelSize;
-  const x = Math.round((canvas.width - box) / 2);
-  const y = Math.round(canvas.height * 0.395);
-
-  const coverTop = y - Math.round(canvas.height * 0.018);
-  const coverH = blockH + Math.round(canvas.height * 0.03);
-  ctx.drawImage(canvas, 4, Math.round(canvas.height * 0.18), 22, coverH, 0, coverTop, canvas.width, coverH);
+  const x = Math.round((width - box) / 2);
+  const y = Math.round(gapTop + (gapBot - gapTop - blockH) / 2);
 
   ctx.save();
   ctx.shadowColor = "rgba(42, 24, 16, 0.22)";
-  ctx.shadowBlur = Math.round(canvas.width * 0.018);
-  ctx.shadowOffsetY = Math.round(canvas.width * 0.008);
+  ctx.shadowBlur = Math.round(width * 0.018);
+  ctx.shadowOffsetY = Math.round(width * 0.008);
   ctx.fillStyle = "#fffdf8";
   roundRectPath(ctx, x, y, box, box, Math.round(box * 0.14));
   ctx.fill();
   ctx.restore();
   ctx.strokeStyle = "#633a11";
-  ctx.lineWidth = Math.max(4, Math.round(canvas.width * 0.011));
+  ctx.lineWidth = Math.max(4, Math.round(width * 0.011));
   roundRectPath(ctx, x, y, box, box, Math.round(box * 0.14));
   ctx.stroke();
   ctx.strokeStyle = "#c4a35a";
-  ctx.lineWidth = Math.max(2, Math.round(canvas.width * 0.005));
+  ctx.lineWidth = Math.max(2, Math.round(width * 0.005));
   roundRectPath(
     ctx,
     x + ctx.lineWidth,
@@ -290,7 +300,7 @@ async function composeRatePoster(url) {
   ctx.font = `800 ${labelSize}px Tajawal, "Segoe UI", sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  ctx.fillText("قيمنا", canvas.width / 2, y + box + labelGap);
+  ctx.fillText("قيمنا", width / 2, y + box + labelGap);
   return canvas;
 }
 
