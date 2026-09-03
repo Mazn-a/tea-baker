@@ -220,40 +220,87 @@ async function shareOrDownloadBlob(blob, filename, title) {
   return "downloaded";
 }
 
+function roundRectPath(ctx, x, y, w, h, r) {
+  const rad = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rad, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rad);
+  ctx.arcTo(x + w, y + h, x, y + h, rad);
+  ctx.arcTo(x, y + h, x, y, rad);
+  ctx.arcTo(x, y, x + w, y, rad);
+  ctx.closePath();
+}
+
 async function composeRatePoster(url) {
   const [poster, qr] = await Promise.all([loadPosterImage(), loadQrBitmap(url, 900)]);
+  if (document.fonts?.ready) {
+    try {
+      await document.fonts.ready;
+    } catch (_) {}
+  }
   const canvas = document.createElement("canvas");
-  canvas.width = poster.naturalWidth || poster.width;
-  canvas.height = poster.naturalHeight || poster.height;
+  const width = poster.naturalWidth || poster.width;
+  const height = poster.naturalHeight || poster.height;
+  canvas.width = width;
+  canvas.height = height;
   const ctx = canvas.getContext("2d");
-  ctx.drawImage(poster, 0, 0, canvas.width, canvas.height);
 
-  const size = Math.round(canvas.width * 0.34);
-  const pad = Math.max(12, Math.round(size * 0.06));
+  // قوام الجدار البيج — بدون سطر «نخدم مكة...»
+  const texY = Math.round(height * 0.58);
+  const texH = Math.max(12, Math.round(height * 0.05));
+  ctx.drawImage(poster, 0, texY, width, texH, 0, 0, width, height);
+
+  // شعار شاي بكر مرفوع لفوق
+  const logoSrcY = Math.round(height * 0.195);
+  const logoSrcH = Math.round(height * 0.31);
+  const logoDestY = Math.round(height * 0.008);
+  ctx.drawImage(poster, 0, logoSrcY, width, logoSrcH, 0, logoDestY, width, logoSrcH);
+
+  const woodSrcY = Math.round(height * 0.662);
+  const woodH = height - woodSrcY;
+  ctx.drawImage(poster, 0, woodSrcY, width, woodH, 0, height - woodH, width, woodH);
+
+  const gapTop = logoDestY + logoSrcH;
+  const gapBot = height - woodH;
+  const size = Math.round(width * 0.18);
+  const pad = Math.max(10, Math.round(size * 0.1));
   const box = size + pad * 2;
-  const x = Math.round((canvas.width - box) / 2);
-  const y = Math.round(canvas.height * 0.445);
+  const labelSize = Math.round(width * 0.052);
+  const labelGap = Math.round(height * 0.011);
+  const blockH = box + labelGap + labelSize;
+  const x = Math.round((width - box) / 2);
+  const y = Math.round(gapTop + (gapBot - gapTop - blockH) / 2);
 
-  const coverTop = Math.round(canvas.height * 0.424);
-  const coverH = Math.max(22, y - coverTop + 8);
-  const srcW = 28;
-  const srcY = Math.min(canvas.height - coverH - 8, Math.round(canvas.height * 0.62));
-  ctx.drawImage(canvas, 6, srcY, srcW, coverH, 0, coverTop, canvas.width, coverH);
-
+  ctx.save();
+  ctx.shadowColor = "rgba(42, 24, 16, 0.22)";
+  ctx.shadowBlur = Math.round(width * 0.018);
+  ctx.shadowOffsetY = Math.round(width * 0.008);
   ctx.fillStyle = "#fffdf8";
-  ctx.strokeStyle = "rgba(42, 24, 16, 0.22)";
-  ctx.lineWidth = Math.max(2, Math.round(canvas.width * 0.006));
-  const r = Math.round(box * 0.08);
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + box, y, x + box, y + box, r);
-  ctx.arcTo(x + box, y + box, x, y + box, r);
-  ctx.arcTo(x, y + box, x, y, r);
-  ctx.arcTo(x, y, x + box, y, r);
-  ctx.closePath();
+  roundRectPath(ctx, x, y, box, box, Math.round(box * 0.14));
   ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle = "#633a11";
+  ctx.lineWidth = Math.max(4, Math.round(width * 0.011));
+  roundRectPath(ctx, x, y, box, box, Math.round(box * 0.14));
+  ctx.stroke();
+  ctx.strokeStyle = "#c4a35a";
+  ctx.lineWidth = Math.max(2, Math.round(width * 0.005));
+  roundRectPath(
+    ctx,
+    x + ctx.lineWidth,
+    y + ctx.lineWidth,
+    box - ctx.lineWidth * 2,
+    box - ctx.lineWidth * 2,
+    Math.round(box * 0.12)
+  );
   ctx.stroke();
   ctx.drawImage(qr, x + pad, y + pad, size, size);
+
+  ctx.fillStyle = "#4a2b19";
+  ctx.font = `800 ${labelSize}px Tajawal, "Segoe UI", sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.fillText("قيمنا", width / 2, y + box + labelGap);
   return canvas;
 }
 
