@@ -232,7 +232,13 @@ async function composeRatePoster(url) {
   const pad = Math.max(12, Math.round(size * 0.06));
   const box = size + pad * 2;
   const x = Math.round((canvas.width - box) / 2);
-  const y = Math.round(canvas.height * 0.468);
+  const y = Math.round(canvas.height * 0.445);
+
+  const coverTop = Math.round(canvas.height * 0.424);
+  const coverH = Math.max(22, y - coverTop + 8);
+  const srcW = 28;
+  const srcY = Math.min(canvas.height - coverH - 8, Math.round(canvas.height * 0.62));
+  ctx.drawImage(canvas, 6, srcY, srcW, coverH, 0, coverTop, canvas.width, coverH);
 
   ctx.fillStyle = "#fffdf8";
   ctx.strokeStyle = "rgba(42, 24, 16, 0.22)";
