@@ -245,23 +245,21 @@ async function composeRatePoster(url) {
   ctx.fillStyle = "#ead4bd";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const shift = Math.round(canvas.height * 0.09);
+  const shift = Math.round(canvas.height * 0.1);
   ctx.drawImage(poster, 0, -shift, canvas.width, canvas.height);
 
-  const size = Math.round(canvas.width * 0.24);
-  const pad = Math.max(10, Math.round(size * 0.08));
+  const size = Math.round(canvas.width * 0.22);
+  const pad = Math.max(10, Math.round(size * 0.09));
   const box = size + pad * 2;
-  const labelSize = Math.round(canvas.width * 0.052);
-  const labelGap = Math.round(canvas.height * 0.014);
+  const labelSize = Math.round(canvas.width * 0.055);
+  const labelGap = Math.round(canvas.height * 0.012);
   const blockH = box + labelGap + labelSize;
   const x = Math.round((canvas.width - box) / 2);
-  const y = Math.round((canvas.height - blockH) / 2);
+  const y = Math.round(canvas.height * 0.395);
 
-  const coverTop = y - Math.round(canvas.height * 0.02);
-  const coverH = blockH + Math.round(canvas.height * 0.04);
-  const srcW = 28;
-  const srcY = Math.min(canvas.height - coverH - 8, Math.round(canvas.height * 0.72));
-  ctx.drawImage(canvas, 6, srcY, srcW, coverH, 0, coverTop, canvas.width, coverH);
+  const coverTop = y - Math.round(canvas.height * 0.018);
+  const coverH = blockH + Math.round(canvas.height * 0.03);
+  ctx.drawImage(canvas, 4, Math.round(canvas.height * 0.18), 22, coverH, 0, coverTop, canvas.width, coverH);
 
   ctx.save();
   ctx.shadowColor = "rgba(42, 24, 16, 0.22)";
