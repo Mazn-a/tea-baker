@@ -42,7 +42,7 @@
 
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100%;
   /* يمنع سحب الصفحة يمين/يسار على الجوال */
   touch-action: pan-y;
@@ -57,7 +57,7 @@ body {
     linear-gradient(180deg, #f7f1e8, #efe4d4 50%, #f7f1e8);
   line-height: 1.7;
   font-size: 1.05rem;
-  overflow-x: hidden;
+  overflow-x: clip;
   overflow-y: auto;
   max-width: 100%;
   width: 100%;
@@ -2173,7 +2173,8 @@ select {
     padding: 0.35rem 0.1rem 0.9rem;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-x pinch-zoom;
+    touch-action: pan-y pan-x;
+    overscroll-behavior-x: contain;
     max-width: 100%;
   }
 
@@ -2240,6 +2241,12 @@ select {
   .receipt-pkg .btn {
     min-height: 2.5rem;
     font-size: 0.94rem;
+  }
+
+  .receipt-pkg,
+  .market-pkg,
+  .pkg-details {
+    touch-action: pan-y pan-x;
   }
 
   .pkg-details summary {
@@ -3164,6 +3171,7 @@ body:has(.view[data-view="booking"].is-active) .fab-stack {
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
     align-content: start;
     min-height: 0;
   }

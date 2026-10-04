@@ -1590,6 +1590,7 @@ body.admin-detail-open #orderDetailView {
   z-index: 1;
   align-self: start;
   width: 100%;
+  min-width: 0;
   justify-self: stretch;
 }
 
@@ -1667,6 +1668,7 @@ body.admin-detail-open #orderDetailView {
   appearance: none;
   border: 0;
   border-radius: 1.15rem;
+  min-width: 0;
   min-height: 3rem;
   padding: 0.6rem 0.85rem;
   display: grid;
@@ -1699,12 +1701,14 @@ body.admin-detail-open #orderDetailView {
 .welcome-choice strong {
   font-size: 1.05rem;
   font-weight: 800;
+  overflow-wrap: anywhere;
 }
 
 .welcome-choice > span:last-child {
   font-size: 0.8rem;
   font-weight: 600;
   opacity: 0.9;
+  overflow-wrap: anywhere;
 }
 
 .welcome-choice.is-secondary > span:last-child { color: #6a5240; }
@@ -2367,6 +2371,7 @@ body:has(#adminHome.is-page-on) .admin-main {
 
   .welcome-choice strong {
     font-size: 0.95rem;
+    overflow-wrap: anywhere;
   }
 
   .welcome-choice > span:last-child {
@@ -2397,6 +2402,14 @@ body:has(#adminHome.is-page-on) .admin-main {
     overflow: visible;
     justify-content: flex-start;
     padding: 0.75rem 0 calc(1.25rem + var(--safe-bottom));
+  }
+
+  .welcome-shell,
+  .welcome-hero,
+  .welcome-choices,
+  .welcome-copy {
+    max-width: 100%;
+    min-width: 0;
   }
 
   .welcome-shell {
@@ -2687,4 +2700,27 @@ body:has(#adminHome.is-page-on) .admin-main {
 
 .upcoming-open {
   margin-top: 0.55rem;
+}
+
+/* جوال بالعرض: نفس شكل الودجت، فقط نفك قفل الارتفاع عشان ما تنضغط */
+@media (max-height: 560px) and (min-width: 600px) {
+  body:has(#adminHome.is-page-on) {
+    overflow: auto;
+    overflow-x: clip;
+  }
+
+  .admin-welcome {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .welcome-landing {
+    height: auto;
+    min-height: 0;
+    overflow-x: clip;
+    overflow-y: visible;
+    justify-content: flex-start;
+  }
 }
