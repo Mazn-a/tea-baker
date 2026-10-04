@@ -2238,6 +2238,12 @@ select {
     font-size: 0.94rem;
   }
 
+  .receipt-pkg,
+  .market-pkg,
+  .pkg-details {
+    touch-action: pan-y;
+  }
+
   .pkg-details summary {
     font-size: 0.9rem;
   }
