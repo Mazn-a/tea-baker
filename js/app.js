@@ -390,6 +390,22 @@ function showView(name, opts = {}) {
   $(".site-header")?.classList.toggle("is-booking", name === "booking");
   // بديل :has() للمتصفحات الأقدم على الجوال
   document.body.classList.toggle("booking-open", name === "booking");
+  if (name === "about") loadAboutMap();
+}
+
+/** خريطة «عن شاي بكر» تُحمَّل بعد ظهور القسم حتى ما تبقى رمادية بسبب display:none */
+function loadAboutMap() {
+  const iframe = document.querySelector(".about-map iframe");
+  if (!iframe) return;
+  const src = iframe.getAttribute("data-map-src");
+  if (!src) return;
+  window.clearTimeout(loadAboutMap._tid);
+  loadAboutMap._tid = window.setTimeout(() => {
+    if (!document.querySelector('.view[data-view="about"].is-active')) return;
+    const current = iframe.getAttribute("src") || "";
+    if (current === src) return;
+    iframe.src = src;
+  }, 80);
 }
 
 function isBookingOpen() {
@@ -487,6 +503,8 @@ function isValidLocationLink(value) {
     "maps.google.sa",
     "goo.gl",
     "maps.app.goo.gl",
+    "share.google",
+    "g.co",
   ]);
 
   // اسمح أيضاً بنطاقات google.XX الشائعة للخرائط
@@ -499,9 +517,15 @@ function isValidLocationLink(value) {
 
   // تأكد أنه رابط خرائط وليس أي صفحة قوقل أخرى
   if (host === "goo.gl") return path.startsWith("/maps");
-  if (host === "maps.app.goo.gl") return url.pathname.length > 1;
+  if (host === "g.co") return path.startsWith("/maps");
+  if (host === "maps.app.goo.gl" || host === "share.google") return url.pathname.length > 1;
   if (host.startsWith("maps.google.")) return true;
-  return path.includes("/maps") || path.includes("maps?") || /[?&](q|ll|query)=/i.test(url.search);
+  if (path.includes("/maps") || path.includes("maps?")) return true;
+  // إحداثيات أو معرّف مكان بدون /maps في المسار
+  return (
+    /[?&](cid|place_id)=/i.test(url.search) ||
+    /[?&](q|ll|query)=-?\d+(?:\.\d+)?\s*,\s*-?\d+/i.test(url.search)
+  );
 }
 
 function sanitizeLocationLink(value) {
