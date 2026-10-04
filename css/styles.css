@@ -2167,19 +2167,24 @@ select {
 
 @media (max-width: 960px) {
   .pkg-market-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    overflow: visible;
-    gap: 0.85rem;
-    padding: 0.15rem 0 0.4rem;
-    scroll-snap-type: none;
-    touch-action: pan-y;
+    display: flex;
+    overflow-x: auto;
+    gap: 0.75rem;
+    padding: 0.35rem 0.1rem 0.9rem;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y pan-x;
+    overscroll-behavior-x: contain;
     max-width: 100%;
   }
 
+  .pkg-market-grid::-webkit-scrollbar {
+    height: 4px;
+  }
+
   .receipt-pkg {
-    width: 100%;
-    max-width: 100%;
+    flex: 0 0 min(82vw, 300px);
+    scroll-snap-align: start;
     height: auto;
     border-radius: 0 0 1.1rem 1.1rem;
     box-shadow: 0 10px 24px rgba(42, 24, 16, 0.1);
@@ -2241,7 +2246,7 @@ select {
   .receipt-pkg,
   .market-pkg,
   .pkg-details {
-    touch-action: pan-y;
+    touch-action: pan-y pan-x;
   }
 
   .pkg-details summary {

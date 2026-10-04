@@ -2702,7 +2702,7 @@ body:has(#adminHome.is-page-on) .admin-main {
   margin-top: 0.55rem;
 }
 
-/* جوال بالعرض — بعد قواعد 900/640 حتى ما تنكتب فوقها */
+/* جوال بالعرض: نفس شكل الودجت، فقط نفك قفل الارتفاع عشان ما تنضغط */
 @media (max-height: 560px) and (min-width: 600px) {
   body:has(#adminHome.is-page-on) {
     overflow: auto;
@@ -2722,56 +2722,5 @@ body:has(#adminHome.is-page-on) .admin-main {
     overflow-x: clip;
     overflow-y: visible;
     justify-content: flex-start;
-    padding: 0.4rem 0 0.85rem;
-  }
-
-  .welcome-shell {
-    width: min(100% - 1.25rem, 920px);
-    gap: 0.5rem;
-    padding: 0.15rem 0 0.35rem;
-    flex: none;
-    min-height: auto;
-    max-width: 100%;
-  }
-
-  .welcome-art-wrap {
-    display: none;
-  }
-
-  .welcome-logo {
-    width: 3.35rem;
-  }
-
-  .welcome-name {
-    font-size: 1.15rem;
-  }
-
-  .welcome-copy h1 {
-    font-size: 0.88rem;
-  }
-
-  .welcome-tag,
-  .welcome-sub {
-    display: none;
-  }
-
-  .welcome-choices {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.4rem;
-  }
-
-  .welcome-choice {
-    min-height: 2.55rem;
-    padding: 0.4rem 0.55rem;
-    border-radius: 0.85rem;
-  }
-
-  .welcome-choice strong {
-    font-size: 0.86rem;
-  }
-
-  .welcome-choice > span:last-child {
-    font-size: 0.66rem;
-    line-height: 1.25;
   }
 }
